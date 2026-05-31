@@ -1,0 +1,8 @@
+{
+  "package_id": "forsetti.feature.support-technician",
+  "module_type": "support-technician",
+  "package_version": "1.0.0",
+  "module_display_name": "Support Technician",
+  "module_subtitle": "Unified support workflow for computer and mobile device tickets.",
+  "icon_system_name": "wrench.and.screwdriver"
+}

@@ -1,0 +1,46 @@
+# Xcode / Swift build artifacts
+build/
+DerivedData/
+*.xcarchive
+*.dSYM
+*.dSYM.zip
+*.ipa
+*.app.zip
+*.pkg.zip
+
+# Xcode user-specific settings (shouldn't be in source control)
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Carthage / CocoaPods (if introduced later)
+Carthage/Build/
+Carthage/Checkouts/
+Pods/
+
+# macOS noise
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Signing / provisioning assets
+*.p12
+*.mobileprovision
+
+# Local environment / credentials
+.env
+.env.local
+
+# Common local logs / scratch
+*.log
+.swift-version
+
+# Temporary migration files
+*.moved-aside

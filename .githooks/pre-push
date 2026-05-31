@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REMOTE="$1"
+URL="$2"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+ATTRIBUTION_PATTERNS=(
+  "^Co-Authored-By:"
+  "^Generat""ed by "
+  "^Generat""ed with "
+  "^Authored by "
+  "^Built with "
+  "Cod""ex"
+  "Open""A""I"
+  "Chat""GPT"
+  "Clau""de"
+  "Anth""ropic"
+  "Gem""ini"
+  "Cop""ilot"
+)
+
+COMBINED_PATTERN=$(IFS='|'; echo "${ATTRIBUTION_PATTERNS[*]}")
+REF_LINES=()
+while IFS= read -r line; do
+  REF_LINES+=("$line")
+done
+
+for line in "${REF_LINES[@]}"; do
+  read -r local_ref local_sha remote_ref remote_sha <<< "$line"
+  [[ "$local_sha" == "0000000000000000000000000000000000000000" ]] && continue
+
+  if [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
+    commits=$(git log --format="%H" "$local_sha" --not --remotes 2>/dev/null || echo "$local_sha")
+  else
+    commits=$(git log --format="%H" "${remote_sha}..${local_sha}" 2>/dev/null || true)
+  fi
+
+  for commit in $commits; do
+    message=$(git log --format="%B" -1 "$commit")
+    if echo "$message" | grep -iEq "$COMBINED_PATTERN"; then
+      echo "pre-push: rejected attribution footer in commit $(echo "$commit" | cut -c1-8)" >&2
+      exit 1
+    fi
+  done
+done
+
+if [[ "${SKIP_BUILD:-0}" == "1" ]]; then
+  echo "pre-push: SKIP_BUILD=1, build checks skipped."
+  exit 0
+fi
+
+PROJECT_ARG=( -project "Forsetti.xcodeproj" -scheme "Forsetti" -configuration Debug )
+SIGNING_ARGS=( CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO )
+
+if [[ "${SKIP_TESTS:-0}" == "1" ]]; then
+  xcodebuild "${PROJECT_ARG[@]}" -destination "platform=macOS" "${SIGNING_ARGS[@]}" build
+else
+  xcodebuild "${PROJECT_ARG[@]}" -destination "platform=macOS" "${SIGNING_ARGS[@]}" test
+fi
+
+echo "pre-push: checks passed for $REMOTE $URL."
