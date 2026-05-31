@@ -56,6 +56,7 @@ The existing obsidian/cyan retail shell remains intact. New Computer Search UI i
 | Full `xcodebuild ... test` | Pass, 190 tests |
 | `xcodebuild ... build` | Pass |
 | App launch screenshot | Captured at `reports/screenshots/forsetti-3.24-main.png` |
+| Compact layout screenshot | Captured at `reports/screenshots/forsetti-3.24-layout-compact.png` |
 | Live review-thread audit | Pass after field-typing remediation |
 
 ## Notes

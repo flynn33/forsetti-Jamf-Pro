@@ -10,6 +10,7 @@ The completed Forsetti retail visual direction was preserved. The 3.24 work adde
 - Existing retail color tokens and glass/metal presentation.
 - Existing Computer Search list styling, field catalog sheet, scan button, profile menu, and primary/secondary button styling.
 - Existing Mobile Device Search advanced-query components and storage/battery visualization components.
+- Command Center scrolling now uses one workspace scroll region so the header, body, inspector, and diagnostics retain the existing visual language without clipped lower content.
 
 ## Added UI surfaces
 
@@ -25,3 +26,4 @@ The package gate warns that app-specific UI markers remain under `ForsettiApp/Fr
 ## Screenshot
 
 Main window screenshot: `reports/screenshots/forsetti-3.24-main.png`.
+Compact layout screenshot: `reports/screenshots/forsetti-3.24-layout-compact.png`.

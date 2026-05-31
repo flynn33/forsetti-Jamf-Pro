@@ -41,6 +41,7 @@ enum ForsettiTheme {
         static let navigationRailWidth: CGFloat = 240
         static let navigationRailCollapsedWidth: CGFloat = 72
         static let rightInspectorWidth: CGFloat = 340
+        static let dashboardContentMinimumWidth: CGFloat = 700
         static let commandActivityBarHeight: CGFloat = 54
     }
 
