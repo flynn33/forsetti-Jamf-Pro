@@ -27,7 +27,7 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
     init(
         showsInspector: Bool = true,
         showsBottomDrawer: Bool = true,
-        backgroundStyle: ForsettiWorkspaceShellBackgroundStyle = .none,
+        backgroundStyle: ForsettiWorkspaceShellBackgroundStyle = .staticBackdrop,
         @ViewBuilder navigation: () -> Navigation,
         @ViewBuilder commandActivityBar: () -> CommandActivity,
         @ViewBuilder header: () -> Header,

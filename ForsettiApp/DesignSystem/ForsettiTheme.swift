@@ -2,17 +2,17 @@ import SwiftUI
 
 /// Central layout, surface, and motion-adjacent tokens for the Forsetti app.
 enum ForsettiTheme {
-    static let themeName = "Forsetti Cyan Data Stream"
+    static let themeName = "Forsetti Obsidian Data Stream"
 
     // MARK: - Layout Tokens
 
     enum Radius {
-        static let small: CGFloat = 8
-        static let medium: CGFloat = 12
-        static let card: CGFloat = 18
-        static let large: CGFloat = 18
-        static let panel: CGFloat = 22
-        static let button: CGFloat = 12
+        static let small: CGFloat = 10
+        static let medium: CGFloat = 16
+        static let card: CGFloat = 22
+        static let large: CGFloat = 22
+        static let panel: CGFloat = 28
+        static let button: CGFloat = 14
         static let capsule: CGFloat = 999
     }
 
@@ -30,9 +30,9 @@ enum ForsettiTheme {
     }
 
     enum Opacity {
-        static let glassFill = 0.72
-        static let toolbar = 0.82
-        static let glassBorder = 0.18
+        static let glassFill = 0.78
+        static let toolbar = 0.86
+        static let glassBorder = 0.28
         static let activeGlow = 0.72
         static let disabled = 0.42
     }
@@ -55,8 +55,8 @@ enum ForsettiTheme {
     static let strongBorder = ForsettiColors.accentCyan.opacity(Opacity.activeGlow)
     static let warningBorder = ForsettiColors.warning.opacity(0.70)
     static let criticalBorder = ForsettiColors.critical.opacity(0.74)
-    static let shadowColor = Color.black.opacity(0.35)
-    static let shadowColorStrong = ForsettiColors.accentCyan.opacity(0.22)
+    static let shadowColor = Color.black.opacity(0.46)
+    static let shadowColorStrong = ForsettiColors.accentCyan.opacity(0.30)
     static let buttonTextOnPrimary = ForsettiColors.textInverse
 
     // MARK: - Gradients
@@ -66,7 +66,7 @@ enum ForsettiTheme {
             colors: [
                 ForsettiColors.accentCyan,
                 ForsettiColors.accentBlue,
-                ForsettiColors.accentIndigo
+                ForsettiColors.accentViolet
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -76,9 +76,9 @@ enum ForsettiTheme {
     static var glassPanelGradient: LinearGradient {
         LinearGradient(
             colors: [
-                ForsettiColors.backgroundPanel.opacity(0.92),
+                ForsettiColors.backgroundPanel.opacity(0.94),
                 ForsettiColors.backgroundPanelGlass.opacity(Opacity.glassFill),
-                ForsettiColors.accentBlue.opacity(0.10)
+                ForsettiColors.accentViolet.opacity(0.12)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -89,8 +89,8 @@ enum ForsettiTheme {
         LinearGradient(
             colors: [
                 ForsettiColors.accentCyan,
-                ForsettiColors.accentTeal,
-                ForsettiColors.accentBlue
+                ForsettiColors.accentBlue,
+                ForsettiColors.accentViolet
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -103,7 +103,7 @@ enum ForsettiTheme {
                 ForsettiColors.backgroundVignette.opacity(0.96),
                 ForsettiColors.backgroundRoot,
                 ForsettiColors.backgroundDepth.opacity(0.86),
-                ForsettiColors.accentBlue.opacity(0.10)
+                ForsettiColors.accentViolet.opacity(0.12)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -117,17 +117,50 @@ enum ForsettiTheme {
         ZStack {
             ForsettiColors.backgroundRoot
             appBackdropGradient
+            ForsettiDataStreamGrid()
             LinearGradient(
                 colors: [
                     Color.clear,
-                    ForsettiColors.accentCyan.opacity(0.08),
+                    ForsettiColors.accentCyan.opacity(0.10),
                     Color.clear,
-                    ForsettiColors.accentTeal.opacity(0.05)
+                    ForsettiColors.accentViolet.opacity(0.08)
                 ],
                 startPoint: .topTrailing,
                 endPoint: .bottomLeading
             )
         }
+    }
+}
+
+private struct ForsettiDataStreamGrid: View {
+    var body: some View {
+        Canvas { context, size in
+            let majorSpacing: CGFloat = 64
+            let minorSpacing: CGFloat = 16
+
+            var minorPath = Path()
+            stride(from: CGFloat.zero, through: size.width, by: minorSpacing).forEach { x in
+                minorPath.move(to: CGPoint(x: x, y: 0))
+                minorPath.addLine(to: CGPoint(x: x, y: size.height))
+            }
+            stride(from: CGFloat.zero, through: size.height, by: minorSpacing).forEach { y in
+                minorPath.move(to: CGPoint(x: 0, y: y))
+                minorPath.addLine(to: CGPoint(x: size.width, y: y))
+            }
+            context.stroke(minorPath, with: .color(ForsettiColors.accentCyan.opacity(0.025)), lineWidth: 0.5)
+
+            var majorPath = Path()
+            stride(from: CGFloat.zero, through: size.width, by: majorSpacing).forEach { x in
+                majorPath.move(to: CGPoint(x: x, y: 0))
+                majorPath.addLine(to: CGPoint(x: x, y: size.height))
+            }
+            stride(from: CGFloat.zero, through: size.height, by: majorSpacing).forEach { y in
+                majorPath.move(to: CGPoint(x: 0, y: y))
+                majorPath.addLine(to: CGPoint(x: size.width, y: y))
+            }
+            context.stroke(majorPath, with: .color(ForsettiColors.accentBlue.opacity(0.055)), lineWidth: 0.8)
+        }
+        .allowsHitTesting(false)
     }
 }
 

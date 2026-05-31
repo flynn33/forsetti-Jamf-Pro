@@ -120,7 +120,7 @@ struct ForsettiDangerButtonStyle: ButtonStyle {
         let shape = RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button, style: .continuous)
         configuration.label
             .font(.system(.headline, design: .rounded).weight(.semibold))
-            .foregroundStyle(isEnabled ? Color.red : Color.secondary)
+            .foregroundStyle(isEnabled ? ForsettiColors.critical : Color.secondary)
             .padding(.vertical, 11)
             .padding(.horizontal, 16)
             .background(
@@ -143,7 +143,7 @@ struct ForsettiDangerButtonStyle: ButtonStyle {
 
     /// The border color -- red-tinted when enabled, system separator when disabled.
     private var borderColor: Color {
-        isEnabled ? Color.red.opacity(0.35) : ForsettiPlatformColors.separator
+        isEnabled ? ForsettiColors.critical.opacity(0.35) : ForsettiPlatformColors.separator
     }
 
     /// Returns the background fill color based on enabled and pressed states.
@@ -154,8 +154,7 @@ struct ForsettiDangerButtonStyle: ButtonStyle {
             return ForsettiPlatformColors.tertiaryFill
         }
 
-        // Show a light red tint when the user presses down
-        return isPressed ? Color.red.opacity(0.16) : ForsettiTheme.surface
+        return isPressed ? ForsettiColors.critical.opacity(0.16) : ForsettiTheme.surface
     }
 }
 

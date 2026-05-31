@@ -3,10 +3,13 @@ import SwiftUI
 /// Generic activity state for the retail command bar.
 enum ForsettiCommandActivityState: Equatable {
     case idle(lastUpdated: Date?)
+    case preparing(label: String, progress: Double?)
     case querying(label: String, progress: Double?)
     case sendingCommand(label: String, progress: Double?)
     case waitingForTenant(label: String)
     case waitingForDevice(label: String)
+    case waitingForJamf(label: String)
+    case pollingStatus(label: String, progress: Double?)
     case validating(label: String, progress: Double?)
     case rendering(label: String, progress: Double?)
     case exporting(label: String, progress: Double?)
@@ -49,10 +52,13 @@ extension ForsettiCommandActivityState {
         switch self {
         case .idle:
             return "Ready"
-        case let .querying(label, _),
+        case let .preparing(label, _),
+             let .querying(label, _),
              let .sendingCommand(label, _),
              let .waitingForTenant(label),
              let .waitingForDevice(label),
+             let .waitingForJamf(label),
+             let .pollingStatus(label, _),
              let .validating(label, _),
              let .rendering(label, _),
              let .exporting(label, _),
@@ -71,8 +77,10 @@ extension ForsettiCommandActivityState {
     var progress: Double? {
         let value: Double?
         switch self {
-        case let .querying(_, progress),
+        case let .preparing(_, progress),
+             let .querying(_, progress),
              let .sendingCommand(_, progress),
+             let .pollingStatus(_, progress),
              let .validating(_, progress),
              let .rendering(_, progress),
              let .exporting(_, progress):
@@ -91,7 +99,7 @@ extension ForsettiCommandActivityState {
         switch self {
         case .idle:
             return ForsettiColors.accentCyanSoft
-        case .querying, .sendingCommand, .waitingForTenant, .waitingForDevice, .validating, .rendering, .exporting:
+        case .preparing, .querying, .sendingCommand, .waitingForTenant, .waitingForDevice, .waitingForJamf, .pollingStatus, .validating, .rendering, .exporting:
             return ForsettiColors.accentCyan
         case .completed:
             return ForsettiColors.success
@@ -106,12 +114,18 @@ extension ForsettiCommandActivityState {
         switch self {
         case .idle:
             return "shield.lefthalf.filled"
+        case .preparing:
+            return "slider.horizontal.3"
         case .querying:
             return "waveform.path.ecg"
         case .sendingCommand:
             return "paperplane.fill"
         case .waitingForTenant, .waitingForDevice:
             return "clock.fill"
+        case .waitingForJamf:
+            return "network"
+        case .pollingStatus:
+            return "dot.radiowaves.left.and.right"
         case .validating:
             return "checklist"
         case .rendering:
@@ -172,9 +186,9 @@ extension ForsettiCommandActivityState {
         case let .sending(action, _):
             self = .sendingCommand(label: action.title, progress: phase.progress)
         case let .queued(action, _):
-            self = .waitingForDevice(label: "\(action.title) queued")
+            self = .waitingForJamf(label: "\(action.title) queued")
         case let .verifying(action, _, _):
-            self = .validating(label: "Verifying \(action.title)", progress: phase.progress)
+            self = .pollingStatus(label: "Verifying \(action.title)", progress: phase.progress)
         case let .succeeded(action, completedAt):
             self = .completed(label: "\(action.title) confirmed", completedAt: completedAt)
         case let .failed(action, errorDescription):

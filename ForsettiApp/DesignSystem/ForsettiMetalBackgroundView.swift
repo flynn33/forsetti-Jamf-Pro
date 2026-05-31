@@ -114,8 +114,8 @@ private final class ForsettiMetalBackgroundRenderer: NSObject, MTKViewDelegate {
     ///
     /// The vertex function generates a fullscreen triangle from three hardcoded
     /// vertices (the "oversized triangle" trick -- only one draw call needed).
-    /// The fragment function produces an animated multi-wave cyan and blue blend
-    /// with a soft vignette.
+    /// The fragment function produces an animated multi-wave obsidian, cyan,
+    /// blue, and violet blend with a soft vignette.
     private static let shaderSource = """
     #include <metal_stdlib>
     using namespace metal;
@@ -162,14 +162,16 @@ private final class ForsettiMetalBackgroundRenderer: NSObject, MTKViewDelegate {
         float mixValue = waveA * 0.48 + waveB * 0.34 + bloom * 0.18;
         mixValue = smoothstep(-0.9, 0.9, mixValue);
 
-        float3 root = float3(0.02, 0.03, 0.05);
-        float3 cyan = float3(0.00, 0.90, 1.00);
-        float3 blue = float3(0.13, 0.59, 1.00);
-        float3 teal = float3(0.00, 0.94, 0.82);
+        float3 root = float3(0.008, 0.024, 0.067);
+        float3 cyan = float3(0.00, 0.898, 1.00);
+        float3 blue = float3(0.184, 0.498, 1.00);
+        float3 violet = float3(0.478, 0.361, 1.00);
+        float3 magenta = float3(1.00, 0.310, 0.847);
 
         float3 color = mix(root, cyan, mixValue * 0.55);
         color = mix(color, blue, 0.20 + 0.15 * sin(t + p.x * 2.2 - p.y * 1.0));
-        color = mix(color, teal, 0.10 + 0.08 * cos(t * 1.4 + p.y * 3.0));
+        color = mix(color, violet, 0.12 + 0.10 * cos(t * 1.4 + p.y * 3.0));
+        color = mix(color, magenta, 0.035 * smoothstep(0.42, 1.0, bloom));
 
         float vignette = smoothstep(1.30, 0.18, length(p));
         float alpha = 0.30 * vignette;
