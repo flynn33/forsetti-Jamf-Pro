@@ -15,7 +15,9 @@ enum ForsettiCommandActivityState: Equatable {
     case permissionDenied(label: String, requiredPrivilege: String?)
     case blocked(label: String, reason: String)
     case cancelled(label: String)
+}
 
+extension ForsettiCommandActivityState {
     var lastUpdated: Date? {
         switch self {
         case let .idle(lastUpdated):
