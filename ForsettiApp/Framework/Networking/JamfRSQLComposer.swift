@@ -1,5 +1,15 @@
 import Foundation
 
+protocol JamfRSQLFieldMetadata {
+    var key: String { get }
+    var dataType: MobileDeviceFieldDataType { get }
+    var isFilterable: Bool { get }
+    var isServerFilterable: Bool { get }
+}
+
+extension MobileDeviceField: JamfRSQLFieldMetadata {}
+extension ComputerField: JamfRSQLFieldMetadata {}
+
 /// Composes server-side RSQL filters from `AdvancedQuery` instances built by
 /// the Advanced Search UI.
 ///
@@ -33,6 +43,12 @@ enum JamfRSQLComposer {
         /// unions this with the active profile's sections to ensure the
         /// API response includes the values the client filter needs.
         let referencedSections: Set<MobileDeviceInventorySection>
+    }
+
+    struct ComputerComposeResult: Equatable {
+        let serverFilter: String?
+        let clientCriteria: [AdvancedQueryCriterion]
+        let referencedSections: Set<ComputerInventorySection>
     }
 
     /// Renders an `AdvancedQuery` into the three-bucket result.
@@ -95,12 +111,58 @@ enum JamfRSQLComposer {
         )
     }
 
+    static func composeComputer(
+        _ query: AdvancedQuery,
+        fieldLookup: [String: ComputerField]
+    ) -> ComputerComposeResult {
+        var serverGroups: [String] = []
+        var clientCriteria: [AdvancedQueryCriterion] = []
+        var sections: Set<ComputerInventorySection> = [.general]
+
+        for group in query.groups {
+            var parts: [String] = []
+            for criterion in group.criteria {
+                guard let field = fieldLookup[criterion.fieldKey] else {
+                    continue
+                }
+                sections.insert(field.section)
+
+                guard field.isFilterable else { continue }
+
+                if field.isServerFilterable == false {
+                    clientCriteria.append(criterion)
+                    continue
+                }
+
+                if let part = render(criterion: criterion, field: field) {
+                    parts.append(part)
+                }
+            }
+
+            if parts.isEmpty {
+                continue
+            }
+
+            serverGroups.append("(" + parts.joined(separator: group.combinator.rsqlSymbol) + ")")
+        }
+
+        let serverFilter: String? = serverGroups.isEmpty
+            ? nil
+            : serverGroups.joined(separator: query.outerCombinator.rsqlSymbol)
+
+        return ComputerComposeResult(
+            serverFilter: serverFilter,
+            clientCriteria: clientCriteria,
+            referencedSections: sections
+        )
+    }
+
     /// Builds the RSQL fragment for a single criterion. Returns nil when the
     /// criterion has no usable value (empty string, empty list, unparseable
     /// date) so the parent group cleanly skips it.
     private static func render(
         criterion: AdvancedQueryCriterion,
-        field: MobileDeviceField
+        field: some JamfRSQLFieldMetadata
     ) -> String? {
 
         // Pull a string out of the value for operators that take strings.

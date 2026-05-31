@@ -80,6 +80,9 @@ final class ComputerSearchViewModel: ObservableObject {
     /// Controls presentation of the field catalog sheet.
     @Published var isFieldCatalogPresented = false
 
+    /// Controls presentation of the Advanced Search sheet.
+    @Published var isAdvancedSearchPresented = false
+
     /// Controls presentation of the "Save Profile" alert dialog.
     @Published var isSaveProfilePromptPresented = false
 
@@ -95,6 +98,18 @@ final class ComputerSearchViewModel: ObservableObject {
     /// response format wasn't the expected one.
     @Published var decodingNoticeMessage: String?
 
+    /// Saved multi-criterion filters for Computer Search.
+    @Published private(set) var smartFilters: [SmartFilter] = []
+
+    /// Tenant computer extension-attribute metadata loaded for advanced filters.
+    @Published private(set) var extensionAttributes: [ComputerExtensionAttribute] = []
+
+    /// Last extension-attribute metadata load error, if all supported endpoints failed.
+    @Published private(set) var extensionAttributeLoadError: String?
+
+    /// Tracks whether extension-attribute metadata has been requested this session.
+    @Published private(set) var hasAttemptedExtensionAttributeLoad: Bool = false
+
     // MARK: - Dependencies
 
     /// The API gateway used to issue authenticated HTTP requests to Jamf Pro.
@@ -105,6 +120,9 @@ final class ComputerSearchViewModel: ObservableObject {
 
     /// The persistence store for reading and writing search profiles.
     private let profileStore: ComputerSearchProfileStore
+
+    /// Persistence for saved advanced-search filters.
+    private let smartFilterStore: SmartFilterStore
 
     /// A shared JSON decoder instance for all response parsing.
     private let decoder = JSONDecoder()
@@ -121,6 +139,9 @@ final class ComputerSearchViewModel: ObservableObject {
     /// An in-memory cache mapping prestage profile IDs to their display names,
     /// avoiding redundant API calls during a single search session.
     private var computerPrestageNameCache: [String: String] = [:]
+
+    /// One-shot flag for response-shape diagnostics.
+    private var hasLoggedResponseShape: Bool = false
 
     /// The complete set of field keys that the Jamf Pro API supports in inventory filter expressions.
     /// Fields not in this set cannot be used in RSQL queries and are silently excluded.
@@ -281,11 +302,13 @@ final class ComputerSearchViewModel: ObservableObject {
     init(
         apiGateway: JamfAPIGateway,
         diagnosticsReporter: any DiagnosticsReporting,
-        profileStore: ComputerSearchProfileStore = ComputerSearchProfileStore()
+        profileStore: ComputerSearchProfileStore = ComputerSearchProfileStore(),
+        smartFilterStore: SmartFilterStore = SmartFilterStore(fileName: "computer-smart-filters.json")
     ) {
         self.apiGateway = apiGateway
         self.diagnosticsReporter = diagnosticsReporter
         self.profileStore = profileStore
+        self.smartFilterStore = smartFilterStore
     }
 
     // MARK: - Computed Properties
@@ -298,6 +321,14 @@ final class ComputerSearchViewModel: ObservableObject {
         }
 
         return profiles.first(where: { $0.id == selectedProfileID })
+    }
+
+    var allCatalogFields: [ComputerField] {
+        ComputerField.catalog + extensionAttributes.map { $0.makeField() }
+    }
+
+    var mergedFieldLookup: [String: ComputerField] {
+        Dictionary(uniqueKeysWithValues: allCatalogFields.map { ($0.key, $0) })
     }
 
     // MARK: - Profile Management
@@ -457,6 +488,174 @@ final class ComputerSearchViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Advanced Search and Smart Filters
+
+    func loadSmartFilters() async {
+        do {
+            smartFilters = try await smartFilterStore.loadFilters()
+                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        } catch {
+            let description = describe(error)
+            errorMessage = "Failed to load smart filters. \(description)"
+            reportError(
+                category: "smartFilters",
+                message: "Failed to load smart filters.",
+                errorDescription: description
+            )
+        }
+    }
+
+    func saveSmartFilter(_ filter: SmartFilter) async {
+        if let index = smartFilters.firstIndex(where: { $0.name.localizedCaseInsensitiveCompare(filter.name) == .orderedSame }) {
+            smartFilters[index] = filter
+        } else {
+            smartFilters.append(filter)
+        }
+        smartFilters.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
+        do {
+            try await smartFilterStore.saveFilters(smartFilters)
+            reportEvent(
+                severity: .info,
+                category: "smartFilters",
+                message: "Saved smart filter.",
+                metadata: ["criteria_count": String(filter.query.groups.reduce(0) { $0 + $1.criteria.count })]
+            )
+        } catch {
+            let description = describe(error)
+            errorMessage = "Failed to save smart filter. \(description)"
+            reportError(
+                category: "smartFilters",
+                message: "Failed to save smart filter.",
+                errorDescription: description
+            )
+        }
+    }
+
+    func deleteSmartFilters(at offsets: IndexSet) {
+        for index in offsets.sorted(by: >) {
+            guard smartFilters.indices.contains(index) else { continue }
+            smartFilters.remove(at: index)
+        }
+
+        Task {
+            do {
+                try await smartFilterStore.saveFilters(smartFilters)
+                reportEvent(
+                    severity: .warning,
+                    category: "smartFilters",
+                    message: "Deleted one or more smart filters."
+                )
+            } catch {
+                let description = describe(error)
+                errorMessage = "Failed to persist smart filter deletion. \(description)"
+                reportError(
+                    category: "smartFilters",
+                    message: "Failed to persist smart filter deletion.",
+                    errorDescription: description
+                )
+            }
+        }
+    }
+
+    func makeAdvancedSearchViewModel(initialQuery: AdvancedQuery? = nil) -> ComputerAdvancedSearchViewModel {
+        ComputerAdvancedSearchViewModel(
+            initialQuery: initialQuery ?? AdvancedQuery(groups: [AdvancedQueryGroup()]),
+            initialFieldKeys: selectedFieldKeys,
+            availableFields: allCatalogFields,
+            fieldLookup: mergedFieldLookup
+        )
+    }
+
+    func loadSmartFilterIntoAdvancedSearch(_ filter: SmartFilter) -> ComputerAdvancedSearchViewModel {
+        if filter.fieldKeys.isEmpty == false {
+            selectedFieldKeys = Set(filter.fieldKeys)
+        }
+        return ComputerAdvancedSearchViewModel(
+            initialQuery: filter.query,
+            initialFieldKeys: selectedFieldKeys,
+            availableFields: allCatalogFields,
+            fieldLookup: mergedFieldLookup
+        )
+    }
+
+    func loadExtensionAttributes() async {
+        defer { hasAttemptedExtensionAttributeLoad = true }
+
+        do {
+            let loaded = try await fetchComputerExtensionAttributes()
+            extensionAttributes = loaded.sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+            extensionAttributeLoadError = nil
+            reportEvent(
+                severity: .info,
+                category: "extensionAttributes",
+                message: "Loaded computer extension attributes.",
+                metadata: ["ea_count": String(extensionAttributes.count)]
+            )
+        } catch {
+            let description = describe(error)
+            extensionAttributeLoadError = description
+            reportError(
+                category: "extensionAttributes",
+                message: "Failed to load computer extension attributes.",
+                errorDescription: description
+            )
+        }
+    }
+
+    private func fetchComputerExtensionAttributes() async throws -> [ComputerExtensionAttribute] {
+        var allAttributes: [ComputerExtensionAttribute] = []
+        var page = 0
+        let pageSize = 200
+
+        while true {
+            let data = try await apiGateway.request(
+                path: "api/v2/computer-extension-attributes",
+                method: .get,
+                queryItems: [
+                    URLQueryItem(name: "page", value: String(page)),
+                    URLQueryItem(name: "page-size", value: String(pageSize))
+                ]
+            )
+
+            let pageResults = try decodeComputerExtensionAttributePage(data: data)
+            allAttributes.append(contentsOf: pageResults)
+
+            if pageResults.count < pageSize || pageResults.isEmpty {
+                break
+            }
+            page += 1
+            if page >= 50 {
+                reportEvent(
+                    severity: .warning,
+                    category: "extensionAttributes",
+                    message: "Computer extension attribute pagination hit safety cap.",
+                    metadata: ["accumulated": String(allAttributes.count)]
+                )
+                break
+            }
+        }
+
+        return allAttributes
+    }
+
+    private func decodeComputerExtensionAttributePage(data: Data) throws -> [ComputerExtensionAttribute] {
+        let decoder = JSONDecoder()
+        if let wrapper = try? decoder.decode(ComputerExtensionAttributePage.self, from: data) {
+            return wrapper.results
+        }
+        if let bareArray = try? decoder.decode([ComputerExtensionAttribute].self, from: data) {
+            return bareArray
+        }
+        throw JamfFrameworkError.decodingFailure
+    }
+
+    private struct ComputerExtensionAttributePage: Decodable {
+        let results: [ComputerExtensionAttribute]
+    }
+
     // MARK: - Search Execution
 
     /// Executes a computer inventory search against the Jamf Pro API.
@@ -599,6 +798,58 @@ final class ComputerSearchViewModel: ObservableObject {
         }
     }
 
+    func executeAdvancedSearch(
+        _ composeResult: JamfRSQLComposer.ComputerComposeResult,
+        fieldKeys: Set<String>
+    ) async {
+        isSearching = true
+        decodingNoticeMessage = nil
+        defer { isSearching = false }
+
+        if fieldKeys.isEmpty == false {
+            selectedFieldKeys = fieldKeys
+        }
+
+        let activeFields = resolvedCatalogFields(from: Array(selectedFieldKeys).sorted())
+        let baseSections = resolvedSections(from: activeFields)
+        let unionedSections = Array(Set(baseSections).union(composeResult.referencedSections))
+            .sorted { $0.rawValue < $1.rawValue }
+
+        do {
+            let rawResults = try await requestAllInventoryPagesWithRawFilter(
+                sections: unionedSections,
+                rawFilter: composeResult.serverFilter
+            )
+            let enriched = await resolvePrestageEnrollment(for: rawResults, query: "")
+            let postFiltered = applyClientCriteria(composeResult.clientCriteria, to: enriched)
+            searchResults = postFiltered
+            errorMessage = nil
+            reportEvent(
+                severity: .info,
+                category: "advancedSearch",
+                message: "Computer advanced search completed.",
+                metadata: [
+                    "result_count": String(postFiltered.count),
+                    "server_filter_present": composeResult.serverFilter == nil ? "false" : "true",
+                    "client_criteria_count": String(composeResult.clientCriteria.count),
+                    "section_count": String(unionedSections.count)
+                ]
+            )
+        } catch {
+            let description = describe(error)
+            errorMessage = userFacingSearchErrorMessage(for: error)
+            reportError(
+                category: "advancedSearch",
+                message: "Computer advanced search failed.",
+                errorDescription: description,
+                metadata: [
+                    "server_filter": composeResult.serverFilter ?? "",
+                    "section_count": String(unionedSections.count)
+                ]
+            )
+        }
+    }
+
     // MARK: - API Request Construction
 
     /// Issues inventory requests across all endpoint versions (v3 -> v2 -> v1), returning
@@ -728,6 +979,98 @@ final class ComputerSearchViewModel: ObservableObject {
         return allRecords
     }
 
+    private func requestAllInventoryPagesWithRawFilter(
+        sections: [ComputerInventorySection],
+        rawFilter: String?
+    ) async throws -> [ComputerRecord] {
+        var allRecords: [ComputerRecord] = []
+        var page = 0
+
+        while true {
+            let data = try await requestInventoryWithRawFilter(
+                sections: sections,
+                rawFilter: rawFilter,
+                page: page
+            )
+            let pageRecords = try decodeSearchResults(from: data)
+            allRecords.append(contentsOf: pageRecords)
+
+            if pageRecords.count < Self.computerInventoryPageSize || pageRecords.isEmpty {
+                break
+            }
+
+            page += 1
+            if page >= 50 {
+                reportEvent(
+                    severity: .warning,
+                    category: "advancedSearch",
+                    message: "Computer advanced search paginated to safety cap; stopping.",
+                    metadata: ["accumulated_count": String(allRecords.count)]
+                )
+                break
+            }
+        }
+
+        return allRecords
+    }
+
+    private func requestInventoryWithRawFilter(
+        sections: [ComputerInventorySection],
+        rawFilter: String?,
+        page: Int
+    ) async throws -> Data {
+        var lastError: (any Error)?
+
+        for endpointVersion in ComputerInventoryEndpointVersion.allCases {
+            let versionSections = sections
+                .filter { endpointVersion.supportedSections.contains($0) }
+                .sorted { $0.rawValue < $1.rawValue }
+
+            do {
+                return try await requestInventoryWithRawFilter(
+                    endpointVersion: endpointVersion,
+                    sections: versionSections,
+                    rawFilter: rawFilter,
+                    page: page
+                )
+            } catch {
+                lastError = error
+                if shouldTryNextEndpointVersion(for: error) == false {
+                    throw error
+                }
+            }
+        }
+
+        throw lastError ?? JamfFrameworkError.authenticationFailed
+    }
+
+    private func requestInventoryWithRawFilter(
+        endpointVersion: ComputerInventoryEndpointVersion,
+        sections: [ComputerInventorySection],
+        rawFilter: String?,
+        page: Int
+    ) async throws -> Data {
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "page-size", value: String(Self.computerInventoryPageSize)),
+            URLQueryItem(name: "sort", value: "general.name:asc")
+        ]
+
+        for section in sections {
+            queryItems.append(URLQueryItem(name: "section", value: section.rawValue))
+        }
+
+        if let rawFilter, rawFilter.isEmpty == false {
+            queryItems.append(URLQueryItem(name: "filter", value: rawFilter))
+        }
+
+        return try await apiGateway.request(
+            path: endpointVersion.path,
+            method: .get,
+            queryItems: queryItems
+        )
+    }
+
     /// Builds and issues a single inventory API request for a specific endpoint version.
     ///
     /// Constructs query parameters for pagination, section selection, sorting, and RSQL filtering,
@@ -798,12 +1141,12 @@ final class ComputerSearchViewModel: ObservableObject {
     /// - Returns: An array of `ComputerField` instances ready for filter construction.
     private func resolvedCatalogFields(from selectedKeys: [String]) -> [ComputerField] {
         if selectedKeys.isEmpty {
-            return ComputerField.defaultRSQLQueryFieldKeys.compactMap { ComputerField.keyLookup[$0] }
+            return ComputerField.defaultRSQLQueryFieldKeys.compactMap { mergedFieldLookup[$0] }
         }
 
-        let resolved = selectedKeys.compactMap { ComputerField.keyLookup[$0] }
+        let resolved = selectedKeys.compactMap { mergedFieldLookup[$0] }
         if resolved.isEmpty {
-            return ComputerField.defaultRSQLQueryFieldKeys.compactMap { ComputerField.keyLookup[$0] }
+            return ComputerField.defaultRSQLQueryFieldKeys.compactMap { mergedFieldLookup[$0] }
         }
 
         return resolved
@@ -897,6 +1240,7 @@ final class ComputerSearchViewModel: ObservableObject {
     /// - Returns: An array of decoded computer records.
     /// - Throws: `JamfFrameworkError.decodingFailure` if neither format succeeds.
     private func decodeSearchResults(from data: Data) throws -> [ComputerRecord] {
+        logResponseShapeOnce(data: data)
         var primaryError: (any Error)?
 
         do {
@@ -926,6 +1270,241 @@ final class ComputerSearchViewModel: ObservableObject {
             )
             throw JamfFrameworkError.decodingFailure
         }
+    }
+
+    private func applyClientCriteria(
+        _ criteria: [AdvancedQueryCriterion],
+        to records: [ComputerRecord]
+    ) -> [ComputerRecord] {
+        guard criteria.isEmpty == false else { return records }
+        return records.filter { record in
+            criteria.allSatisfy { matches(criterion: $0, record: record) }
+        }
+    }
+
+    private func matches(criterion: AdvancedQueryCriterion, record: ComputerRecord) -> Bool {
+        let recordValue = (record.value(for: criterion.fieldKey) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let loweredRecordValue = recordValue.lowercased()
+
+        switch criterion.op {
+        case .equals:
+            return valuesEqual(recordValue: recordValue, criterionValue: criterion.value)
+        case .notEquals:
+            return valuesEqual(recordValue: recordValue, criterionValue: criterion.value) == false
+        case .contains:
+            if case .string(let value) = criterion.value { return loweredRecordValue.contains(value.lowercased()) }
+        case .notContains:
+            if case .string(let value) = criterion.value { return loweredRecordValue.contains(value.lowercased()) == false }
+        case .startsWith:
+            if case .string(let value) = criterion.value { return loweredRecordValue.hasPrefix(value.lowercased()) }
+        case .endsWith:
+            if case .string(let value) = criterion.value { return loweredRecordValue.hasSuffix(value.lowercased()) }
+        case .includedIn:
+            if case .list(let values) = criterion.value {
+                return values.map { $0.lowercased() }.contains(loweredRecordValue)
+            }
+        case .excludedFrom:
+            if case .list(let values) = criterion.value {
+                return values.map { $0.lowercased() }.contains(loweredRecordValue) == false
+            }
+        case .greaterThan, .greaterThanOrEqual, .lessThan, .lessThanOrEqual:
+            return compareNumeric(recordValue: recordValue, op: criterion.op, criterionValue: criterion.value)
+        case .isTrue:
+            return ["true", "yes", "1"].contains(loweredRecordValue)
+        case .isFalse:
+            return ["false", "no", "0"].contains(loweredRecordValue)
+        case .before, .after, .on, .between:
+            return compareDate(recordValue: recordValue, op: criterion.op, criterionValue: criterion.value)
+        }
+
+        return false
+    }
+
+    private func valuesEqual(recordValue: String, criterionValue: AdvancedQueryValue) -> Bool {
+        switch criterionValue {
+        case .string(let value):
+            return recordValue.caseInsensitiveCompare(value) == .orderedSame
+        case .int(let value):
+            return Int(recordValue) == value
+        case .double(let value):
+            return Double(recordValue) == value
+        case .bool(let value):
+            return ["true", "yes", "1"].contains(recordValue.lowercased()) == value
+        case .date(let value):
+            guard let recordDate = parseDate(recordValue) else { return false }
+            return Calendar.current.isDate(recordDate, inSameDayAs: value)
+        case .dateRange, .list:
+            return false
+        }
+    }
+
+    private func compareNumeric(
+        recordValue: String,
+        op: RSQLOperator,
+        criterionValue: AdvancedQueryValue
+    ) -> Bool {
+        guard let recordNumber = Double(recordValue) else { return false }
+        let expected: Double?
+        switch criterionValue {
+        case .int(let value):
+            expected = Double(value)
+        case .double(let value):
+            expected = value
+        case .string(let value):
+            expected = Double(value)
+        default:
+            expected = nil
+        }
+        guard let expected else { return false }
+        switch op {
+        case .greaterThan:
+            return recordNumber > expected
+        case .greaterThanOrEqual:
+            return recordNumber >= expected
+        case .lessThan:
+            return recordNumber < expected
+        case .lessThanOrEqual:
+            return recordNumber <= expected
+        default:
+            return false
+        }
+    }
+
+    private func compareDate(
+        recordValue: String,
+        op: RSQLOperator,
+        criterionValue: AdvancedQueryValue
+    ) -> Bool {
+        guard let recordDate = parseDate(recordValue) else { return false }
+        switch (op, criterionValue) {
+        case (.before, .date(let date)):
+            return recordDate < date
+        case (.after, .date(let date)):
+            return recordDate > date
+        case (.on, .date(let date)):
+            return Calendar.current.isDate(recordDate, inSameDayAs: date)
+        case (.between, .dateRange(let start, let end)):
+            return recordDate >= start && recordDate <= end
+        default:
+            return false
+        }
+    }
+
+    private func parseDate(_ value: String) -> Date? {
+        let iso = ISO8601DateFormatter()
+        if let date = iso.date(from: value) {
+            return date
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)
+    }
+
+    private func logResponseShapeOnce(data: Data) {
+        guard hasLoggedResponseShape == false else { return }
+        hasLoggedResponseShape = true
+
+        guard let json = try? JSONSerialization.jsonObject(with: data) else { return }
+        let firstObject: [String: Any]?
+        if let dictionary = json as? [String: Any] {
+            if let results = dictionary["results"] as? [[String: Any]] {
+                firstObject = results.first
+            } else if let computers = dictionary["computers"] as? [[String: Any]] {
+                firstObject = computers.first
+            } else if let items = dictionary["items"] as? [[String: Any]] {
+                firstObject = items.first
+            } else {
+                firstObject = dictionary
+            }
+        } else if let array = json as? [[String: Any]] {
+            firstObject = array.first
+        } else {
+            firstObject = nil
+        }
+
+        guard let firstObject else { return }
+        var metadata = ["topLevelKeys": firstObject.keys.sorted().joined(separator: ",")]
+        if let general = firstObject["general"] as? [String: Any] {
+            metadata["generalKeys"] = general.keys.sorted().joined(separator: ",")
+        }
+        if let hardware = firstObject["hardware"] as? [String: Any] {
+            metadata["hardwareKeys"] = hardware.keys.sorted().joined(separator: ",")
+        }
+        if let storage = firstObject["storage"] as? [String: Any] {
+            metadata["storageKeys"] = storage.keys.sorted().joined(separator: ",")
+        }
+
+        reportEvent(
+            severity: .info,
+            category: "responseShape",
+            message: "Observed first computer inventory response shape.",
+            metadata: metadata
+        )
+    }
+
+    // MARK: - Detail Refresh
+
+    func refreshComputerHardware(id: String) async throws {
+        let sections: [ComputerInventorySection] = [
+            .general,
+            .hardware,
+            .operatingSystem,
+            .userAndLocation,
+            .storage,
+            .extensionAttributes
+        ]
+
+        let data = try await requestComputerDetail(id: id, sections: sections)
+        let refreshed = try decodeSingleRecord(from: data)
+
+        if let index = searchResults.firstIndex(where: { $0.id == id }) {
+            searchResults[index] = searchResults[index].merging(refreshed)
+        }
+    }
+
+    private func requestComputerDetail(
+        id: String,
+        sections: [ComputerInventorySection]
+    ) async throws -> Data {
+        let sectionItems = sections.map { URLQueryItem(name: "section", value: $0.rawValue) }
+        var lastError: (any Error)?
+
+        for endpointVersion in ComputerInventoryEndpointVersion.allCases {
+            let attempts: [(path: String, queryItems: [URLQueryItem])] = [
+                ("api/\(endpointVersion.rawValue)/computers-inventory/\(id)", sectionItems),
+                ("api/\(endpointVersion.rawValue)/computers-inventory-detail/\(id)", [])
+            ]
+
+            for attempt in attempts {
+                do {
+                    return try await apiGateway.request(
+                        path: attempt.path,
+                        method: .get,
+                        queryItems: attempt.queryItems
+                    )
+                } catch {
+                    lastError = error
+                    if shouldTryNextEndpointVersion(for: error) == false {
+                        throw error
+                    }
+                }
+            }
+        }
+
+        throw lastError ?? JamfFrameworkError.authenticationFailed
+    }
+
+    private func decodeSingleRecord(from data: Data) throws -> ComputerRecord {
+        let decoder = JSONDecoder()
+        if let record = try? decoder.decode(ComputerRecord.self, from: data) {
+            return record
+        }
+        if let wrapper = try? decoder.decode(ComputerSearchResponse.self, from: data),
+           let record = wrapper.results.first {
+            return record
+        }
+        throw JamfFrameworkError.decodingFailure
     }
 
     // MARK: - PreStage Enrollment Resolution
@@ -1044,6 +1623,11 @@ final class ComputerSearchViewModel: ObservableObject {
             assetTag: nil,
             departmentID: nil,
             buildingID: nil,
+            processorType: nil,
+            totalRamMegabytes: nil,
+            batteryCapacityPercent: nil,
+            appleSilicon: nil,
+            extensionAttributes: [:],
             prestageEnrollmentStatus: notEnrolledStatusLabel,
             prestageEnrollmentProfileName: association.profileName,
             prestageEnrollmentProfileID: association.profileID
