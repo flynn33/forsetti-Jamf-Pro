@@ -27,6 +27,8 @@ while IFS= read -r line; do
   REF_LINES+=("$line")
 done
 
+.github/scripts/check-provenance-markers.sh .
+
 for line in "${REF_LINES[@]}"; do
   read -r local_ref local_sha remote_ref remote_sha <<< "$line"
   [[ "$local_sha" == "0000000000000000000000000000000000000000" ]] && continue
