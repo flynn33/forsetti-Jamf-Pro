@@ -167,7 +167,7 @@ struct DashboardView: View {
     }
 }
 
-private struct DashboardModuleSummary: Identifiable, Hashable {
+struct DashboardModuleSummary: Identifiable, Hashable {
     enum Category: String, Hashable {
         case inventory = "Inventory"
         case operations = "Operations"
@@ -194,20 +194,22 @@ private struct DashboardModuleSummary: Identifiable, Hashable {
     let iconSystemName: String
     let category: Category
 
+    var isDemo: Bool {
+        title.localizedCaseInsensitiveContains("demo")
+            || subtitle.localizedCaseInsensitiveContains("dummy data")
+            || subtitle.localizedCaseInsensitiveContains("no live")
+    }
+
     init(module: any JamfModule) {
         id = module.id
-
-        if module.id == "forsetti.feature.deployment-tracker" {
-            title = "Deployment Tracker"
-            subtitle = "Coordinate deployment workbench, preload, workflow, catalog, and records operations."
-            iconSystemName = "rectangle.stack.badge.play"
-            category = .deployment
-            return
-        }
-
         title = module.title
         subtitle = module.subtitle
         iconSystemName = module.iconSystemName
+
+        if module.id == "forsetti.feature.deployment-tracker" {
+            category = .deployment
+            return
+        }
 
         if module.id.contains("reports") {
             category = .reporting
@@ -220,11 +222,22 @@ private struct DashboardModuleSummary: Identifiable, Hashable {
 }
 
 private struct CommandCenterNavigationRail: View {
+    @Environment(\.forsettiWorkspaceNavigationPlacement) private var placement
+
     let modules: [DashboardModuleSummary]
     let showSettings: () -> Void
     let showDiagnostics: () -> Void
 
     var body: some View {
+        switch placement {
+        case .side:
+            sideRail
+        case .top:
+            topRail
+        }
+    }
+
+    private var sideRail: some View {
         VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
             ForsettiBrandHeader()
 
@@ -260,10 +273,60 @@ private struct CommandCenterNavigationRail: View {
         }
         .padding(ForsettiTheme.Spacing.item)
     }
+
+    private var topRail: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: ForsettiTheme.Spacing.compact) {
+                ForsettiBrandHeader()
+                    .frame(width: 170)
+
+                ForEach(modules) { module in
+                    NavigationLink(value: module.id) {
+                        RailModuleRow(module: module, style: .compact)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Divider()
+                    .frame(height: 28)
+                    .overlay(ForsettiTheme.border)
+
+                Button(action: showDiagnostics) {
+                    Label("Diagnostics", systemImage: "stethoscope")
+                        .labelStyle(.iconOnly)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.forsettiSecondary)
+                .help("Diagnostics")
+
+                Button(action: showSettings) {
+                    Label("Settings", systemImage: "gearshape")
+                        .labelStyle(.iconOnly)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.forsettiSecondary)
+                .help("Settings")
+            }
+            .padding(.horizontal, ForsettiTheme.Spacing.item)
+            .padding(.vertical, ForsettiTheme.Spacing.compact)
+        }
+        .frame(maxWidth: .infinity, maxHeight: 68, alignment: .leading)
+    }
 }
 
 private struct RailModuleRow: View {
+    enum Style {
+        case regular
+        case compact
+    }
+
     let module: DashboardModuleSummary
+    let style: Style
+
+    init(module: DashboardModuleSummary, style: Style = .regular) {
+        self.module = module
+        self.style = style
+    }
 
     var body: some View {
         HStack(spacing: ForsettiTheme.Spacing.compact) {
@@ -278,14 +341,15 @@ private struct RailModuleRow: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(ForsettiColors.textPrimary)
                     .lineLimit(1)
-                Text(module.category.rawValue)
+                Text(module.isDemo ? "Demo" : module.category.rawValue)
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(ForsettiColors.textTertiary)
+                    .foregroundStyle(module.isDemo ? ForsettiColors.warning : ForsettiColors.textTertiary)
             }
         }
         .padding(.horizontal, ForsettiTheme.Spacing.compact)
         .padding(.vertical, 7)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: style == .regular ? .infinity : nil, alignment: .leading)
+        .frame(width: style == .compact ? 180 : nil, alignment: .leading)
         .background(ForsettiColors.backgroundPanelGlass.opacity(0.42), in: RoundedRectangle(cornerRadius: 12))
         .overlay {
             RoundedRectangle(cornerRadius: 12)
@@ -463,6 +527,9 @@ private struct CommandCenterModuleCard: View {
 
                     Spacer(minLength: ForsettiTheme.Spacing.item)
 
+                    if module.isDemo {
+                        ForsettiStatusBadge(.warning, text: "Demo")
+                    }
                     ForsettiStatusBadge(.ready, text: module.category.rawValue)
                 }
 

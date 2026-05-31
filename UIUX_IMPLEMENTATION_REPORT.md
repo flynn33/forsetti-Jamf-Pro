@@ -16,6 +16,8 @@ Implemented the Forsetti Obsidian Data Stream foundation across the shared retai
 | Command status coverage | Command activity states did not cover preparation, Jamf wait, polling, and cancellation phases from the handoff. | Added those phases, accessibility text, clamped progress, icons, and status tint mapping. | Focused retail UI tests passed. |
 | Metal status vectors | Metal command status payloads still used earlier blue/amber/red vectors. | Updated payload vectors to the Obsidian Data Stream status palette. | Command status renderer tests passed. |
 | First screen layout | The dashboard was still a simple module grid. | Replaced it with a command-center workspace using the shared shell, navigation rail, activity bar, metrics, module cards, inspector, and diagnostics drawer. | macOS build and full tests passed. |
+| Deployment Tracker metadata | The command-center summary could mask the module's demo title and safety subtitle. | Preserved the module-provided title, subtitle, and icon while keeping deployment categorization and a visible demo badge. | Focused UI foundation test passed. |
+| Compact navigation | The navigation rail could expand vertically when rendered in the shell's compact top area. | Added shell navigation-placement context and a compact horizontal top-rail layout. | Focused UI foundation test passed. |
 | Dashboard boundary | The dashboard view directly refreshed credential state. | Routed dashboard refresh through the app container boundary. | macOS build and full tests passed. |
 | Visual consistency | Shared button, fallback status, and Metal backdrop styling retained older colors. | Retokenized danger buttons, fallback command status colors, and the animated backdrop shader. | Full macOS build passed. |
 

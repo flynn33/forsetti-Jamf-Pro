@@ -161,6 +161,17 @@ final class ForsettiRetailUIFoundationTests: XCTestCase {
         _ = drawer.body
     }
 
+    func testDashboardSummaryPreservesDeploymentTrackerDemoMetadata() {
+        let module = DeploymentTrackerModule()
+        let summary = DashboardModuleSummary(module: module)
+
+        XCTAssertEqual(summary.title, module.title)
+        XCTAssertEqual(summary.subtitle, module.subtitle)
+        XCTAssertEqual(summary.iconSystemName, module.iconSystemName)
+        XCTAssertEqual(summary.category.rawValue, "Deployment")
+        XCTAssertTrue(summary.isDemo)
+    }
+
     private func assertColor(
         _ color: Color,
         equalsHex hex: String,

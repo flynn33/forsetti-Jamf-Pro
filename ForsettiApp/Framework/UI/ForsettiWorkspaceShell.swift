@@ -6,6 +6,22 @@ enum ForsettiWorkspaceShellBackgroundStyle {
     case animatedBackdrop
 }
 
+enum ForsettiWorkspaceNavigationPlacement {
+    case side
+    case top
+}
+
+private struct ForsettiWorkspaceNavigationPlacementKey: EnvironmentKey {
+    static let defaultValue: ForsettiWorkspaceNavigationPlacement = .side
+}
+
+extension EnvironmentValues {
+    var forsettiWorkspaceNavigationPlacement: ForsettiWorkspaceNavigationPlacement {
+        get { self[ForsettiWorkspaceNavigationPlacementKey.self] }
+        set { self[ForsettiWorkspaceNavigationPlacementKey.self] = newValue }
+    }
+}
+
 private enum ForsettiWorkspaceShellBreakpoint {
     static let compactWidth: CGFloat = 760
     static let collapsedRailWidth: CGFloat = 920
@@ -82,6 +98,7 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
         VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
             navigation
                 .frame(maxWidth: .infinity, minHeight: ForsettiTheme.Layout.commandActivityBarHeight, alignment: .leading)
+                .environment(\.forsettiWorkspaceNavigationPlacement, .top)
                 .background(ForsettiTheme.surface.opacity(0.92))
                 .overlay(alignment: .bottom) {
                     Rectangle()
@@ -98,6 +115,7 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
             navigation
                 .frame(width: railWidth)
                 .frame(maxHeight: .infinity)
+                .environment(\.forsettiWorkspaceNavigationPlacement, .side)
                 .background(ForsettiTheme.surface.opacity(0.92))
                 .overlay(alignment: .trailing) {
                     Rectangle()
