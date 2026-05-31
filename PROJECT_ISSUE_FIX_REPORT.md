@@ -20,7 +20,8 @@ Scope: local staging material was migrated into `/Volumes/NVME/GitHub/Forsetti-J
 | Secret reveal actions | Secret retrieval actions could run without typed confirmation. | Reclassified secret retrieval actions to require typed confirmation. | Static review and focused test build completed successfully. |
 | Tenant fallback data | A tenant-specific prestage fallback value remained in support device mapping. | Removed the fallback and kept the value nil when Jamf Pro does not provide a source value. | Customer-reference scan returned pass. |
 | Local safeguards | Hook scripts and helper scripts needed current product naming and stronger local checks. | Rewrote repository scripts and hooks for Forsetti naming, added bearer-token fallback scanning, and expanded commit-message attribution guards. | Customer-reference and attribution scans returned no matches. |
-| Hosted validation | The repository had no pull-request workflow checks. | Added a macOS validation workflow for sanitation, project resolution, and Xcode tests. | Workflow file present under `.github/workflows/`. |
+| Hosted validation | The repository had no pull-request workflow checks. | Added a macOS validation workflow for sanitation, project resolution, and Xcode tests. | Pull request `Xcode tests` check passed. |
+| Hosted Swift isolation | Hosted Xcode treated module view factory calls as main actor-isolated and failed synchronous protocol dispatch. | Marked `JamfModule.makeRootView(context:)` as `@MainActor` so all module root-view factories execute on the correct actor. | Local and hosted Xcode tests passed after the fix. |
 
 ## Validation Evidence
 
@@ -29,10 +30,13 @@ Scope: local staging material was migrated into `/Volumes/NVME/GitHub/Forsetti-J
 - `xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=macOS' -derivedDataPath /tmp/forsetti-jamfpro-focused-dd CODE_SIGNING_ALLOWED=NO -only-testing:ForsettiTests/ForsettiRetailIdentityTests test`: passed, 4 tests.
 - `xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=macOS' -derivedDataPath /tmp/forsetti-jamfpro-focused-dd CODE_SIGNING_ALLOWED=NO -only-testing:ForsettiTests/DiagnosticsCenterExportTests -only-testing:ForsettiTests/SupportTechnicianCacheTests test`: passed, 12 tests.
 - `xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=macOS' -derivedDataPath /tmp/forsetti-jamfpro-full-dd CODE_SIGNING_ALLOWED=NO test`: passed, 175 tests.
+- `xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=macOS' -derivedDataPath /tmp/forsetti-jamfpro-final-dd CODE_SIGNING_ALLOWED=NO test`: passed, 175 tests.
+- Pre-push Xcode validation: passed, 175 tests.
+- Hosted pull-request `Xcode tests`: passed.
 - `bash scripts/verify-no-customer-references.sh .`: passed.
 - Repository attribution scan: no matches.
 
 ## Remaining Release Notes
 
-- Remote pull request checks are pending until the project branch is pushed.
-- Full app test validation should be run immediately before the pull request is opened and again after the branch is pushed.
+- Pull request 1 is open and mergeable with hosted validation passing.
+- Live review-thread inspection returned no actionable review threads.

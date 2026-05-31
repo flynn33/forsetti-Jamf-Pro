@@ -2,9 +2,9 @@
 
 ## Summary
 
-- Status: Local gates passed; pull request opened and remote checks pending.
+- Status: Local gates passed; pull request opened; hosted validation passed on the current project branch head.
 - Date: 2026-05-31
-- Run/session: local implementation and verification pass.
+- Run/session: local implementation, hosted validation, and review-state verification pass.
 - Source input: `/NVME/[local-staging]/Forsetti-Jamf-Pro/` plus the handoff package in that folder. The exact absolute staging path is redacted in this committed artifact because one directory segment is forbidden by repository policy.
 - Target repository: `https://github.com/flynn33/forsetti-Jamf-Pro`
 
@@ -137,6 +137,7 @@ xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=m
 ```text
 Forsetti Framework package tests: passed, 37 tests, 0 failures.
 Forsetti app tests: passed, 175 tests, 0 failures.
+Hosted PR Xcode tests: passed.
 ```
 
 ## Acceptance Gates
@@ -149,19 +150,20 @@ Forsetti app tests: passed, 175 tests, 0 failures.
 | Forsetti Framework integrated | Pass | Xcode package resolved at `47b7747`; app target links `ForsettiCore` and `ForsettiPlatform`. |
 | Build passes | Pass | `xcodebuild -list -project Forsetti.xcodeproj` passed. |
 | Tests pass | Pass | Full app suite passed, 175 tests, 0 failures. |
-| Hosted validation configured | Pass | `.github/workflows/macos-validation.yml` added for pull-request sanitation and Xcode tests. |
+| Hosted validation | Pass | `.github/workflows/macos-validation.yml` ran pull-request sanitation and Xcode tests successfully. |
 | Clean Git history | Pass | Empty `main` seed commit plus initial sanitized project commit on `initial-project`. |
 
 ## Repository Status
 
 - Remote: `https://github.com/flynn33/forsetti-Jamf-Pro`
 - Initial sanitized commit hash: `85f7f6ed143f649a543bfd5b4abddf444ff601a0`
+- Hosted validation remediation commit: `0d5450a4b44504c4fddf1d712820811ded9a8692`
 - Pushed: yes, branch `initial-project`.
 - Pull request: `https://github.com/flynn33/forsetti-Jamf-Pro/pull/1`
 
 ## Unresolved Items
 
 ```text
-- Remote pull-request checks are pending GitHub completion.
+- No remote check blockers remain on the pull request at close-out.
 - The manifest-backed framework runtime is validated and available; the existing app UI still renders through the current local module container pending a later full UI bridge.
 ```
