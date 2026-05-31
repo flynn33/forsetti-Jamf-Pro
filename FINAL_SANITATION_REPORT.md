@@ -2,7 +2,7 @@
 
 ## Summary
 
-- Status: Local gates passed; remote pull-request checks pending branch push.
+- Status: Local gates passed; pull request opened and remote checks pending.
 - Date: 2026-05-31
 - Run/session: local implementation and verification pass.
 - Source input: `/NVME/[local-staging]/Forsetti-Jamf-Pro/` plus the handoff package in that folder. The exact absolute staging path is redacted in this committed artifact because one directory segment is forbidden by repository policy.
@@ -156,12 +156,12 @@ Forsetti app tests: passed, 175 tests, 0 failures.
 
 - Remote: `https://github.com/flynn33/forsetti-Jamf-Pro`
 - Initial sanitized commit hash: `85f7f6ed143f649a543bfd5b4abddf444ff601a0`
-- Pushed: pending.
-- Pull request: pending.
+- Pushed: yes, branch `initial-project`.
+- Pull request: `https://github.com/flynn33/forsetti-Jamf-Pro/pull/1`
 
 ## Unresolved Items
 
 ```text
-- Remote pull-request checks are pending until the project branch is pushed.
+- Remote pull-request checks are pending GitHub completion.
 - The manifest-backed framework runtime is validated and available; the existing app UI still renders through the current local module container pending a later full UI bridge.
 ```
