@@ -21,8 +21,14 @@ enum ForsettiTheme {
         /// The standard corner radius applied to card containers.
         static let card: CGFloat = 18
 
+        /// The larger panel radius used for primary glass surfaces.
+        static let panel: CGFloat = 22
+
         /// The corner radius applied to buttons and small interactive elements.
         static let button: CGFloat = 12
+
+        /// A large value used for capsule-shaped controls.
+        static let capsule: CGFloat = 999
     }
 
     /// Spacing tokens that define consistent vertical and horizontal rhythm.
@@ -35,6 +41,21 @@ enum ForsettiTheme {
 
         /// A tighter spacing value used in compact or dense layouts.
         static let compact: CGFloat = 8
+    }
+
+    /// Stable sizing tokens for the retail workspace shell.
+    enum Layout {
+        /// Width for the persistent navigation rail on wide macOS layouts.
+        static let navigationRailWidth: CGFloat = 240
+
+        /// Compact rail width used when callers opt into a collapsed shell.
+        static let navigationRailCollapsedWidth: CGFloat = 72
+
+        /// Width for the contextual inspector on wide macOS layouts.
+        static let rightInspectorWidth: CGFloat = 340
+
+        /// Preferred height for the top command activity surface.
+        static let commandActivityBarHeight: CGFloat = 54
     }
 
     // MARK: - Semantic Colors
