@@ -33,6 +33,7 @@ protocol JamfModule {
     ///
     /// - Parameter context: The `ModuleContext` containing API gateway, credentials, and diagnostics.
     /// - Returns: A type-erased `AnyView` representing the module's UI.
+    @MainActor
     func makeRootView(context: ModuleContext) -> AnyView
 }
 
