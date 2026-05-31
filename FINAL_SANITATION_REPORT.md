@@ -150,12 +150,12 @@ Forsetti app tests: passed, 175 tests, 0 failures.
 | Build passes | Pass | `xcodebuild -list -project Forsetti.xcodeproj` passed. |
 | Tests pass | Pass | Full app suite passed, 175 tests, 0 failures. |
 | Hosted validation configured | Pass | `.github/workflows/macos-validation.yml` added for pull-request sanitation and Xcode tests. |
-| Clean Git history | Pending | Repository initialization and project branch creation are next. |
+| Clean Git history | Pass | Empty `main` seed commit plus initial sanitized project commit on `initial-project`. |
 
 ## Repository Status
 
 - Remote: `https://github.com/flynn33/forsetti-Jamf-Pro`
-- Initial sanitized commit hash: pending branch commit.
+- Initial sanitized commit hash: `85f7f6ed143f649a543bfd5b4abddf444ff601a0`
 - Pushed: pending.
 - Pull request: pending.
 
