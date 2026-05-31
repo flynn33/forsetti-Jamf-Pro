@@ -33,6 +33,7 @@ Implemented:
 - Dynamic catalog value extraction from nested and array-backed inventory payloads.
 - Computer extension-attribute metadata loading and client-side filter fields.
 - Computer-specific advanced-search view model, UI sheet, raw RSQL execution, and smart-filter persistence.
+- Terminal-component field typing for advanced search, including string-safe identifier fields.
 - Detail navigation from search rows.
 - Computer hardware card with storage, battery, memory, processor, model, and OS presentation.
 - Diagnostics for response shape, metadata loading, advanced search, decode fallback, pagination caps, and detail refresh failures.
@@ -55,6 +56,7 @@ The existing obsidian/cyan retail shell remains intact. New Computer Search UI i
 | Full `xcodebuild ... test` | Pass, 190 tests |
 | `xcodebuild ... build` | Pass |
 | App launch screenshot | Captured at `reports/screenshots/forsetti-3.24-main.png` |
+| Live review-thread audit | Pass after field-typing remediation |
 
 ## Notes
 

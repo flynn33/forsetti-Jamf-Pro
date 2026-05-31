@@ -103,37 +103,69 @@ struct ComputerField: Identifiable, Hashable, Sendable {
 
     private static func inferredDataType(for key: String) -> MobileDeviceFieldDataType {
         let lowercased = key.lowercased()
+        let normalizedKey = lowercased.replacingOccurrences(of: "[]", with: "")
+        let terminalComponent = normalizedKey.split(separator: ".").last.map(String.init) ?? normalizedKey
         if lowercased.contains("date") || lowercased.contains("time") || lowercased.contains("timestamp") {
             return .date
         }
-        if lowercased.contains("enabled")
-            || lowercased.contains("managed")
-            || lowercased.contains("supervised")
-            || lowercased.contains("capable")
-            || lowercased.contains("present")
-            || lowercased.contains("purchased")
-            || lowercased.contains("leased")
-            || lowercased.contains("applesilicon")
-            || lowercased.contains("active")
-            || lowercased.contains("activated")
-            || lowercased.contains("restricted")
-            || lowercased.contains("smartgroup")
+        let booleanComponents: Set<String> = [
+            "managed",
+            "supervised",
+            "capable",
+            "purchased",
+            "leased",
+            "applesilicon",
+            "activated",
+            "active",
+            "admin",
+            "smartgroup",
+        ]
+        let booleanSuffixes = [
+            "allowed",
+            "disabled",
+            "enabled",
+            "present",
+            "restricted",
+        ]
+        if booleanComponents.contains(terminalComponent)
+            || booleanSuffixes.contains(where: terminalComponent.hasSuffix)
+            || terminalComponent.hasPrefix("supports")
         {
             return .bool
         }
-        if lowercased.contains("megabytes")
-            || lowercased.contains("mhz")
-            || lowercased.contains("count")
-            || lowercased.contains("percent")
-            || lowercased.contains("kilobytes")
-            || lowercased.contains("bytes")
-            || lowercased.contains("capacity")
-            || lowercased.contains("available")
-            || lowercased.contains("price")
-            || lowercased.contains("expectancy")
-            || lowercased.contains("port")
-            || lowercased.contains("id")
-            || lowercased.contains("uid")
+        let numericSuffixes = [
+            "age",
+            "bytes",
+            "characters",
+            "code",
+            "count",
+            "depth",
+            "expectancy",
+            "kilobytes",
+            "length",
+            "limit",
+            "mb",
+            "megabytes",
+            "mhz",
+            "percent",
+            "percentage",
+            "price",
+        ]
+        if terminalComponent == "port"
+            || terminalComponent.contains("bytes")
+            || numericSuffixes.contains(where: terminalComponent.hasSuffix)
+        {
+            return .integer
+        }
+        let numericIdentifierKeys: Set<String> = [
+            "userandlocation.departmentid",
+            "userandlocation.buildingid",
+            "extensionattributes.definitionid",
+            "groupmemberships.groupid",
+        ]
+        if terminalComponent == "id"
+            || terminalComponent == "uid"
+            || numericIdentifierKeys.contains(normalizedKey)
         {
             return .integer
         }

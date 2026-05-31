@@ -7,6 +7,15 @@ final class ComputerSearchParityTests: XCTestCase {
         XCTAssertEqual(ComputerField.keyLookup["hardware.totalRamMegabytes"]?.dataType, .integer)
         XCTAssertEqual(ComputerField.keyLookup["hardware.batteryCapacityPercent"]?.dataType, .integer)
         XCTAssertEqual(ComputerField.keyLookup["hardware.appleSilicon"]?.dataType, .bool)
+        XCTAssertEqual(ComputerField.keyLookup["udid"]?.dataType, .string)
+        XCTAssertEqual(ComputerField.keyLookup["hardware.modelIdentifier"]?.dataType, .string)
+        XCTAssertEqual(ComputerField.keyLookup["hardware.macAddress"]?.dataType, .string)
+        XCTAssertEqual(ComputerField.keyLookup["localUserAccounts[].computerAzureActiveDirectoryId"]?.dataType, .string)
+        XCTAssertEqual(ComputerField.keyLookup["diskEncryption.fileVault2EnabledUserNames"]?.dataType, .string)
+        XCTAssertEqual(ComputerField.keyLookup["operatingSystem.activeDirectoryStatus"]?.dataType, .string)
+        XCTAssertEqual(ComputerField.keyLookup["userAndLocation.departmentId"]?.dataType, .integer)
+        XCTAssertEqual(ComputerField.keyLookup["configurationProfiles[].id"]?.dataType, .integer)
+        XCTAssertEqual(ComputerField.keyLookup["contentCaching.active"]?.dataType, .bool)
         XCTAssertEqual(ComputerField.keyLookup["extensionAttributes[].values[]"]?.isServerFilterable, false)
     }
 
