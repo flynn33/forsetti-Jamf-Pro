@@ -139,6 +139,7 @@ Forsetti Framework package tests: passed, 37 tests, 0 failures.
 Forsetti app tests: passed, 175 tests, 0 failures.
 Hosted PR Xcode tests: passed.
 Provenance marker scans: passed, no controlled-content matches.
+Provenance Guard workflow: added for pull requests and pushes to main.
 ```
 
 ## Acceptance Gates
@@ -152,6 +153,7 @@ Provenance marker scans: passed, no controlled-content matches.
 | Build passes | Pass | `xcodebuild -list -project Forsetti.xcodeproj` passed. |
 | Tests pass | Pass | Full app suite passed, 175 tests, 0 failures. |
 | No provenance markers | Pass | Broad content, path, Git metadata, and PR title/body/comment scans returned no matches. |
+| Merge policy guard | Pass | Dedicated Provenance Guard workflow and self-test cover repository contents, paths, commit messages, and pull-request title/body. |
 | Hosted validation | Pass | `.github/workflows/macos-validation.yml` ran pull-request sanitation and Xcode tests successfully. |
 | Clean Git history | Pass | Empty `main` seed commit plus initial sanitized project commit on `initial-project`. |
 
