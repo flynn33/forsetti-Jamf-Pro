@@ -205,19 +205,20 @@ struct DashboardModuleSummary: Identifiable, Hashable {
         title = module.title
         subtitle = module.subtitle
         iconSystemName = module.iconSystemName
+        category = Self.category(for: module.id)
+    }
 
-        if module.id == "forsetti.feature.deployment-tracker" {
-            category = .deployment
-            return
+    private static func category(for moduleID: String) -> Category {
+        if moduleID == "forsetti.feature.deployment-tracker" {
+            return .deployment
         }
-
-        if module.id.contains("reports") {
-            category = .reporting
-        } else if module.id.contains("support") || module.id.contains("prestage") {
-            category = .operations
-        } else {
-            category = .inventory
+        if moduleID.contains("reports") {
+            return .reporting
         }
+        if moduleID.contains("support") || moduleID.contains("prestage") {
+            return .operations
+        }
+        return .inventory
     }
 }
 
@@ -255,23 +256,26 @@ private struct CommandCenterNavigationRail: View {
                 }
             }
 
-            Spacer(minLength: ForsettiTheme.Spacing.item)
-
-            VStack(spacing: ForsettiTheme.Spacing.compact) {
-                Button(action: showDiagnostics) {
-                    Label("Diagnostics", systemImage: "stethoscope")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.forsettiSecondary)
-
-                Button(action: showSettings) {
-                    Label("Settings", systemImage: "gearshape")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.forsettiSecondary)
-            }
+            sideRailActions
+                .frame(maxHeight: .infinity, alignment: .bottom)
         }
         .padding(ForsettiTheme.Spacing.item)
+    }
+
+    private var sideRailActions: some View {
+        VStack(spacing: ForsettiTheme.Spacing.compact) {
+            Button(action: showDiagnostics) {
+                Label("Diagnostics", systemImage: "stethoscope")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.forsettiSecondary)
+
+            Button(action: showSettings) {
+                Label("Settings", systemImage: "gearshape")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.forsettiSecondary)
+        }
     }
 
     private var topRail: some View {
