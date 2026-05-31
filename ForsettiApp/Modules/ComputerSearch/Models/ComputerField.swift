@@ -22,6 +22,7 @@ enum ComputerInventorySection: String, CaseIterable, Sendable {
     case fonts = "FONTS"
     case security = "SECURITY"
     case operatingSystem = "OPERATING_SYSTEM"
+    case storage = "STORAGE"
     case licensedSoftware = "LICENSED_SOFTWARE"
     case ibeacons = "IBEACONS"
     case softwareUpdates = "SOFTWARE_UPDATES"
@@ -49,12 +50,127 @@ struct ComputerField: Identifiable, Hashable, Sendable {
     /// The inventory section this field belongs to, used for grouping and API section scoping.
     let section: ComputerInventorySection
 
+    /// Ordered JSON key paths that can provide this field in Jamf responses.
+    let responsePaths: [String]
+
+    /// Runtime value type used by advanced search and detail presentation.
+    let dataType: MobileDeviceFieldDataType
+
+    /// Whether this field can appear in advanced search criteria.
+    let isFilterable: Bool
+
+    /// Whether this field is documented or safe enough for sort UI.
+    let isSortable: Bool
+
+    /// Whether advanced search may emit this field as server-side RSQL.
+    let isServerFilterable: Bool
+
+    /// Optional closed set of allowed values for picker-driven fields.
+    let allowedValues: [String]?
+
     /// Whether this field can be used in RSQL filter expressions for server-side search.
     /// Fields inside array containers (e.g. `configurationProfiles[]`) typically do not support RSQL.
     let supportsRSQLSearch: Bool
 
     /// The unique identity of this field, derived from its API key.
     var id: String { key }
+
+    init(
+        key: String,
+        displayName: String,
+        description: String,
+        section: ComputerInventorySection,
+        supportsRSQLSearch: Bool,
+        responsePaths: [String]? = nil,
+        dataType: MobileDeviceFieldDataType? = nil,
+        isFilterable: Bool = true,
+        isSortable: Bool = true,
+        isServerFilterable: Bool? = nil,
+        allowedValues: [String]? = nil
+    ) {
+        self.key = key
+        self.displayName = displayName
+        self.description = description
+        self.section = section
+        self.supportsRSQLSearch = supportsRSQLSearch
+        self.responsePaths = responsePaths ?? [key]
+        self.dataType = dataType ?? Self.inferredDataType(for: key)
+        self.isFilterable = isFilterable
+        self.isSortable = isSortable
+        self.isServerFilterable = isServerFilterable ?? supportsRSQLSearch
+        self.allowedValues = allowedValues
+    }
+
+    private static func inferredDataType(for key: String) -> MobileDeviceFieldDataType {
+        let lowercased = key.lowercased()
+        let normalizedKey = lowercased.replacingOccurrences(of: "[]", with: "")
+        let terminalComponent = normalizedKey.split(separator: ".").last.map(String.init) ?? normalizedKey
+        if lowercased.contains("date") || lowercased.contains("time") || lowercased.contains("timestamp") {
+            return .date
+        }
+        let booleanComponents: Set<String> = [
+            "managed",
+            "supervised",
+            "capable",
+            "purchased",
+            "leased",
+            "applesilicon",
+            "activated",
+            "active",
+            "admin",
+            "smartgroup",
+        ]
+        let booleanSuffixes = [
+            "allowed",
+            "disabled",
+            "enabled",
+            "present",
+            "restricted",
+        ]
+        if booleanComponents.contains(terminalComponent)
+            || booleanSuffixes.contains(where: terminalComponent.hasSuffix)
+            || terminalComponent.hasPrefix("supports")
+        {
+            return .bool
+        }
+        let numericSuffixes = [
+            "age",
+            "bytes",
+            "characters",
+            "code",
+            "count",
+            "depth",
+            "expectancy",
+            "kilobytes",
+            "length",
+            "limit",
+            "mb",
+            "megabytes",
+            "mhz",
+            "percent",
+            "percentage",
+            "price",
+        ]
+        if terminalComponent == "port"
+            || terminalComponent.contains("bytes")
+            || numericSuffixes.contains(where: terminalComponent.hasSuffix)
+        {
+            return .integer
+        }
+        let numericIdentifierKeys: Set<String> = [
+            "userandlocation.departmentid",
+            "userandlocation.buildingid",
+            "extensionattributes.definitionid",
+            "groupmemberships.groupid",
+        ]
+        if terminalComponent == "id"
+            || terminalComponent == "uid"
+            || numericIdentifierKeys.contains(normalizedKey)
+        {
+            return .integer
+        }
+        return .string
+    }
 }
 
 /// Static catalog and lookup helpers for the complete set of known computer inventory fields.
@@ -63,7 +179,7 @@ extension ComputerField {
     ///
     /// This array drives the field catalog UI, RSQL filter construction, and section resolution.
     /// Each entry defines the API key, display metadata, parent section, and RSQL support flag.
-    static let catalog: [ComputerField] = [
+    nonisolated static let catalog: [ComputerField] = [
         .init(key: "id", displayName: "Unique identifier for the computer", description: "Unique identifier for the computer", section: .general, supportsRSQLSearch: true),
         .init(key: "general.name", displayName: "Computer name", description: "Computer name", section: .general, supportsRSQLSearch: true),
         .init(key: "hardware.macAddress", displayName: "Primary MAC address", description: "Primary MAC address", section: .hardware, supportsRSQLSearch: true),
@@ -113,6 +229,9 @@ extension ComputerField {
         .init(key: "hardware.opticalDrive", displayName: "Optical drive type", description: "Optical drive type", section: .hardware, supportsRSQLSearch: true),
         .init(key: "hardware.smcVersion", displayName: "SMC version", description: "SMC version", section: .hardware, supportsRSQLSearch: true),
         .init(key: "hardware.batteryCapacityPercent", displayName: "Battery capacity percentage", description: "Battery capacity percentage", section: .hardware, supportsRSQLSearch: true),
+        .init(key: "hardware.capacityMb", displayName: "Storage capacity", description: "Primary storage capacity in MB", section: .hardware, supportsRSQLSearch: false, responsePaths: ["hardware.capacityMb", "hardware.storageCapacityMegabytes", "general.storageCapacityMegabytes", "storage.capacityMb", "storage.storageCapacityMegabytes", "capacityMb"]),
+        .init(key: "hardware.availableSpaceMb", displayName: "Available storage", description: "Available primary storage in MB", section: .hardware, supportsRSQLSearch: false, responsePaths: ["hardware.availableSpaceMb", "hardware.bootDriveAvailableSpaceMegabytes", "general.bootDriveAvailableSpaceMegabytes", "storage.bootDriveAvailableSpaceMegabytes", "storage.availableSpaceMb", "availableSpaceMb"]),
+        .init(key: "hardware.usedSpacePercentage", displayName: "Used storage percentage", description: "Reported used storage percentage", section: .hardware, supportsRSQLSearch: false, responsePaths: ["hardware.usedSpacePercentage", "usedSpacePercentage"]),
         .init(key: "hardware.supportsIosAppInstalls", displayName: "iOS app installation support", description: "iOS app installation support", section: .hardware, supportsRSQLSearch: true),
         .init(key: "hardware.appleSilicon", displayName: "Apple Silicon status", description: "Apple Silicon status", section: .hardware, supportsRSQLSearch: true),
         .init(key: "operatingSystem.name", displayName: "OS name", description: "OS name", section: .operatingSystem, supportsRSQLSearch: true),
@@ -190,6 +309,9 @@ extension ComputerField {
         .init(key: "softwareUpdates[].name", displayName: "Update name", description: "Update name", section: .softwareUpdates, supportsRSQLSearch: false),
         .init(key: "softwareUpdates[].version", displayName: "Update version", description: "Update version", section: .softwareUpdates, supportsRSQLSearch: false),
         .init(key: "softwareUpdates[].packageName", displayName: "Package name", description: "Package name", section: .softwareUpdates, supportsRSQLSearch: false),
+        .init(key: "storage.disks[].sizeMegabytes", displayName: "Disk size", description: "Disk size in MB", section: .storage, supportsRSQLSearch: false),
+        .init(key: "storage.disks[].partitions[].sizeMegabytes", displayName: "Partition size", description: "Partition size in MB", section: .storage, supportsRSQLSearch: false),
+        .init(key: "storage.disks[].partitions[].availableMegabytes", displayName: "Partition available space", description: "Partition available space in MB", section: .storage, supportsRSQLSearch: false),
         .init(key: "extensionAttributes[].definitionId", displayName: "Attribute ID", description: "Attribute ID", section: .extensionAttributes, supportsRSQLSearch: false),
         .init(key: "extensionAttributes[].name", displayName: "Attribute name", description: "Attribute name", section: .extensionAttributes, supportsRSQLSearch: false),
         .init(key: "extensionAttributes[].dataType", displayName: "Data type", description: "Data type", section: .extensionAttributes, supportsRSQLSearch: false),
@@ -221,7 +343,7 @@ extension ComputerField {
     ///
     /// These represent the most commonly searched identifiers: name, serial, MAC, asset tag,
     /// barcodes, IP address, and UDID.
-    static let defaultRSQLQueryFieldKeys: [String] = [
+    nonisolated static let defaultRSQLQueryFieldKeys: [String] = [
         "general.name",
         "hardware.serialNumber",
         "hardware.macAddress",
@@ -239,7 +361,7 @@ extension ComputerField {
     ///
     /// Built once from the catalog and used throughout the search pipeline to quickly resolve
     /// field metadata from raw key strings.
-    static let keyLookup: [String: ComputerField] = Dictionary(
+    nonisolated static let keyLookup: [String: ComputerField] = Dictionary(
         uniqueKeysWithValues: catalog.map { ($0.key, $0) }
     )
 }

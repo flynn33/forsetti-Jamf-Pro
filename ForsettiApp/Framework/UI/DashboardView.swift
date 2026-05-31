@@ -150,7 +150,7 @@ struct DashboardView: View {
                         .navigationTitle(module.title)
                         .forsettiInlineNavigationTitle()
 #if os(macOS)
-                        .frame(minWidth: 1200, minHeight: 820)
+                        .frame(minWidth: 860, minHeight: 620)
 #endif
                 } else {
                     ContentUnavailableView(
@@ -242,22 +242,27 @@ private struct CommandCenterNavigationRail: View {
         VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
             ForsettiBrandHeader()
 
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
-                Text("Workspace")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(ForsettiColors.textTertiary)
-                    .textCase(.uppercase)
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                    Text("Workspace")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(ForsettiColors.textTertiary)
+                        .textCase(.uppercase)
 
-                ForEach(modules) { module in
-                    NavigationLink(value: module.id) {
-                        RailModuleRow(module: module)
+                    ForEach(modules) { module in
+                        NavigationLink(value: module.id) {
+                            RailModuleRow(module: module)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .scrollIndicators(.visible)
+            .frame(maxHeight: .infinity, alignment: .top)
 
             sideRailActions
-                .frame(maxHeight: .infinity, alignment: .bottom)
+                .frame(maxWidth: .infinity, alignment: .bottom)
         }
         .padding(ForsettiTheme.Spacing.item)
     }
@@ -279,7 +284,7 @@ private struct CommandCenterNavigationRail: View {
     }
 
     private var topRail: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal, showsIndicators: true) {
             HStack(spacing: ForsettiTheme.Spacing.compact) {
                 ForsettiBrandHeader()
                     .frame(width: 170)
@@ -314,6 +319,7 @@ private struct CommandCenterNavigationRail: View {
             .padding(.horizontal, ForsettiTheme.Spacing.item)
             .padding(.vertical, ForsettiTheme.Spacing.compact)
         }
+        .scrollIndicators(.visible)
         .frame(maxWidth: .infinity, maxHeight: 68, alignment: .leading)
     }
 }
@@ -372,33 +378,70 @@ private struct CommandCenterHeader: View {
 
     var body: some View {
         ForsettiGlassCard(active: true) {
-            HStack(alignment: .center, spacing: ForsettiTheme.Spacing.section) {
-                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
-                    Text("Command Center")
-                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
-                        .foregroundStyle(ForsettiColors.textPrimary)
-                    Text("Retail operations workspace for Jamf Pro modules, diagnostics, reports, and deployment workflows.")
-                        .font(.callout)
-                        .foregroundStyle(ForsettiColors.textSecondary)
-                        .lineLimit(2)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: ForsettiTheme.Spacing.section) {
+                    titleBlock
+
+                    Spacer(minLength: ForsettiTheme.Spacing.item)
+
+                    statusBlock(alignment: .trailing)
                 }
 
-                Spacer(minLength: ForsettiTheme.Spacing.item)
-
-                VStack(alignment: .trailing, spacing: ForsettiTheme.Spacing.compact) {
-                    HStack(spacing: ForsettiTheme.Spacing.compact) {
-                        ForsettiStatusBadge(hasCredentials ? .connected : .pending, text: hasCredentials ? "Connected" : "Credentials")
-                        ForsettiStatusBadge(.ready, text: "\(moduleCount) modules")
-                    }
-
-                    if !appVersion.isEmpty {
-                        Text("v\(appVersion)")
-                            .font(.caption.monospacedDigit().weight(.semibold))
-                            .foregroundStyle(ForsettiColors.textTertiary)
-                    }
+                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                    titleBlock
+                    statusBlock(alignment: .leading)
                 }
             }
         }
+    }
+
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+            Text("Command Center")
+                .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                .foregroundStyle(ForsettiColors.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+            Text("Retail operations workspace for Jamf Pro modules, diagnostics, reports, and deployment workflows.")
+                .font(.callout)
+                .foregroundStyle(ForsettiColors.textSecondary)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func statusBlock(alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: ForsettiTheme.Spacing.compact) {
+            badgeGroup(alignment: alignment)
+
+            if !appVersion.isEmpty {
+                Text("v\(appVersion)")
+                    .font(.caption.monospacedDigit().weight(.semibold))
+                    .foregroundStyle(ForsettiColors.textTertiary)
+            }
+        }
+    }
+
+    private func badgeGroup(alignment: HorizontalAlignment) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: ForsettiTheme.Spacing.compact) {
+                connectionBadge
+                moduleCountBadge
+            }
+
+            VStack(alignment: alignment, spacing: ForsettiTheme.Spacing.compact) {
+                connectionBadge
+                moduleCountBadge
+            }
+        }
+    }
+
+    private var connectionBadge: some View {
+        ForsettiStatusBadge(hasCredentials ? .connected : .pending, text: hasCredentials ? "Connected" : "Credentials")
+    }
+
+    private var moduleCountBadge: some View {
+        ForsettiStatusBadge(.ready, text: "\(moduleCount) modules")
     }
 }
 
@@ -407,44 +450,47 @@ private struct CommandCenterContent: View {
     let hasCredentials: Bool
 
     private var columns: [GridItem] {
-        [GridItem(.adaptive(minimum: 210), spacing: ForsettiTheme.Spacing.item)]
+        [GridItem(.adaptive(minimum: 250), spacing: ForsettiTheme.Spacing.item)]
+    }
+
+    private var metricColumns: [GridItem] {
+        [GridItem(.adaptive(minimum: 220), spacing: ForsettiTheme.Spacing.item)]
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
-                metricStrip
+        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+            metricStrip
 
-                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
-                    Text("Modules")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(ForsettiColors.textPrimary)
+            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                Text("Modules")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(ForsettiColors.textPrimary)
 
-                    if modules.isEmpty {
-                        ContentUnavailableView(
-                            "No Modules Installed",
-                            systemImage: "square.grid.2x2",
-                            description: Text("Install or enable modules from Settings.")
-                        )
-                        .forsettiCardSurface(fill: ForsettiTheme.glassSurface)
-                    } else {
-                        LazyVGrid(columns: columns, alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
-                            ForEach(modules) { module in
-                                NavigationLink(value: module.id) {
-                                    CommandCenterModuleCard(module: module)
-                                }
-                                .buttonStyle(.plain)
+                if modules.isEmpty {
+                    ContentUnavailableView(
+                        "No Modules Installed",
+                        systemImage: "square.grid.2x2",
+                        description: Text("Install or enable modules from Settings.")
+                    )
+                    .forsettiCardSurface(fill: ForsettiTheme.glassSurface)
+                } else {
+                    LazyVGrid(columns: columns, alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                        ForEach(modules) { module in
+                            NavigationLink(value: module.id) {
+                                CommandCenterModuleCard(module: module)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     private var metricStrip: some View {
         LazyVGrid(
-            columns: [GridItem(.adaptive(minimum: 170), spacing: ForsettiTheme.Spacing.item)],
+            columns: metricColumns,
             alignment: .leading,
             spacing: ForsettiTheme.Spacing.item
         ) {
@@ -509,10 +555,13 @@ private struct CommandCenterMetricCard: View {
                     Text(detail)
                         .font(.caption)
                         .foregroundStyle(ForsettiColors.textSecondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
         }
+        .frame(minWidth: 220, alignment: .leading)
     }
 }
 
@@ -522,7 +571,7 @@ private struct CommandCenterModuleCard: View {
     var body: some View {
         ForsettiGlassCard(active: module.category == .deployment) {
             VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
-                HStack(alignment: .center) {
+                HStack(alignment: .top, spacing: ForsettiTheme.Spacing.item) {
                     Image(systemName: module.iconSystemName)
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(module.category.color)
@@ -531,20 +580,19 @@ private struct CommandCenterModuleCard: View {
 
                     Spacer(minLength: ForsettiTheme.Spacing.item)
 
-                    if module.isDemo {
-                        ForsettiStatusBadge(.warning, text: "Demo")
-                    }
-                    ForsettiStatusBadge(.ready, text: module.category.rawValue)
+                    moduleBadges
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(module.title)
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(ForsettiColors.textPrimary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(module.subtitle)
                         .font(.footnote)
                         .foregroundStyle(ForsettiColors.textSecondary)
-                        .lineLimit(3)
+                        .lineLimit(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -559,7 +607,25 @@ private struct CommandCenterModuleCard: View {
                         .foregroundStyle(module.category.color)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 176, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 210, alignment: .topLeading)
+        }
+    }
+
+    private var moduleBadges: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: ForsettiTheme.Spacing.compact) {
+                if module.isDemo {
+                    ForsettiStatusBadge(.warning, text: "Demo")
+                }
+                ForsettiStatusBadge(.ready, text: module.category.rawValue)
+            }
+
+            VStack(alignment: .trailing, spacing: ForsettiTheme.Spacing.compact) {
+                if module.isDemo {
+                    ForsettiStatusBadge(.warning, text: "Demo")
+                }
+                ForsettiStatusBadge(.ready, text: module.category.rawValue)
+            }
         }
     }
 }

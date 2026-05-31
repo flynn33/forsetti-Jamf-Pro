@@ -34,7 +34,7 @@ struct ForsettiApp: App {
                 .forsettiAppBackground()                 // Apply branded gradient backdrop
                 .preferredColorScheme(.dark)             // Use the fixed retail dark theme
 #if os(macOS)
-                .frame(minWidth: 1200, minHeight: 820) // Enforce minimum window size on macOS
+                .frame(minWidth: 860, minHeight: 620) // Support compact Mac workspaces with app-level scrolling
 #endif
         }
 #if os(macOS)

@@ -23,9 +23,8 @@ extension EnvironmentValues {
 }
 
 private enum ForsettiWorkspaceShellBreakpoint {
-    static let compactWidth: CGFloat = 760
-    static let collapsedRailWidth: CGFloat = 920
-    static let sideInspectorWidth: CGFloat = 1120
+    static let compactWidth: CGFloat = 960
+    static let sideInspectorContentWidth: CGFloat = 1_080
 }
 
 /// Shared retail workspace frame for Forsetti screens.
@@ -66,8 +65,9 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
         GeometryReader { proxy in
             let width = proxy.size.width
             let isCompact = isCompactWidth(width)
-            let showsSideInspector = showsSideInspector(for: width)
-            let railWidth = navigationRailWidth(for: width)
+            let railWidth = navigationRailWidth
+            let contentWidth = max(0, width - railWidth)
+            let showsSideInspector = showsSideInspector(forContentWidth: contentWidth)
 
             if isCompact {
                 compactLayout
@@ -84,14 +84,12 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
         width < ForsettiWorkspaceShellBreakpoint.compactWidth
     }
 
-    private func showsSideInspector(for width: CGFloat) -> Bool {
-        showsInspector && width >= ForsettiWorkspaceShellBreakpoint.sideInspectorWidth
+    private func showsSideInspector(forContentWidth width: CGFloat) -> Bool {
+        showsInspector && width >= ForsettiWorkspaceShellBreakpoint.sideInspectorContentWidth
     }
 
-    private func navigationRailWidth(for width: CGFloat) -> CGFloat {
-        width < ForsettiWorkspaceShellBreakpoint.collapsedRailWidth
-            ? ForsettiTheme.Layout.navigationRailCollapsedWidth
-            : ForsettiTheme.Layout.navigationRailWidth
+    private var navigationRailWidth: CGFloat {
+        ForsettiTheme.Layout.navigationRailWidth
     }
 
     private var compactLayout: some View {
@@ -135,28 +133,67 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
             header
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(alignment: .top, spacing: ForsettiTheme.Spacing.item) {
-                content
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            GeometryReader { scrollProxy in
+                let minimumWidth = scrollContentMinimumWidth(showsSideInspector: showsSideInspector)
+                let contentWidth = max(scrollProxy.size.width, minimumWidth)
+                let mainContentWidth = primaryContentWidth(
+                    contentWidth: contentWidth,
+                    showsSideInspector: showsSideInspector
+                )
+                let scrollAxes: Axis.Set = scrollProxy.size.width < minimumWidth ? [.horizontal, .vertical] : .vertical
 
-                if showsSideInspector {
-                    inspector
-                        .frame(width: ForsettiTheme.Layout.rightInspectorWidth)
+                ScrollView(scrollAxes, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+                        if showsSideInspector {
+                            HStack(alignment: .top, spacing: ForsettiTheme.Spacing.item) {
+                                content
+                                    .frame(width: mainContentWidth, alignment: .topLeading)
+
+                                inspector
+                                    .frame(width: ForsettiTheme.Layout.rightInspectorWidth, alignment: .topLeading)
+                            }
+                        } else {
+                            content
+                                .frame(width: contentWidth, alignment: .topLeading)
+
+                            if showsInspector {
+                                inspector
+                                    .frame(width: contentWidth, alignment: .leading)
+                            }
+                        }
+
+                        if showsBottomDrawer {
+                            bottomDrawer
+                                .frame(width: contentWidth, alignment: .leading)
+                        }
+                    }
+                    .frame(width: contentWidth, alignment: .topLeading)
                 }
+                .scrollIndicators(.visible)
             }
-
-            if showsInspector && !showsSideInspector {
-                inspector
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            if showsBottomDrawer {
-                bottomDrawer
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .padding(ForsettiTheme.Spacing.section)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func scrollContentMinimumWidth(showsSideInspector: Bool) -> CGFloat {
+        if showsSideInspector {
+            return ForsettiTheme.Layout.dashboardContentMinimumWidth
+                + ForsettiTheme.Spacing.item
+                + ForsettiTheme.Layout.rightInspectorWidth
+        }
+
+        return ForsettiTheme.Layout.dashboardContentMinimumWidth
+    }
+
+    private func primaryContentWidth(contentWidth: CGFloat, showsSideInspector: Bool) -> CGFloat {
+        guard showsSideInspector else { return contentWidth }
+
+        let remainingWidth = contentWidth
+            - ForsettiTheme.Spacing.item
+            - ForsettiTheme.Layout.rightInspectorWidth
+        return max(ForsettiTheme.Layout.dashboardContentMinimumWidth, remainingWidth)
     }
 }
 

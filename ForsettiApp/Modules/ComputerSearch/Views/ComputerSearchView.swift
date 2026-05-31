@@ -12,6 +12,7 @@ import SwiftUI
 struct ComputerSearchView: View {
     /// The view model that drives search execution, profile management, and state.
     @StateObject private var viewModel: ComputerSearchViewModel
+    @State private var advancedSearchViewModel: ComputerAdvancedSearchViewModel?
 
     /// Creates the search view with an injected view model.
     ///
@@ -43,6 +44,12 @@ struct ComputerSearchView: View {
                 HStack {
                     Button("Fields") {
                         viewModel.isFieldCatalogPresented = true
+                    }
+                    .buttonStyle(.forsettiSecondary)
+
+                    Button("Advanced") {
+                        advancedSearchViewModel = viewModel.makeAdvancedSearchViewModel()
+                        viewModel.isAdvancedSearchPresented = true
                     }
                     .buttonStyle(.forsettiSecondary)
 
@@ -107,6 +114,19 @@ struct ComputerSearchView: View {
                 }
             }
 
+            if viewModel.smartFilters.isEmpty == false {
+                Section("Smart Filters") {
+                    SmartFilterListView(
+                        filters: viewModel.smartFilters,
+                        onSelect: { filter in
+                            advancedSearchViewModel = viewModel.loadSmartFilterIntoAdvancedSearch(filter)
+                            viewModel.isAdvancedSearchPresented = true
+                        },
+                        onDelete: viewModel.deleteSmartFilters
+                    )
+                }
+            }
+
             // MARK: - Results Section
             Section("Results") {
                 if viewModel.isSearching {
@@ -116,15 +136,22 @@ struct ComputerSearchView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(viewModel.searchResults) { record in
-                        ComputerResultRow(record: record)
+                        NavigationLink(value: ComputerRecordRoute(id: record.id)) {
+                            ComputerResultRow(record: record)
+                        }
                     }
                 }
             }
         }
         .forsettiInsetGroupedListStyle()
+        .navigationDestination(for: ComputerRecordRoute.self) { route in
+            ComputerDetailView(viewModel: viewModel, recordID: route.id)
+        }
         .task {
             // Load saved profiles from disk when the view first appears
             await viewModel.loadProfiles()
+            await viewModel.loadSmartFilters()
+            await viewModel.loadExtensionAttributes()
         }
         .onChange(of: viewModel.selectedProfileID) { _, _ in
             viewModel.applySelectedProfileFields()
@@ -145,6 +172,26 @@ struct ComputerSearchView: View {
             #if os(macOS)
             .frame(minWidth: 720, idealWidth: 820, minHeight: 600, idealHeight: 720)
             #endif
+        }
+        .sheet(isPresented: $viewModel.isAdvancedSearchPresented, onDismiss: {
+            advancedSearchViewModel = nil
+        }) {
+            if let advancedSearchViewModel {
+                ComputerAdvancedSearchView(
+                    viewModel: advancedSearchViewModel,
+                    onSearch: { result, fieldKeys in
+                        viewModel.isAdvancedSearchPresented = false
+                        Task {
+                            await viewModel.executeAdvancedSearch(result, fieldKeys: fieldKeys)
+                        }
+                    },
+                    onSaveSmartFilter: { filter in
+                        Task {
+                            await viewModel.saveSmartFilter(filter)
+                        }
+                    }
+                )
+            }
         }
         .alert("Save Search Profile", isPresented: $viewModel.isSaveProfilePromptPresented) {
             TextField("Profile name", text: $viewModel.pendingProfileName)

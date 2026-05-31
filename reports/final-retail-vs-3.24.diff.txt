@@ -1,0 +1,40 @@
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.githooks/post-commit and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.githooks/post-commit differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.githooks/pre-commit and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.githooks/pre-commit differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.githooks/pre-push and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.githooks/pre-push differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.github/scripts/bump-version.sh and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.github/scripts/bump-version.sh differ
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.github/scripts: check-source-marker-markers.sh
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.github/scripts/generate-changelog.sh and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.github/scripts/generate-changelog.sh differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.github/scripts/release.sh and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.github/scripts/release.sh differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.github/scripts/sync-docs.sh and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.github/scripts/sync-docs.sh differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.github/scripts/sync-wiki.sh and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.github/scripts/sync-wiki.sh differ
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.github/scripts: test-source-marker-guard.sh
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.github: workflows
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.gitignore and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.gitignore differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/.swiftlint.yml and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/.swiftlint.yml differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/CHANGELOG.md and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/CHANGELOG.md differ
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro: FINAL_SANITATION_REPORT.md
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro: Forsetti.xcodeproj
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro: ForsettiApp
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro: ForsettiTests
+Only in /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0: Jamf Dashboard.xcodeproj
+Only in /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0: JamfDashboardApp
+Only in /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0: JamfDashboardAppTests
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/LICENSE and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/LICENSE differ
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro: LICENSE_REVIEW_REQUIRED.md
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/ModulePackageTemplates/computer-search.json and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/ModulePackageTemplates/computer-search.json differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/ModulePackageTemplates/deployment-tracker.json and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/ModulePackageTemplates/deployment-tracker.json differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/ModulePackageTemplates/mobile-device-search.json and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/ModulePackageTemplates/mobile-device-search.json differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/ModulePackageTemplates/prestage-director.json and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/ModulePackageTemplates/prestage-director.json differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/ModulePackageTemplates/reports.json and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/ModulePackageTemplates/reports.json differ
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/ModulePackageTemplates/support-technician.json and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/ModulePackageTemplates/support-technician.json differ
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro: PROJECT_ISSUE_FIX_REPORT.md
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/README.md and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/README.md differ
+Only in /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0: ReportsModule_BuildTest_Handoff.md
+Only in /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0: SANITIZATION-README.md
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro: UIUX_IMPLEMENTATION_PLAN.md
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro: UIUX_IMPLEMENTATION_REPORT.md
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/WIKI.md and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/WIKI.md differ
+Only in /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0: sanitization-verification
+Files /tmp/forsetti-rebase/3.24-sanitized/Jamf-Dashboard-Sanitized-3.24.0/scripts/install-hooks.sh and /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/scripts/install-hooks.sh differ
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/scripts: verify-no-customer-references.sh
+Only in /Volumes/NVME/GitHub/Forsetti-Jamf-Pro/scripts: verify-no-customer-residue.sh

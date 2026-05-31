@@ -10,7 +10,7 @@ actor SmartFilterStore {
     private let fileManager: FileManager
     private let fileURL: URL
 
-    init(fileManager: FileManager = .default) {
+    init(fileManager: FileManager = .default, fileName: String = "mobile-device-smart-filters.json") {
         self.fileManager = fileManager
 
         let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
@@ -18,7 +18,7 @@ actor SmartFilterStore {
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
 
         let directoryURL = appSupportURL.appending(path: ForsettiAppIdentity.applicationSupportFolder, directoryHint: .isDirectory)
-        self.fileURL = directoryURL.appending(path: "mobile-device-smart-filters.json")
+        self.fileURL = directoryURL.appending(path: fileName)
     }
 
     /// Loads all saved smart filters. Returns an empty array on first run
