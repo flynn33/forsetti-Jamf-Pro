@@ -165,3 +165,59 @@ struct ForsettiStatusBadge: View {
 
     var accessibilityText: String { text ?? kind.displayName }
 }
+
+/// Compact diagnostics drawer used by retail workspaces for framework and tenant health.
+struct ForsettiDiagnosticsDrawer: View {
+    struct Item: Identifiable, Hashable {
+        let id = UUID()
+        let title: String
+        let value: String
+        let kind: ForsettiStatusBadge.Kind
+
+        var accessibilityText: String {
+            "\(title), \(value)"
+        }
+    }
+
+    let title: String
+    let items: [Item]
+
+    init(title: String = "Diagnostics", items: [Item]) {
+        self.title = title
+        self.items = items
+    }
+
+    var body: some View {
+        ForsettiGlassCard(style: .dense) {
+            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                HStack(spacing: ForsettiTheme.Spacing.compact) {
+                    Image(systemName: "waveform.path.ecg.rectangle")
+                        .foregroundStyle(ForsettiColors.accentCyan)
+                    Text(title)
+                        .font(.system(.headline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(ForsettiColors.textPrimary)
+                    Spacer(minLength: 0)
+                }
+
+                ForEach(items) { item in
+                    HStack(alignment: .firstTextBaseline, spacing: ForsettiTheme.Spacing.item) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.title)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(ForsettiColors.textSecondary)
+                            Text(item.value)
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(ForsettiColors.textPrimary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        Spacer(minLength: ForsettiTheme.Spacing.item)
+                        ForsettiStatusBadge(item.kind)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(item.accessibilityText)
+                }
+            }
+        }
+    }
+}

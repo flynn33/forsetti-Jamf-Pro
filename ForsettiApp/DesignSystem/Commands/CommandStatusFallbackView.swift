@@ -161,7 +161,7 @@ struct CommandStatusFallbackView: View {
         time: TimeInterval
     ) -> some View {
         let pulse = CGFloat((sin(time * 2.6) + 1.0) / 2.0)
-        let nodeColor = isActive ? accentColor : Color.gray.opacity(0.52)
+        let nodeColor = isActive ? accentColor : ForsettiColors.textTertiary.opacity(0.52)
 
         return ZStack {
             Circle()
@@ -200,17 +200,19 @@ struct CommandStatusFallbackView: View {
     private var accentColor: Color {
         switch phase {
         case .idle:
-            return Color.gray
-        case .sending, .queued:
-            return ForsettiColors.bluePrimary
+            return ForsettiColors.textTertiary
+        case .sending:
+            return ForsettiColors.accentCyan
+        case .queued:
+            return ForsettiColors.accentBlue
         case .verifying:
-            return .orange
+            return ForsettiColors.warning
         case .succeeded:
-            return ForsettiColors.greenPrimary
+            return ForsettiColors.success
         case .failed:
-            return .red
+            return ForsettiColors.critical
         case .timedOut:
-            return .orange
+            return ForsettiColors.warning
         }
     }
 

@@ -1,85 +1,95 @@
 import SwiftUI
 
-/// The main dashboard view that serves as the app's home screen. It displays the brand header,
-/// credential connection status, and a grid of installed Jamf modules. Toolbar buttons provide
-/// access to the Settings and Diagnostics sheets.
+/// Root command center for the Forsetti app.
+@MainActor
 struct DashboardView: View {
-    /// Identifies which modal sheet is currently presented (settings or diagnostics).
     private enum ActiveSheet: String, Identifiable {
-        /// The settings/configuration sheet.
         case settings
-        /// The diagnostics log viewer sheet.
         case diagnostics
 
-        /// Conforms to `Identifiable` using the raw string value.
         var id: String { rawValue }
     }
 
-    /// The shared framework container providing access to credentials, diagnostics, and modules.
     @ObservedObject var container: ForsettiFrameworkContainer
-    /// The module registry observed separately so the grid updates when modules are added/removed.
     @ObservedObject private var moduleRegistry: ModuleRegistry
-
-    /// Tracks which sheet (settings or diagnostics) is currently presented, or nil if none.
     @State private var activeSheet: ActiveSheet?
 
-    /// Initializes the dashboard with the given framework container and extracts
-    /// the module registry for direct observation.
-    /// - Parameter container: The shared `ForsettiFrameworkContainer` instance.
     init(container: ForsettiFrameworkContainer) {
         self.container = container
         _moduleRegistry = ObservedObject(wrappedValue: container.moduleRegistry)
     }
 
-    /// Adaptive grid columns for the module cards, with a minimum width of 164pt per card.
-    private var columns: [GridItem] {
-        [GridItem(.adaptive(minimum: 164), spacing: ForsettiTheme.Spacing.item)]
+    private var hasCredentials: Bool {
+        container.credentialsStore.hasStoredCredentials
+    }
+
+    private var modules: [DashboardModuleSummary] {
+        moduleRegistry.modules.map(DashboardModuleSummary.init(module:))
+    }
+
+    private var activityState: ForsettiCommandActivityState {
+        hasCredentials
+            ? .idle(lastUpdated: nil)
+            : .blocked(label: "Jamf Pro connection", reason: "Credentials required")
+    }
+
+    private var diagnosticsItems: [ForsettiDiagnosticsDrawer.Item] {
+        [
+            .init(
+                title: "UI module",
+                value: "forsetti.retail.ui",
+                kind: .ready
+            ),
+            .init(
+                title: "Registered modules",
+                value: "\(modules.count)",
+                kind: modules.isEmpty ? .warning : .ready
+            ),
+            .init(
+                title: "Jamf Pro connection",
+                value: hasCredentials ? "Configured" : "Needs credentials",
+                kind: hasCredentials ? .connected : .pending
+            )
+        ]
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
-                    ForsettiBrandHeader()
-                    CredentialStatusCard(hasCredentials: container.credentialsStore.hasStoredCredentials)
-
-                    VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
-                        Text("Installed Modules")
-                            .font(.system(.headline, design: .rounded).weight(.semibold))
-                            .foregroundStyle(ForsettiColors.textPrimary)
-
-                        if moduleRegistry.modules.isEmpty {
-                            Text("No modules are installed.")
-                                .foregroundStyle(ForsettiColors.textSecondary)
-                        } else {
-                            // Lay out module cards in a responsive grid that adapts to screen width
-                            LazyVGrid(columns: columns, alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
-                                ForEach(moduleRegistry.modules, id: \.id) { module in
-                                    NavigationLink(value: module.id) {
-                                        ModuleCard(
-                                            moduleID: module.id,
-                                            title: module.title,
-                                            subtitle: module.subtitle,
-                                            iconSystemName: module.iconSystemName
-                                        )
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                    }
+            ForsettiWorkspaceShell(
+                backgroundStyle: .animatedBackdrop,
+                navigation: {
+                    CommandCenterNavigationRail(
+                        modules: modules,
+                        showSettings: { activeSheet = .settings },
+                        showDiagnostics: { activeSheet = .diagnostics }
+                    )
+                },
+                commandActivityBar: {
+                    ForsettiCommandActivityBar(state: activityState)
+                },
+                header: {
+                    CommandCenterHeader(
+                        hasCredentials: hasCredentials,
+                        moduleCount: modules.count
+                    )
+                },
+                content: {
+                    CommandCenterContent(
+                        modules: modules,
+                        hasCredentials: hasCredentials
+                    )
+                },
+                inspector: {
+                    CommandCenterInspector(
+                        hasCredentials: hasCredentials,
+                        modules: modules,
+                        showSettings: { activeSheet = .settings }
+                    )
+                },
+                bottomDrawer: {
+                    ForsettiDiagnosticsDrawer(items: diagnosticsItems)
                 }
-                .padding(.horizontal, ForsettiTheme.Spacing.section)
-                .padding(.vertical, ForsettiTheme.Spacing.section)
-            }
-            .background {
-                ZStack {
-                    ForsettiTheme.appBackground()
-                    ForsettiMetalBackgroundView()
-                    ForsettiTheme.appBackdropGradient.opacity(0.48)
-                }
-                .ignoresSafeArea()
-            }
+            )
             .navigationTitle("Forsetti")
             .toolbar {
                 ToolbarItem(placement: .forsettiTopBarLeading) {
@@ -135,10 +145,6 @@ struct DashboardView: View {
                 }
             }
             .navigationDestination(for: String.self) { moduleID in
-                // Resolve the module by ID and present its root view, or show an error.
-                // Note: NavigationStack provides the system back button automatically.
-                // Do NOT add .forsettiBackButtonToolbar() here — it creates a duplicate
-                // back button and can dismiss the whole module instead of popping.
                 if let module = moduleRegistry.module(withID: moduleID) {
                     module.makeRootView(context: container.moduleContext)
                         .navigationTitle(module.title)
@@ -155,137 +161,500 @@ struct DashboardView: View {
                 }
             }
             .onAppear {
-                // Refresh credential state in case the user saved/cleared while in another view
-                container.credentialsStore.refreshState()
+                container.refreshDashboardState()
             }
         }
     }
 }
 
-/// A status card that indicates whether Jamf Pro credentials are configured.
-/// Shows a green checkmark seal when connected, or an orange warning when credentials are missing.
-private struct CredentialStatusCard: View {
-    /// Whether the credential store currently has saved credentials.
-    let hasCredentials: Bool
+struct DashboardModuleSummary: Identifiable, Hashable {
+    enum Category: String, Hashable {
+        case inventory = "Inventory"
+        case operations = "Operations"
+        case reporting = "Reporting"
+        case deployment = "Deployment"
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
-            Label(
-                hasCredentials ? "Connected credentials configured" : "Credentials required",
-                systemImage: hasCredentials ? "checkmark.seal.fill" : "lock.trianglebadge.exclamationmark"
-            )
-            .font(.system(.headline, design: .rounded).weight(.semibold))
-            .foregroundStyle(hasCredentials ? ForsettiColors.success : ForsettiColors.warning)
-
-            Text(hasCredentials ?
-                 "Modules can call the Jamf API through the framework gateway." :
-                 "Open Settings to add Jamf Pro URL, choose one login method, verify, then save.")
-                .font(.subheadline)
-                .foregroundStyle(ForsettiColors.textSecondary)
+        var color: Color {
+            switch self {
+            case .inventory:
+                return ForsettiColors.accentCyan
+            case .operations:
+                return ForsettiColors.accentBlue
+            case .reporting:
+                return ForsettiColors.accentViolet
+            case .deployment:
+                return ForsettiColors.success
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .forsettiCardSurface()
+    }
+
+    let id: String
+    let title: String
+    let subtitle: String
+    let iconSystemName: String
+    let category: Category
+
+    var isDemo: Bool {
+        title.localizedCaseInsensitiveContains("demo")
+            || subtitle.localizedCaseInsensitiveContains("dummy data")
+            || subtitle.localizedCaseInsensitiveContains("no live")
+    }
+
+    init(module: any JamfModule) {
+        id = module.id
+        title = module.title
+        subtitle = module.subtitle
+        iconSystemName = module.iconSystemName
+        category = Self.category(for: module.id)
+    }
+
+    private static func category(for moduleID: String) -> Category {
+        if moduleID == "forsetti.feature.deployment-tracker" {
+            return .deployment
+        }
+        if moduleID.contains("reports") {
+            return .reporting
+        }
+        if moduleID.contains("support") || moduleID.contains("prestage") {
+            return .operations
+        }
+        return .inventory
     }
 }
 
-/// A compact card that represents an installed Jamf module in the dashboard grid.
-/// Displays the module's SF Symbol icon, title, and a short subtitle description.
-private struct ModuleCard: View {
-    /// The module's stable package/module identifier.
-    let moduleID: String
-    /// The module's display name shown as the card title.
-    let title: String
-    /// A short description of the module's purpose.
-    let subtitle: String
-    /// The SF Symbols name for the module's icon.
-    let iconSystemName: String
+private struct CommandCenterNavigationRail: View {
+    @Environment(\.forsettiWorkspaceNavigationPlacement) private var placement
 
-    private var isDeploymentTracker: Bool {
-        moduleID == "forsetti.feature.deployment-tracker" || title.localizedCaseInsensitiveContains("Deployment Tracker")
-    }
+    let modules: [DashboardModuleSummary]
+    let showSettings: () -> Void
+    let showDiagnostics: () -> Void
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
-                Image(systemName: iconSystemName)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(ForsettiColors.bluePrimary)
-                    .frame(width: 34, height: 34)
-                    .background(
-                        Circle()
-                            .fill(ForsettiColors.accentCyan.opacity(0.14))
-                    )
+        switch placement {
+        case .side:
+            sideRail
+        case .top:
+            topRail
+        }
+    }
 
-                Text(title)
-                    .font(.system(.headline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(ForsettiColors.textPrimary)
+    private var sideRail: some View {
+        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+            ForsettiBrandHeader()
 
-                if isDeploymentTracker {
-                    Text("Coming Soon")
-                        .font(.system(.title3, design: .rounded).weight(.bold))
-                        .foregroundStyle(ForsettiColors.warning)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityAddTraits(.isHeader)
+            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                Text("Workspace")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(ForsettiColors.textTertiary)
+                    .textCase(.uppercase)
+
+                ForEach(modules) { module in
+                    NavigationLink(value: module.id) {
+                        RailModuleRow(module: module)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            sideRailActions
+                .frame(maxHeight: .infinity, alignment: .bottom)
+        }
+        .padding(ForsettiTheme.Spacing.item)
+    }
+
+    private var sideRailActions: some View {
+        VStack(spacing: ForsettiTheme.Spacing.compact) {
+            Button(action: showDiagnostics) {
+                Label("Diagnostics", systemImage: "stethoscope")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.forsettiSecondary)
+
+            Button(action: showSettings) {
+                Label("Settings", systemImage: "gearshape")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.forsettiSecondary)
+        }
+    }
+
+    private var topRail: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: ForsettiTheme.Spacing.compact) {
+                ForsettiBrandHeader()
+                    .frame(width: 170)
+
+                ForEach(modules) { module in
+                    NavigationLink(value: module.id) {
+                        RailModuleRow(module: module, style: .compact)
+                    }
+                    .buttonStyle(.plain)
                 }
 
-                Text(subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(ForsettiColors.textSecondary)
-                    .lineLimit(isDeploymentTracker ? 2 : 3)
+                Divider()
+                    .frame(height: 28)
+                    .overlay(ForsettiTheme.border)
 
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
-            .padding(16)
+                Button(action: showDiagnostics) {
+                    Label("Diagnostics", systemImage: "stethoscope")
+                        .labelStyle(.iconOnly)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.forsettiSecondary)
+                .help("Diagnostics")
 
-            if isDeploymentTracker {
-                Text("Demo")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(ForsettiColors.textInverse)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(ForsettiColors.warning)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(Color.black.opacity(0.16), lineWidth: 1)
-                    }
-                    .padding(10)
-                    .accessibilityLabel("Demo")
+                Button(action: showSettings) {
+                    Label("Settings", systemImage: "gearshape")
+                        .labelStyle(.iconOnly)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.forsettiSecondary)
+                .help("Settings")
             }
+            .padding(.horizontal, ForsettiTheme.Spacing.item)
+            .padding(.vertical, ForsettiTheme.Spacing.compact)
         }
-        .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
-        .forsettiCardSurface()
+        .frame(maxWidth: .infinity, maxHeight: 68, alignment: .leading)
     }
 }
 
-/// A branded header bar displaying the Forsetti brand mark at the top of the dashboard
-/// with the current app version shown on the trailing side.
-private struct ForsettiBrandHeader: View {
-    /// Marketing version pulled from the bundle's `CFBundleShortVersionString`
-    /// (driven by `MARKETING_VERSION` in the Xcode project).
+private struct RailModuleRow: View {
+    enum Style {
+        case regular
+        case compact
+    }
+
+    let module: DashboardModuleSummary
+    let style: Style
+
+    init(module: DashboardModuleSummary, style: Style = .regular) {
+        self.module = module
+        self.style = style
+    }
+
+    var body: some View {
+        HStack(spacing: ForsettiTheme.Spacing.compact) {
+            Image(systemName: module.iconSystemName)
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(module.category.color)
+                .frame(width: 28, height: 28)
+                .background(module.category.color.opacity(0.14), in: RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(module.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(ForsettiColors.textPrimary)
+                    .lineLimit(1)
+                Text(module.isDemo ? "Demo" : module.category.rawValue)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(module.isDemo ? ForsettiColors.warning : ForsettiColors.textTertiary)
+            }
+        }
+        .padding(.horizontal, ForsettiTheme.Spacing.compact)
+        .padding(.vertical, 7)
+        .frame(maxWidth: style == .regular ? .infinity : nil, alignment: .leading)
+        .frame(width: style == .compact ? 180 : nil, alignment: .leading)
+        .background(ForsettiColors.backgroundPanelGlass.opacity(0.42), in: RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(module.category.color.opacity(0.18), lineWidth: 1)
+        }
+    }
+}
+
+private struct CommandCenterHeader: View {
+    let hasCredentials: Bool
+    let moduleCount: Int
+
     private var appVersion: String {
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? ""
     }
 
     var body: some View {
-        HStack(alignment: .center) {
-            ForsettiBrandMark()
+        ForsettiGlassCard(active: true) {
+            HStack(alignment: .center, spacing: ForsettiTheme.Spacing.section) {
+                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                    Text("Command Center")
+                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                        .foregroundStyle(ForsettiColors.textPrimary)
+                    Text("Retail operations workspace for Jamf Pro modules, diagnostics, reports, and deployment workflows.")
+                        .font(.callout)
+                        .foregroundStyle(ForsettiColors.textSecondary)
+                        .lineLimit(2)
+                }
 
-            Spacer(minLength: ForsettiTheme.Spacing.item)
+                Spacer(minLength: ForsettiTheme.Spacing.item)
 
-            if !appVersion.isEmpty {
-                Text("v\(appVersion)")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(ForsettiColors.textSecondary)
-                    .monospacedDigit()
-                    .accessibilityLabel("App version \(appVersion)")
+                VStack(alignment: .trailing, spacing: ForsettiTheme.Spacing.compact) {
+                    HStack(spacing: ForsettiTheme.Spacing.compact) {
+                        ForsettiStatusBadge(hasCredentials ? .connected : .pending, text: hasCredentials ? "Connected" : "Credentials")
+                        ForsettiStatusBadge(.ready, text: "\(moduleCount) modules")
+                    }
+
+                    if !appVersion.isEmpty {
+                        Text("v\(appVersion)")
+                            .font(.caption.monospacedDigit().weight(.semibold))
+                            .foregroundStyle(ForsettiColors.textTertiary)
+                    }
+                }
             }
         }
-        .padding(14)
+    }
+}
+
+private struct CommandCenterContent: View {
+    let modules: [DashboardModuleSummary]
+    let hasCredentials: Bool
+
+    private var columns: [GridItem] {
+        [GridItem(.adaptive(minimum: 210), spacing: ForsettiTheme.Spacing.item)]
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+                metricStrip
+
+                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                    Text("Modules")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(ForsettiColors.textPrimary)
+
+                    if modules.isEmpty {
+                        ContentUnavailableView(
+                            "No Modules Installed",
+                            systemImage: "square.grid.2x2",
+                            description: Text("Install or enable modules from Settings.")
+                        )
+                        .forsettiCardSurface(fill: ForsettiTheme.glassSurface)
+                    } else {
+                        LazyVGrid(columns: columns, alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                            ForEach(modules) { module in
+                                NavigationLink(value: module.id) {
+                                    CommandCenterModuleCard(module: module)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var metricStrip: some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 170), spacing: ForsettiTheme.Spacing.item)],
+            alignment: .leading,
+            spacing: ForsettiTheme.Spacing.item
+        ) {
+            CommandCenterMetricCard(
+                title: "Connection",
+                value: hasCredentials ? "Ready" : "Setup",
+                detail: hasCredentials ? "Credentials configured" : "Open Settings",
+                tint: hasCredentials ? ForsettiColors.success : ForsettiColors.warning,
+                symbolName: hasCredentials ? "checkmark.seal.fill" : "key.fill"
+            )
+
+            CommandCenterMetricCard(
+                title: "Modules",
+                value: "\(modules.count)",
+                detail: "Registered workspaces",
+                tint: ForsettiColors.accentCyan,
+                symbolName: "square.grid.3x3.fill"
+            )
+
+            CommandCenterMetricCard(
+                title: "Theme",
+                value: "Obsidian",
+                detail: "Data Stream active",
+                tint: ForsettiColors.accentViolet,
+                symbolName: "circle.hexagongrid.fill"
+            )
+
+            CommandCenterMetricCard(
+                title: "Boundary",
+                value: "Retail UI",
+                detail: "Single app module",
+                tint: ForsettiColors.accentBlue,
+                symbolName: "rectangle.3.group.fill"
+            )
+        }
+    }
+}
+
+private struct CommandCenterMetricCard: View {
+    let title: String
+    let value: String
+    let detail: String
+    let tint: Color
+    let symbolName: String
+
+    var body: some View {
+        ForsettiGlassCard(style: .dense) {
+            HStack(alignment: .center, spacing: ForsettiTheme.Spacing.item) {
+                Image(systemName: symbolName)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 36, height: 36)
+                    .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 12))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(ForsettiColors.textTertiary)
+                    Text(value)
+                        .font(.title3.monospacedDigit().weight(.bold))
+                        .foregroundStyle(ForsettiColors.textPrimary)
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(ForsettiColors.textSecondary)
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+}
+
+private struct CommandCenterModuleCard: View {
+    let module: DashboardModuleSummary
+
+    var body: some View {
+        ForsettiGlassCard(active: module.category == .deployment) {
+            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                HStack(alignment: .center) {
+                    Image(systemName: module.iconSystemName)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(module.category.color)
+                        .frame(width: 40, height: 40)
+                        .background(module.category.color.opacity(0.16), in: RoundedRectangle(cornerRadius: 12))
+
+                    Spacer(minLength: ForsettiTheme.Spacing.item)
+
+                    if module.isDemo {
+                        ForsettiStatusBadge(.warning, text: "Demo")
+                    }
+                    ForsettiStatusBadge(.ready, text: module.category.rawValue)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(module.title)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(ForsettiColors.textPrimary)
+                    Text(module.subtitle)
+                        .font(.footnote)
+                        .foregroundStyle(ForsettiColors.textSecondary)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+
+                HStack(spacing: ForsettiTheme.Spacing.compact) {
+                    Text("Open")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(module.category.color)
+                    Image(systemName: "arrow.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(module.category.color)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 176, alignment: .topLeading)
+        }
+    }
+}
+
+private struct CommandCenterInspector: View {
+    let hasCredentials: Bool
+    let modules: [DashboardModuleSummary]
+    let showSettings: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+            ForsettiGlassCard {
+                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                    HStack {
+                        Label("Tenant State", systemImage: hasCredentials ? "checkmark.shield.fill" : "lock.shield.fill")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(hasCredentials ? ForsettiColors.success : ForsettiColors.warning)
+                        Spacer(minLength: 0)
+                    }
+
+                    Text(hasCredentials ? "Jamf Pro credentials are configured for framework gateway use." : "Credentials are required before modules can call Jamf Pro through the framework gateway.")
+                        .font(.subheadline)
+                        .foregroundStyle(ForsettiColors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Button(action: showSettings) {
+                        Label(hasCredentials ? "Manage Credentials" : "Configure Credentials", systemImage: "key.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.forsettiPrimary)
+                }
+            }
+
+            ForsettiGlassCard(style: .dense) {
+                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+                    Text("Module Mix")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(ForsettiColors.textPrimary)
+
+                    ForEach(categoryCounts, id: \.category) { item in
+                        HStack {
+                            Circle()
+                                .fill(item.category.color)
+                                .frame(width: 8, height: 8)
+                            Text(item.category.rawValue)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(ForsettiColors.textSecondary)
+                            Spacer()
+                            Text("\(item.count)")
+                                .font(.caption.monospacedDigit().weight(.semibold))
+                                .foregroundStyle(ForsettiColors.textPrimary)
+                        }
+                    }
+                }
+            }
+
+            ForsettiGlassCard(style: .dense) {
+                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                    Text("Runtime Boundaries")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(ForsettiColors.textPrimary)
+                    ForsettiStatusBadge(.ready, text: "SwiftUI rendering")
+                    ForsettiStatusBadge(.ready, text: "Metal presentation")
+                    ForsettiStatusBadge(.ready, text: "Framework gateway")
+                }
+            }
+        }
+    }
+
+    private var categoryCounts: [(category: DashboardModuleSummary.Category, count: Int)] {
+        DashboardModuleSummary.Category.allCasesForDashboard.map { category in
+            (category, modules.filter { $0.category == category }.count)
+        }
+    }
+}
+
+private extension DashboardModuleSummary.Category {
+    static var allCasesForDashboard: [DashboardModuleSummary.Category] {
+        [.inventory, .operations, .reporting, .deployment]
+    }
+}
+
+private struct ForsettiBrandHeader: View {
+    var body: some View {
+        HStack(alignment: .center, spacing: ForsettiTheme.Spacing.item) {
+            ForsettiBrandMark()
+            Spacer(minLength: 0)
+        }
+        .padding(ForsettiTheme.Spacing.compact)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .forsettiCardSurface(fill: ForsettiTheme.glassSurface)
+        .background(ForsettiColors.backgroundPanelGlass.opacity(0.58), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(ForsettiTheme.border, lineWidth: 1)
+        }
     }
 }
 

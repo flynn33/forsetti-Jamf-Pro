@@ -7,20 +7,26 @@ import AppKit
 
 @MainActor
 final class ForsettiRetailUIFoundationTests: XCTestCase {
-    func testThemeDefinesCyanDataStreamTokens() {
-        XCTAssertEqual(ForsettiTheme.themeName, "Forsetti Cyan Data Stream")
-        XCTAssertEqual(ForsettiTheme.Opacity.glassFill, 0.72, accuracy: 0.001)
-        XCTAssertEqual(ForsettiTheme.Opacity.glassBorder, 0.18, accuracy: 0.001)
+    func testThemeDefinesObsidianDataStreamTokens() {
+        XCTAssertEqual(ForsettiTheme.themeName, "Forsetti Obsidian Data Stream")
+        XCTAssertEqual(ForsettiTheme.Opacity.glassFill, 0.78, accuracy: 0.001)
+        XCTAssertEqual(ForsettiTheme.Opacity.glassBorder, 0.28, accuracy: 0.001)
         XCTAssertEqual(ForsettiTheme.Opacity.activeGlow, 0.72, accuracy: 0.001)
 
-        assertColor(ForsettiColors.backgroundRoot, equalsHex: "#05070C")
-        assertColor(ForsettiColors.backgroundPanel, equalsHex: "#0E1622")
+        assertColor(ForsettiColors.backgroundRoot, equalsHex: "#020611")
+        assertColor(ForsettiColors.backgroundElevated, equalsHex: "#040913")
+        assertColor(ForsettiColors.backgroundPanel, equalsHex: "#07111F")
+        assertColor(ForsettiColors.backgroundPanelGlass, equalsHex: "#0B182B")
         assertColor(ForsettiColors.accentCyan, equalsHex: "#00E5FF")
-        assertColor(ForsettiColors.accentTeal, equalsHex: "#00F0D0")
-        assertColor(ForsettiColors.success, equalsHex: "#3EF2A3")
-        assertColor(ForsettiColors.warning, equalsHex: "#FFCC66")
-        assertColor(ForsettiColors.critical, equalsHex: "#FF5A7A")
-        assertColor(ForsettiColors.textPrimary, equalsHex: "#F4FAFF")
+        assertColor(ForsettiColors.accentCyanSoft, equalsHex: "#6CF6FF")
+        assertColor(ForsettiColors.accentBlue, equalsHex: "#2F7FFF")
+        assertColor(ForsettiColors.accentViolet, equalsHex: "#7A5CFF")
+        assertColor(ForsettiColors.success, equalsHex: "#37FFB0")
+        assertColor(ForsettiColors.warning, equalsHex: "#FFD166")
+        assertColor(ForsettiColors.critical, equalsHex: "#FF5C8A")
+        assertColor(ForsettiColors.textPrimary, equalsHex: "#EAFBFF")
+        assertColor(ForsettiColors.textSecondary, equalsHex: "#A8C7D8")
+        assertColor(ForsettiColors.textTertiary, equalsHex: "#63879A")
     }
 
     func testThemeDefinesRetailWorkspaceTokens() {
@@ -28,7 +34,10 @@ final class ForsettiRetailUIFoundationTests: XCTestCase {
         XCTAssertEqual(ForsettiTheme.Layout.navigationRailCollapsedWidth, 72)
         XCTAssertEqual(ForsettiTheme.Layout.rightInspectorWidth, 340)
         XCTAssertEqual(ForsettiTheme.Layout.commandActivityBarHeight, 54)
-        XCTAssertEqual(ForsettiTheme.Radius.panel, 22)
+        XCTAssertEqual(ForsettiTheme.Radius.small, 10)
+        XCTAssertEqual(ForsettiTheme.Radius.medium, 16)
+        XCTAssertEqual(ForsettiTheme.Radius.large, 22)
+        XCTAssertEqual(ForsettiTheme.Radius.panel, 28)
         XCTAssertEqual(ForsettiTheme.Radius.capsule, 999)
     }
 
@@ -92,6 +101,33 @@ final class ForsettiRetailUIFoundationTests: XCTestCase {
         XCTAssertEqual(adapted.summaryText, "Schedule OS Update")
     }
 
+    func testActivityStateCoversObsidianCommandPhases() {
+        let preparing = ForsettiCommandActivityState.preparing(
+            label: "Preparing command",
+            progress: -0.4
+        )
+        let waitingForJamf = ForsettiCommandActivityState.waitingForJamf(
+            label: "Waiting for Jamf Pro response"
+        )
+        let pollingStatus = ForsettiCommandActivityState.pollingStatus(
+            label: "Polling device status",
+            progress: 0.42
+        )
+        let cancelled = ForsettiCommandActivityState.cancelled(label: "Cancelled by operator")
+
+        XCTAssertEqual(preparing.progress, 0)
+        XCTAssertEqual(preparing.accessibilityValue, "0 percent")
+        XCTAssertTrue(preparing.isActive)
+        XCTAssertEqual(preparing.symbolName, "slider.horizontal.3")
+        XCTAssertEqual(waitingForJamf.accessibilityValue, "Active")
+        XCTAssertEqual(waitingForJamf.symbolName, "network")
+        XCTAssertEqual(pollingStatus.progress ?? -1, 0.42, accuracy: 0.001)
+        XCTAssertEqual(pollingStatus.summaryText, "Polling device status")
+        XCTAssertEqual(pollingStatus.symbolName, "dot.radiowaves.left.and.right")
+        XCTAssertFalse(cancelled.isActive)
+        XCTAssertEqual(cancelled.accessibilityValue, "Cancelled")
+    }
+
     func testWorkspaceShellAndGlassCardAreConstructible() {
         let shell = ForsettiWorkspaceShell(
             navigation: { Text("Navigation") },
@@ -111,6 +147,29 @@ final class ForsettiRetailUIFoundationTests: XCTestCase {
         _ = shell.body
         _ = card.body
         _ = activityBar.body
+    }
+
+    func testDiagnosticsDrawerConstructible() {
+        let item = ForsettiDiagnosticsDrawer.Item(
+            title: "Framework boundary",
+            value: "Retail UI module",
+            kind: .ready
+        )
+        let drawer = ForsettiDiagnosticsDrawer(items: [item])
+
+        XCTAssertEqual(item.accessibilityText, "Framework boundary, Retail UI module")
+        _ = drawer.body
+    }
+
+    func testDashboardSummaryPreservesDeploymentTrackerDemoMetadata() {
+        let module = DeploymentTrackerModule()
+        let summary = DashboardModuleSummary(module: module)
+
+        XCTAssertEqual(summary.title, module.title)
+        XCTAssertEqual(summary.subtitle, module.subtitle)
+        XCTAssertEqual(summary.iconSystemName, module.iconSystemName)
+        XCTAssertEqual(summary.category.rawValue, "Deployment")
+        XCTAssertTrue(summary.isDemo)
     }
 
     private func assertColor(

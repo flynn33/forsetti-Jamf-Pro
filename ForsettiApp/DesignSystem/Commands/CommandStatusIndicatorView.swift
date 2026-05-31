@@ -123,17 +123,19 @@ struct CommandStatusIndicatorView: View {
     private var accentColor: Color {
         switch phase {
         case .idle:
-            return Color.gray
-        case .sending, .queued:
-            return ForsettiColors.bluePrimary
+            return ForsettiColors.textTertiary
+        case .sending:
+            return ForsettiColors.accentCyan
+        case .queued:
+            return ForsettiColors.accentBlue
         case .verifying:
-            return .orange
+            return ForsettiColors.warning
         case .succeeded:
-            return ForsettiColors.greenPrimary
+            return ForsettiColors.success
         case .failed:
-            return .red
+            return ForsettiColors.critical
         case .timedOut:
-            return .orange
+            return ForsettiColors.warning
         }
     }
 
@@ -171,13 +173,13 @@ struct CommandStatusIndicatorView: View {
     private var captionForeground: Color {
         switch phase {
         case .succeeded:
-            return ForsettiColors.greenPrimary
+            return ForsettiColors.success
         case .failed:
-            return .red
+            return ForsettiColors.critical
         case .timedOut:
-            return .orange
+            return ForsettiColors.warning
         default:
-            return .secondary
+            return ForsettiColors.textSecondary
         }
     }
 
@@ -208,20 +210,28 @@ struct CommandStatusIndicatorView: View {
     static func renderPayload(for phase: CommandLifecyclePhase) -> (phase: CommandStatusPhaseFlag, accent: SIMD3<Float>) {
         switch phase {
         case .idle:
-            return (.idle, SIMD3<Float>(0.45, 0.50, 0.60))
+            return (.idle, vector(0x63879A))
         case .sending:
-            return (.inFlight, SIMD3<Float>(0.22, 0.55, 0.95))
+            return (.inFlight, vector(0x00E5FF))
         case .queued:
-            return (.queued, SIMD3<Float>(0.22, 0.55, 0.95))
+            return (.queued, vector(0x2F7FFF))
         case .verifying:
-            return (.verifying, SIMD3<Float>(0.95, 0.72, 0.18))
+            return (.verifying, vector(0xFFD166))
         case .succeeded:
-            return (.succeeded, SIMD3<Float>(0.18, 0.72, 0.40))
+            return (.succeeded, vector(0x37FFB0))
         case .failed:
-            return (.failed, SIMD3<Float>(0.92, 0.30, 0.30))
+            return (.failed, vector(0xFF5C8A))
         case .timedOut:
-            return (.timedOut, SIMD3<Float>(0.96, 0.62, 0.18))
+            return (.timedOut, vector(0xFFD166))
         }
+    }
+
+    private static func vector(_ value: UInt32) -> SIMD3<Float> {
+        SIMD3<Float>(
+            Float((value >> 16) & 0xFF) / 255.0,
+            Float((value >> 8) & 0xFF) / 255.0,
+            Float(value & 0xFF) / 255.0
+        )
     }
 }
 

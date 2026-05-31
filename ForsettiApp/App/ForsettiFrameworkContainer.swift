@@ -110,6 +110,11 @@ final class ForsettiFrameworkContainer: ObservableObject {
             diagnosticsReporter: diagnosticsCenter
         )
     }
+
+    /// Refreshes dashboard-observed state through the container boundary.
+    func refreshDashboardState() {
+        credentialsStore.refreshState()
+    }
 }
 
 //endofline
