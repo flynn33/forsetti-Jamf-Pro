@@ -40,16 +40,15 @@ extension View {
         }
     }
 
-    /// Applies a shared elevated card surface style with a rounded rectangle background,
-    /// a thin border stroke, and a configurable drop shadow. Used for dashboard cards,
-    /// status cards, and other elevated content containers.
+    /// Applies a shared elevated card surface style with configurable fill, border,
+    /// and shadow treatments.
     /// - Parameters:
     ///   - fill: The card background color. Defaults to `ForsettiTheme.surface`.
     ///   - border: The border stroke color. Defaults to `ForsettiTheme.border`.
     ///   - shadow: The drop shadow color. Defaults to `ForsettiTheme.shadowColor`.
-    ///   - shadowRadius: The drop shadow blur radius.
-    ///   - shadowY: The vertical drop shadow offset.
-    /// - Returns: The view wrapped in the card surface treatment.
+    ///   - shadowRadius: The drop shadow blur radius. Defaults to `10`.
+    ///   - shadowY: The vertical drop shadow offset. Defaults to `5`.
+    /// - Returns: A view styled as an elevated card surface.
     func forsettiCardSurface(
         fill: Color = ForsettiTheme.surface,
         border: Color = ForsettiTheme.border,

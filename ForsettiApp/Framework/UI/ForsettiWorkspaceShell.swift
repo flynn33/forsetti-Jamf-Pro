@@ -49,11 +49,9 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            let isCompact = width < ForsettiWorkspaceShellBreakpoint.compactWidth
-            let showsSideInspector = showsInspector && width >= ForsettiWorkspaceShellBreakpoint.sideInspectorWidth
-            let railWidth = width < ForsettiWorkspaceShellBreakpoint.collapsedRailWidth
-                ? ForsettiTheme.Layout.navigationRailCollapsedWidth
-                : ForsettiTheme.Layout.navigationRailWidth
+            let isCompact = isCompactWidth(width)
+            let showsSideInspector = showsSideInspector(for: width)
+            let railWidth = navigationRailWidth(for: width)
 
             if isCompact {
                 compactLayout
@@ -64,6 +62,20 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
         .background {
             ForsettiRetailWorkspaceBackground(style: backgroundStyle)
         }
+    }
+
+    private func isCompactWidth(_ width: CGFloat) -> Bool {
+        width < ForsettiWorkspaceShellBreakpoint.compactWidth
+    }
+
+    private func showsSideInspector(for width: CGFloat) -> Bool {
+        showsInspector && width >= ForsettiWorkspaceShellBreakpoint.sideInspectorWidth
+    }
+
+    private func navigationRailWidth(for width: CGFloat) -> CGFloat {
+        width < ForsettiWorkspaceShellBreakpoint.collapsedRailWidth
+            ? ForsettiTheme.Layout.navigationRailCollapsedWidth
+            : ForsettiTheme.Layout.navigationRailWidth
     }
 
     private var compactLayout: some View {

@@ -16,6 +16,33 @@ enum ForsettiCommandActivityState: Equatable {
     case blocked(label: String, reason: String)
     case cancelled(label: String)
 
+    var lastUpdated: Date? {
+        switch self {
+        case let .idle(lastUpdated):
+            return lastUpdated
+        default:
+            return nil
+        }
+    }
+
+    var retryAvailable: Bool {
+        switch self {
+        case let .failed(_, _, retryAvailable):
+            return retryAvailable
+        default:
+            return false
+        }
+    }
+
+    var requiredPrivilege: String? {
+        switch self {
+        case let .permissionDenied(_, requiredPrivilege):
+            return requiredPrivilege
+        default:
+            return nil
+        }
+    }
+
     var label: String {
         switch self {
         case .idle:
@@ -101,33 +128,6 @@ enum ForsettiCommandActivityState: Equatable {
     }
 
     var accessibilityLabel: String { label }
-
-    var lastUpdated: Date? {
-        switch self {
-        case let .idle(lastUpdated):
-            return lastUpdated
-        default:
-            return nil
-        }
-    }
-
-    var retryAvailable: Bool {
-        switch self {
-        case let .failed(_, _, retryAvailable):
-            return retryAvailable
-        default:
-            return false
-        }
-    }
-
-    var requiredPrivilege: String? {
-        switch self {
-        case let .permissionDenied(_, requiredPrivilege):
-            return requiredPrivilege
-        default:
-            return nil
-        }
-    }
 
     var accessibilityValue: String {
         if let progress {
