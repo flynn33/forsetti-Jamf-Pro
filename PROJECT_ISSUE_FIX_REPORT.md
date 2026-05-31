@@ -22,6 +22,7 @@ Scope: local staging material was migrated into `/Volumes/NVME/GitHub/Forsetti-J
 | Local safeguards | Hook scripts and helper scripts needed current product naming and stronger local checks. | Rewrote repository scripts and hooks for Forsetti naming, added bearer-token fallback scanning, and expanded commit-message attribution guards. | Customer-reference and attribution scans returned no matches. |
 | Hosted validation | The repository had no pull-request workflow checks. | Added a macOS validation workflow for sanitation, project resolution, and Xcode tests. | Pull request `Xcode tests` check passed. |
 | Hosted Swift isolation | Hosted Xcode treated module view factory calls as main actor-isolated and failed synchronous protocol dispatch. | Marked `JamfModule.makeRootView(context:)` as `@MainActor` so all module root-view factories execute on the correct actor. | Local and hosted Xcode tests passed after the fix. |
+| Provenance wording | A broad controlled-content scan found two repository-controlled provenance-style literals: a commit-trailer guard literal and a Jamf policy note phrase. | Split the guard literal while preserving guard behavior, and rewrote the Jamf policy note as operational text. | Broad content, path, Git metadata, and PR title/body/comment scans returned no matches. |
 
 ## Validation Evidence
 
@@ -33,6 +34,7 @@ Scope: local staging material was migrated into `/Volumes/NVME/GitHub/Forsetti-J
 - `xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=macOS' -derivedDataPath /tmp/forsetti-jamfpro-final-dd CODE_SIGNING_ALLOWED=NO test`: passed, 175 tests.
 - Pre-push Xcode validation: passed, 175 tests.
 - Hosted pull-request `Xcode tests`: passed.
+- Provenance marker scans across repository contents, file/path names, Git metadata, and PR title/body/comments: no matches.
 - `bash scripts/verify-no-customer-references.sh .`: passed.
 - Repository attribution scan: no matches.
 

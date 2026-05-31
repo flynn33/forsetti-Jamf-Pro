@@ -138,6 +138,7 @@ xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=m
 Forsetti Framework package tests: passed, 37 tests, 0 failures.
 Forsetti app tests: passed, 175 tests, 0 failures.
 Hosted PR Xcode tests: passed.
+Provenance marker scans: passed, no controlled-content matches.
 ```
 
 ## Acceptance Gates
@@ -150,6 +151,7 @@ Hosted PR Xcode tests: passed.
 | Forsetti Framework integrated | Pass | Xcode package resolved at `47b7747`; app target links `ForsettiCore` and `ForsettiPlatform`. |
 | Build passes | Pass | `xcodebuild -list -project Forsetti.xcodeproj` passed. |
 | Tests pass | Pass | Full app suite passed, 175 tests, 0 failures. |
+| No provenance markers | Pass | Broad content, path, Git metadata, and PR title/body/comment scans returned no matches. |
 | Hosted validation | Pass | `.github/workflows/macos-validation.yml` ran pull-request sanitation and Xcode tests successfully. |
 | Clean Git history | Pass | Empty `main` seed commit plus initial sanitized project commit on `initial-project`. |
 
@@ -157,6 +159,7 @@ Hosted PR Xcode tests: passed.
 
 - Remote: `https://github.com/flynn33/forsetti-Jamf-Pro`
 - Initial sanitized commit hash: `85f7f6ed143f649a543bfd5b4abddf444ff601a0`
+- Current project branch head: `c0ffdbe967fb0e95916e53ef6e44eab52b5b9d29`
 - Hosted validation remediation commit: `0d5450a4b44504c4fddf1d712820811ded9a8692`
 - Pushed: yes, branch `initial-project`.
 - Pull request: `https://github.com/flynn33/forsetti-Jamf-Pro/pull/1`
@@ -165,5 +168,6 @@ Hosted PR Xcode tests: passed.
 
 ```text
 - No remote check blockers remain on the pull request at close-out.
+- A published external review-size notice remains as GitHub review metadata; no repository-controlled content or PR title/body/comment contains provenance markers.
 - The manifest-backed framework runtime is validated and available; the existing app UI still renders through the current local module container pending a later full UI bridge.
 ```
