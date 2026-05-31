@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# pre-commit hook — Local enforcement of checks that would otherwise
+# run in CI (artifact policy, lint, secret scan). Runs only on changes
+# staged for commit, so it stays fast enough to live on every commit.
+#
+# Installed by running scripts/install-hooks.sh once per clone, which
+# sets core.hooksPath to .githooks/. Committed to the repo so every
+# developer gets the same enforcement.
+#
+# To bypass for a one-off commit: `git commit --no-verify`.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+FAILED=0
+
+# ═════════════════════════════════════════════════════════════════════════
+# 1. Artifact policy — reject commits that track build output
+# ═════════════════════════════════════════════════════════════════════════
+#
+# Binary build output, signed archives, debug symbols, packaged
+# distributables, and Xcode user state must never be tracked. Every one
+# of these patterns is already in .gitignore, but a developer could add
+# them with `git add -f` or by editing .gitignore at the same time.
+# Catch those explicitly here.
+
+PROHIBITED_REGEX='^(build/|DerivedData/|.+\.xcarchive(/|$)|.+\.dSYM(/|$)|.+\.dSYM\.zip$|.+\.ipa$|.+\.pkg\.zip$|.+\.app\.zip$|.+\.xcuserstate$|xcuserdata/|\.swiftpm/)'
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+
+if [[ -n "$STAGED_FILES" ]]; then
+  OFFENDERS=$(echo "$STAGED_FILES" | grep -E "$PROHIBITED_REGEX" || true)
+  if [[ -n "$OFFENDERS" ]]; then
+    echo "╔═══════════════════════════════════════════════════════════════════╗"
+    echo "║ pre-commit: artifact policy — commit REJECTED                     ║"
+    echo "╚═══════════════════════════════════════════════════════════════════╝"
+    echo "These paths must not be tracked in git:"
+    echo "$OFFENDERS" | sed 's/^/  • /'
+    echo ""
+    echo "Unstage them with: git rm --cached <path>"
+    echo ""
+    FAILED=1
+  fi
+fi
+
+# ═════════════════════════════════════════════════════════════════════════
+# 2. SwiftLint — run against staged Swift files only (fast path)
+# ═════════════════════════════════════════════════════════════════════════
+#
+# Full-repo lint runs in seconds anyway, but staged-only keeps the hook
+# snappy when a dev is making tiny commits in quick succession. Config
+# lives in .swiftlint.yml at repo root. Missing swiftlint is warned, not
+# fatal — devs without it installed can still commit; a teammate with
+# swiftlint installed will catch any issues.
+
+STAGED_SWIFT_FILES=$(echo "$STAGED_FILES" | grep -E '\.swift$' || true)
+
+if [[ -n "$STAGED_SWIFT_FILES" ]]; then
+  if command -v swiftlint >/dev/null 2>&1; then
+    # SwiftLint's `lint --use-script-input-files` reads file list from
+    # SCRIPT_INPUT_FILE_n env vars. Build them here from the staged list.
+    INPUT_COUNT=0
+    INPUT_VARS=()
+    while IFS= read -r f; do
+      [[ -z "$f" ]] && continue
+      # Resolve to absolute path since the hook may run from any dir.
+      INPUT_VARS+=("SCRIPT_INPUT_FILE_${INPUT_COUNT}=$REPO_ROOT/$f")
+      INPUT_COUNT=$((INPUT_COUNT + 1))
+    done <<< "$STAGED_SWIFT_FILES"
+
+    if [[ $INPUT_COUNT -gt 0 ]]; then
+      # Capture output so we can print it only on failure.
+      LINT_OUTPUT=$(env "${INPUT_VARS[@]}" SCRIPT_INPUT_FILE_COUNT=$INPUT_COUNT \
+        swiftlint lint --use-script-input-files --config "$REPO_ROOT/.swiftlint.yml" --quiet 2>&1) || LINT_EXIT=$?
+      LINT_EXIT="${LINT_EXIT:-0}"
+      if echo "$LINT_OUTPUT" | grep -qE ': error:'; then
+        echo "╔═══════════════════════════════════════════════════════════════════╗"
+        echo "║ pre-commit: SwiftLint found issues — commit REJECTED              ║"
+        echo "╚═══════════════════════════════════════════════════════════════════╝"
+        echo "$LINT_OUTPUT"
+        echo ""
+        FAILED=1
+      fi
+    fi
+  else
+    # Once-per-session informational nudge. Using a marker file in the
+    # repo's .git dir so it doesn't spam the dev on every commit.
+    MARKER="$(git rev-parse --git-dir)/.swiftlint-missing-notified"
+    if [[ ! -f "$MARKER" ]]; then
+      echo "pre-commit: swiftlint not installed — lint skipped. (brew install swiftlint to enable.)"
+      touch "$MARKER"
+    fi
+  fi
+fi
+
+# ═════════════════════════════════════════════════════════════════════════
+# 3. Secret scan — reject staged diffs that contain credential-shaped text
+# ═════════════════════════════════════════════════════════════════════════
+#
+# Two paths:
+#   (a) If gitleaks is installed, use it — it has a much richer ruleset
+#       and fewer false positives.
+#   (b) Otherwise, an inline scanner for a conservative set of patterns
+#       that are unambiguous (AWS access key ID, private-key PEM headers,
+#       JWT-like tokens with high entropy). Staged diff only, so existing
+#       historical secrets don't re-flag on every commit.
+
+STAGED_DIFF=$(git diff --cached --unified=0 2>/dev/null || true)
+
+if [[ -n "$STAGED_DIFF" ]]; then
+  if command -v gitleaks >/dev/null 2>&1; then
+    if ! gitleaks protect --staged --no-banner --redact >/dev/null 2>&1; then
+      # Re-run with output so the dev sees the findings.
+      echo "╔═══════════════════════════════════════════════════════════════════╗"
+      echo "║ pre-commit: gitleaks flagged secrets — commit REJECTED            ║"
+      echo "╚═══════════════════════════════════════════════════════════════════╝"
+      gitleaks protect --staged --no-banner --redact || true
+      FAILED=1
+    fi
+  else
+    # Inline fallback: only scan added lines (prefixed `+` in the diff)
+    # and only against patterns that are not easily triggered by
+    # legitimate code.
+    #
+    # Patterns:
+    #   • AWS access key ID     — AKIA / ASIA followed by 16 chars
+    #   • AWS secret access key — 40-char base64-ish secret after
+    #     `aws_secret_access_key`
+    #   • Private-key PEM       — `-----BEGIN ... PRIVATE KEY-----`
+    #   • Generic bearer-like   — `Bearer` followed by 32+ char token
+    #     WITHOUT a placeholder like `YOUR_TOKEN` / `<...>` / `$VAR`
+    #
+    # A 40+ char string embedded in code is allowed unless it matches
+    # one of these shapes — false positives on long strings are too
+    # common to block on.
+
+    ADDED_LINES=$(echo "$STAGED_DIFF" | grep '^+' | grep -v '^+++' || true)
+    FINDINGS=""
+
+    if echo "$ADDED_LINES" | grep -qE 'A(KIA|SIA)[0-9A-Z]{16}'; then
+      FINDINGS+="  • AWS access key ID pattern (AKIA/ASIA followed by 16 chars)"$'\n'
+    fi
+
+    if echo "$ADDED_LINES" | grep -qE 'aws_secret_access_key[[:space:]]*[=:][[:space:]]*["'"'"']?[A-Za-z0-9/+=]{40}'; then
+      FINDINGS+="  • AWS secret access key assignment"$'\n'
+    fi
+
+    if echo "$ADDED_LINES" | grep -qE -- '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'; then
+      FINDINGS+="  • PEM private-key header"$'\n'
+    fi
+
+    if echo "$ADDED_LINES" | grep -qE 'Bearer[[:space:]]+[A-Za-z0-9._~+/=-]{32,}' \
+      && ! echo "$ADDED_LINES" | grep -qE 'Bearer[[:space:]]+(YOUR_|<|\\$|example|placeholder|token_here)'; then
+      FINDINGS+="  • bearer-like token"$'\n'
+    fi
+
+    if [[ -n "$FINDINGS" ]]; then
+      echo "╔═══════════════════════════════════════════════════════════════════╗"
+      echo "║ pre-commit: secret-like content in staged diff — commit REJECTED  ║"
+      echo "╚═══════════════════════════════════════════════════════════════════╝"
+      echo "$FINDINGS"
+      echo "If this is a test fixture, move it outside the repo or use a"
+      echo "placeholder that does not match the real format."
+      echo ""
+      FAILED=1
+    fi
+  fi
+fi
+
+# ═════════════════════════════════════════════════════════════════════════
+# Final verdict
+# ═════════════════════════════════════════════════════════════════════════
+
+if [[ "$FAILED" -ne 0 ]]; then
+  echo "pre-commit: one or more checks failed. Fix the above, then re-commit."
+  echo "(To bypass for a one-off: git commit --no-verify)"
+  exit 1
+fi
+
+exit 0

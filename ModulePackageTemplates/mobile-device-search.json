@@ -1,0 +1,8 @@
+{
+  "package_id": "forsetti.feature.mobile-device-search",
+  "module_type": "mobile-device-search",
+  "package_version": "1.0.0",
+  "module_display_name": "Mobile Device Search",
+  "module_subtitle": "Search inventory and create reusable field-based profiles.",
+  "icon_system_name": "iphone.gen3"
+}

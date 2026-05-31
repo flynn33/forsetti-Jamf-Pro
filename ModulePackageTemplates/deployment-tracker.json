@@ -1,0 +1,8 @@
+{
+  "package_id": "forsetti.feature.deployment-tracker",
+  "module_type": "deployment-tracker",
+  "package_version": "1.0.0",
+  "module_display_name": "Deployment Tracker Demo",
+  "module_subtitle": "Interactive preview of the upcoming Deployment Tracker Module. Uses demo data only. No live Jamf actions.",
+  "icon_system_name": "sparkles.rectangle.stack"
+}

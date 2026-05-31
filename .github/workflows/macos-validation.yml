@@ -1,0 +1,33 @@
+name: macOS validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Xcode tests
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sanitation scan
+        run: bash scripts/verify-no-customer-references.sh .
+
+      - name: Resolve project
+        run: xcodebuild -list -project Forsetti.xcodeproj
+
+      - name: Test
+        run: >
+          xcodebuild
+          -project Forsetti.xcodeproj
+          -scheme Forsetti
+          -destination 'platform=macOS'
+          CODE_SIGNING_ALLOWED=NO
+          test
