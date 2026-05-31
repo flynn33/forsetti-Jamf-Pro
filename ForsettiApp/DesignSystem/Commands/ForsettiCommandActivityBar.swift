@@ -45,7 +45,7 @@ extension ForsettiCommandActivityState {
         }
     }
 
-    var label: String {
+    var summaryText: String {
         switch self {
         case .idle:
             return "Ready"
@@ -129,7 +129,7 @@ extension ForsettiCommandActivityState {
         }
     }
 
-    var accessibilityLabel: String { label }
+    var accessibilityLabel: String { summaryText }
 
     var accessibilityValue: String {
         if let progress {
@@ -217,7 +217,7 @@ struct ForsettiCommandActivityBar: View {
                     .foregroundStyle(state.tint)
                     .frame(width: 24)
 
-                Text(state.label)
+                Text(state.summaryText)
                     .font(.callout.weight(.semibold))
                     .lineLimit(1)
                     .truncationMode(.tail)

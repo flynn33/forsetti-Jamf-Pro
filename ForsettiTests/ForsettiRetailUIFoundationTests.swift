@@ -70,7 +70,7 @@ final class ForsettiRetailUIFoundationTests: XCTestCase {
         let adapted = ForsettiCommandActivityState(commandLifecycle: commandLifecycle)
 
         XCTAssertEqual(adapted.progress, 0.25)
-        XCTAssertEqual(adapted.label, "Schedule OS Update")
+        XCTAssertEqual(adapted.summaryText, "Schedule OS Update")
     }
 
     func testWorkspaceShellAndGlassCardAreConstructible() {
