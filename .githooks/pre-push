@@ -7,7 +7,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 ATTRIBUTION_PATTERNS=(
-  "^Co-Authored-By:"
+  "^Co-""Authored-""By:"
   "^Generat""ed by "
   "^Generat""ed with "
   "^Authored by "
