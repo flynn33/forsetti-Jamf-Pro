@@ -6,6 +6,12 @@ enum ForsettiWorkspaceShellBackgroundStyle {
     case animatedBackdrop
 }
 
+private enum ForsettiWorkspaceShellBreakpoint {
+    static let compactWidth: CGFloat = 760
+    static let collapsedRailWidth: CGFloat = 920
+    static let sideInspectorWidth: CGFloat = 1120
+}
+
 /// Shared retail workspace frame for Forsetti screens.
 struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: View, Content: View, Inspector: View, BottomDrawer: View>: View {
     private let navigation: Navigation
@@ -43,9 +49,9 @@ struct ForsettiWorkspaceShell<Navigation: View, CommandActivity: View, Header: V
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            let isCompact = width < 760
-            let showsSideInspector = showsInspector && width >= 1120
-            let railWidth = width < 920
+            let isCompact = width < ForsettiWorkspaceShellBreakpoint.compactWidth
+            let showsSideInspector = showsInspector && width >= ForsettiWorkspaceShellBreakpoint.sideInspectorWidth
+            let railWidth = width < ForsettiWorkspaceShellBreakpoint.collapsedRailWidth
                 ? ForsettiTheme.Layout.navigationRailCollapsedWidth
                 : ForsettiTheme.Layout.navigationRailWidth
 

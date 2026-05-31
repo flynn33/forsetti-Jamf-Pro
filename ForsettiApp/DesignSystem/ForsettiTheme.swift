@@ -48,7 +48,7 @@ enum ForsettiTheme {
         /// Width for the persistent navigation rail on wide macOS layouts.
         static let navigationRailWidth: CGFloat = 240
 
-        /// Compact rail width used when callers opt into a collapsed shell.
+        /// Compact rail width selected by the responsive workspace shell.
         static let navigationRailCollapsedWidth: CGFloat = 72
 
         /// Width for the contextual inspector on wide macOS layouts.

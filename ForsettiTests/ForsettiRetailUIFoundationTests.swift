@@ -48,11 +48,20 @@ final class ForsettiRetailUIFoundationTests: XCTestCase {
             message: "Permission denied",
             retryAvailable: false
         )
+        let idleDate = Date(timeIntervalSinceReferenceDate: 12)
+        let idle = ForsettiCommandActivityState.idle(lastUpdated: idleDate)
+        let permissionDenied = ForsettiCommandActivityState.permissionDenied(
+            label: "Erase device",
+            requiredPrivilege: "Device Management"
+        )
 
         XCTAssertEqual(active.progress, 1.0)
         XCTAssertEqual(active.accessibilityValue, "100 percent")
         XCTAssertEqual(failed.accessibilityLabel, "Update inventory: Permission denied")
         XCTAssertEqual(failed.symbolName, "xmark.octagon.fill")
+        XCTAssertFalse(failed.retryAvailable)
+        XCTAssertEqual(idle.lastUpdated, idleDate)
+        XCTAssertEqual(permissionDenied.requiredPrivilege, "Device Management")
 
         let commandLifecycle = CommandLifecyclePhase.sending(
             action: .scheduleOSUpdate,
@@ -80,8 +89,8 @@ final class ForsettiRetailUIFoundationTests: XCTestCase {
             state: .querying(label: "Querying inventory", progress: nil)
         )
 
-        XCTAssertNotNil(shell)
-        XCTAssertNotNil(card)
-        XCTAssertNotNil(activityBar)
+        _ = shell.body
+        _ = card.body
+        _ = activityBar.body
     }
 }
