@@ -58,8 +58,19 @@ extension View {
     ) -> some View {
         let shape = RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card, style: .continuous)
         return self
-            .background(shape.fill(fill))
-            .overlay(shape.strokeBorder(border, lineWidth: 1))
+            .background {
+                shape
+                    .fill(fill)
+                    .overlay {
+                        shape.fill(ForsettiColors.accentCyan.opacity(0.025))
+                    }
+            }
+            .overlay {
+                shape.strokeBorder(border, lineWidth: 1)
+            }
+            .overlay {
+                shape.strokeBorder(ForsettiColors.textPrimary.opacity(0.05), lineWidth: 0.5)
+            }
             .shadow(color: shadow, radius: shadowRadius, x: 0, y: shadowY)
     }
 
@@ -67,7 +78,7 @@ extension View {
     /// Used for sticky action bars at the bottom of scrollable content.
     func forsettiBottomBarSurface() -> some View {
         self
-            .background(ForsettiTheme.groupedSurface)
+            .background(ForsettiTheme.toolbarSurface)
             .overlay(alignment: .top) {
                 Divider()
                     .overlay(ForsettiTheme.border)

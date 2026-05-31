@@ -1,9 +1,28 @@
 import XCTest
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 @testable import Forsetti
 
 @MainActor
 final class ForsettiRetailUIFoundationTests: XCTestCase {
+    func testThemeDefinesCyanDataStreamTokens() {
+        XCTAssertEqual(ForsettiTheme.themeName, "Forsetti Cyan Data Stream")
+        XCTAssertEqual(ForsettiTheme.Opacity.glassFill, 0.72, accuracy: 0.001)
+        XCTAssertEqual(ForsettiTheme.Opacity.glassBorder, 0.18, accuracy: 0.001)
+        XCTAssertEqual(ForsettiTheme.Opacity.activeGlow, 0.72, accuracy: 0.001)
+
+        assertColor(ForsettiColors.backgroundRoot, equalsHex: "#05070C")
+        assertColor(ForsettiColors.backgroundPanel, equalsHex: "#0E1622")
+        assertColor(ForsettiColors.accentCyan, equalsHex: "#00E5FF")
+        assertColor(ForsettiColors.accentTeal, equalsHex: "#00F0D0")
+        assertColor(ForsettiColors.success, equalsHex: "#3EF2A3")
+        assertColor(ForsettiColors.warning, equalsHex: "#FFCC66")
+        assertColor(ForsettiColors.critical, equalsHex: "#FF5A7A")
+        assertColor(ForsettiColors.textPrimary, equalsHex: "#F4FAFF")
+    }
+
     func testThemeDefinesRetailWorkspaceTokens() {
         XCTAssertEqual(ForsettiTheme.Layout.navigationRailWidth, 240)
         XCTAssertEqual(ForsettiTheme.Layout.navigationRailCollapsedWidth, 72)
@@ -92,5 +111,34 @@ final class ForsettiRetailUIFoundationTests: XCTestCase {
         _ = shell.body
         _ = card.body
         _ = activityBar.body
+    }
+
+    private func assertColor(
+        _ color: Color,
+        equalsHex hex: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+#if os(macOS)
+        let expected = Self.components(from: hex)
+        guard let actual = NSColor(color).usingColorSpace(.sRGB) else {
+            XCTFail("Unable to resolve color in sRGB", file: file, line: line)
+            return
+        }
+
+        XCTAssertEqual(actual.redComponent, expected.red, accuracy: 0.004, file: file, line: line)
+        XCTAssertEqual(actual.greenComponent, expected.green, accuracy: 0.004, file: file, line: line)
+        XCTAssertEqual(actual.blueComponent, expected.blue, accuracy: 0.004, file: file, line: line)
+#endif
+    }
+
+    private static func components(from hex: String) -> (red: CGFloat, green: CGFloat, blue: CGFloat) {
+        let raw = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        let value = Int(raw, radix: 16) ?? 0
+        return (
+            red: CGFloat((value >> 16) & 0xFF) / 255,
+            green: CGFloat((value >> 8) & 0xFF) / 255,
+            blue: CGFloat(value & 0xFF) / 255
+        )
     }
 }

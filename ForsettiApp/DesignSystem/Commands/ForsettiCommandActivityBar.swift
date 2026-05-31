@@ -89,14 +89,16 @@ extension ForsettiCommandActivityState {
 
     var tint: Color {
         switch self {
-        case .idle, .querying, .sendingCommand, .waitingForTenant, .waitingForDevice, .validating, .rendering, .exporting:
-            return ForsettiColors.bluePrimary
+        case .idle:
+            return ForsettiColors.accentCyanSoft
+        case .querying, .sendingCommand, .waitingForTenant, .waitingForDevice, .validating, .rendering, .exporting:
+            return ForsettiColors.accentCyan
         case .completed:
-            return ForsettiColors.greenPrimary
+            return ForsettiColors.success
         case .failed, .blocked:
-            return .red
+            return ForsettiColors.critical
         case .permissionDenied, .cancelled:
-            return .orange
+            return ForsettiColors.warning
         }
     }
 
@@ -219,6 +221,7 @@ struct ForsettiCommandActivityBar: View {
 
                 Text(state.summaryText)
                     .font(.callout.weight(.semibold))
+                    .foregroundStyle(ForsettiColors.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -251,9 +254,9 @@ struct ForsettiCommandActivityBar: View {
     private var trackBackground: LinearGradient {
         LinearGradient(
             colors: [
-                ForsettiTheme.groupedSurface.opacity(0.96),
-                ForsettiTheme.surface.opacity(0.88),
-                state.tint.opacity(0.08)
+                ForsettiColors.toolbar.opacity(0.92),
+                ForsettiColors.backgroundPanelGlass.opacity(0.78),
+                state.tint.opacity(0.14)
             ],
             startPoint: .leading,
             endPoint: .trailing

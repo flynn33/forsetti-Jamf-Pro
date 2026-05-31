@@ -30,16 +30,18 @@ struct ForsettiGlassCard<Content: View>: View {
     }
 
     private var cardFill: Color {
-        ForsettiTheme.groupedSurface.opacity(active ? 0.94 : 0.86)
+        active
+            ? ForsettiColors.backgroundPanelGlass.opacity(0.84)
+            : ForsettiTheme.glassSurface
     }
 
     private var borderColor: Color {
-        active ? ForsettiColors.bluePrimary.opacity(0.78) : ForsettiTheme.border
+        active ? ForsettiTheme.strongBorder : ForsettiTheme.border
     }
 
     private var shadowColor: Color {
         guard style == .elevated else { return .clear }
-        return active ? ForsettiColors.bluePrimary.opacity(0.18) : ForsettiTheme.shadowColor
+        return active ? ForsettiColors.accentCyan.opacity(0.30) : ForsettiTheme.shadowColor
     }
 
     private var padding: CGFloat {
@@ -125,15 +127,15 @@ struct ForsettiStatusBadge: View {
         var color: Color {
             switch self {
             case .connected, .reachable, .trusted, .compliant, .ready, .succeeded:
-                return ForsettiColors.greenPrimary
+                return ForsettiColors.success
             case .pending, .queued, .verifying:
-                return ForsettiColors.bluePrimary
+                return ForsettiColors.accentCyan
             case .stale, .warning, .permissionDenied:
-                return .orange
+                return ForsettiColors.warning
             case .blocked, .failed:
-                return .red
+                return ForsettiColors.critical
             case .unsupported:
-                return .secondary
+                return ForsettiColors.offline
             }
         }
     }
