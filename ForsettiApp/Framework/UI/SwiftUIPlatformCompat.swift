@@ -40,24 +40,45 @@ extension View {
         }
     }
 
-    /// Applies a shared elevated card surface style with a rounded rectangle background,
-    /// a thin border stroke, and a subtle drop shadow. Used for dashboard cards,
-    /// status cards, and other elevated content containers.
-    /// - Parameter fill: The card background color. Defaults to `ForsettiTheme.surface`.
-    /// - Returns: The view wrapped in the card surface treatment.
-    func forsettiCardSurface(fill: Color = ForsettiTheme.surface) -> some View {
+    /// Applies a shared elevated card surface style with configurable fill, border,
+    /// and shadow treatments.
+    /// - Parameters:
+    ///   - fill: The card background color. Defaults to `ForsettiTheme.surface`.
+    ///   - border: The border stroke color. Defaults to `ForsettiTheme.border`.
+    ///   - shadow: The drop shadow color. Defaults to `ForsettiTheme.shadowColor`.
+    ///   - shadowRadius: The drop shadow blur radius. Defaults to `10`.
+    ///   - shadowY: The vertical drop shadow offset. Defaults to `5`.
+    /// - Returns: A view styled as an elevated card surface.
+    func forsettiCardSurface(
+        fill: Color = ForsettiTheme.surface,
+        border: Color = ForsettiTheme.border,
+        shadow: Color = ForsettiTheme.shadowColor,
+        shadowRadius: CGFloat = 10,
+        shadowY: CGFloat = 5
+    ) -> some View {
         let shape = RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card, style: .continuous)
         return self
-            .background(shape.fill(fill))
-            .overlay(shape.stroke(ForsettiTheme.border, lineWidth: 1))
-            .shadow(color: ForsettiTheme.shadowColor, radius: 10, x: 0, y: 5)
+            .background {
+                shape
+                    .fill(fill)
+                    .overlay {
+                        shape.fill(ForsettiColors.accentCyan.opacity(0.025))
+                    }
+            }
+            .overlay {
+                shape.strokeBorder(border, lineWidth: 1)
+            }
+            .overlay {
+                shape.strokeBorder(ForsettiColors.textPrimary.opacity(0.05), lineWidth: 0.5)
+            }
+            .shadow(color: shadow, radius: shadowRadius, x: 0, y: shadowY)
     }
 
     /// Applies a bottom bar surface treatment with a top divider and upward shadow.
     /// Used for sticky action bars at the bottom of scrollable content.
     func forsettiBottomBarSurface() -> some View {
         self
-            .background(ForsettiTheme.groupedSurface)
+            .background(ForsettiTheme.toolbarSurface)
             .overlay(alignment: .top) {
                 Divider()
                     .overlay(ForsettiTheme.border)

@@ -29,9 +29,10 @@ struct ForsettiApp: App {
             // Root view — renders the module dashboard grid and injects
             // the framework container for dependency access throughout the view hierarchy.
             DashboardView(container: container)
-                .tint(ForsettiColors.bluePrimary)       // Apply Forsetti brand tint globally
+                .tint(ForsettiTheme.accent)             // Apply Forsetti brand tint globally
                 .forsettiRoundedTypography()             // Use rounded system font design
                 .forsettiAppBackground()                 // Apply branded gradient backdrop
+                .preferredColorScheme(.dark)             // Use the fixed retail dark theme
 #if os(macOS)
                 .frame(minWidth: 1200, minHeight: 820) // Enforce minimum window size on macOS
 #endif

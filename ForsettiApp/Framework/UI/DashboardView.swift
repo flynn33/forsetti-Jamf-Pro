@@ -46,10 +46,11 @@ struct DashboardView: View {
                     VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
                         Text("Installed Modules")
                             .font(.system(.headline, design: .rounded).weight(.semibold))
+                            .foregroundStyle(ForsettiColors.textPrimary)
 
                         if moduleRegistry.modules.isEmpty {
                             Text("No modules are installed.")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(ForsettiColors.textSecondary)
                         } else {
                             // Lay out module cards in a responsive grid that adapts to screen width
                             LazyVGrid(columns: columns, alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
@@ -72,11 +73,10 @@ struct DashboardView: View {
                 .padding(.vertical, ForsettiTheme.Spacing.section)
             }
             .background {
-                // Layered background: grouped surface, Metal shader, and gradient overlay
                 ZStack {
-                    ForsettiTheme.groupedSurface
+                    ForsettiTheme.appBackground()
                     ForsettiMetalBackgroundView()
-                    ForsettiTheme.appBackdropGradient.opacity(0.62)
+                    ForsettiTheme.appBackdropGradient.opacity(0.48)
                 }
                 .ignoresSafeArea()
             }
@@ -175,13 +175,13 @@ private struct CredentialStatusCard: View {
                 systemImage: hasCredentials ? "checkmark.seal.fill" : "lock.trianglebadge.exclamationmark"
             )
             .font(.system(.headline, design: .rounded).weight(.semibold))
-            .foregroundStyle(hasCredentials ? ForsettiColors.greenPrimary : .orange)
+            .foregroundStyle(hasCredentials ? ForsettiColors.success : ForsettiColors.warning)
 
             Text(hasCredentials ?
                  "Modules can call the Jamf API through the framework gateway." :
                  "Open Settings to add Jamf Pro URL, choose one login method, verify, then save.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(ForsettiColors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -214,24 +214,24 @@ private struct ModuleCard: View {
                     .frame(width: 34, height: 34)
                     .background(
                         Circle()
-                            .fill(ForsettiColors.blueSecondary.opacity(0.22))
+                            .fill(ForsettiColors.accentCyan.opacity(0.14))
                     )
 
                 Text(title)
                     .font(.system(.headline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(ForsettiColors.textPrimary)
 
                 if isDeploymentTracker {
                     Text("Coming Soon")
                         .font(.system(.title3, design: .rounded).weight(.bold))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(ForsettiColors.warning)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityAddTraits(.isHeader)
                 }
 
                 Text(subtitle)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(ForsettiColors.textSecondary)
                     .lineLimit(isDeploymentTracker ? 2 : 3)
 
                 Spacer(minLength: 0)
@@ -242,10 +242,10 @@ private struct ModuleCard: View {
             if isDeploymentTracker {
                 Text("Demo")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(ForsettiColors.textInverse)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Color.yellow)
+                    .background(ForsettiColors.warning)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -278,14 +278,14 @@ private struct ForsettiBrandHeader: View {
             if !appVersion.isEmpty {
                 Text("v\(appVersion)")
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(ForsettiColors.textSecondary)
                     .monospacedDigit()
                     .accessibilityLabel("App version \(appVersion)")
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .forsettiCardSurface(fill: ForsettiTheme.groupedSurface)
+        .forsettiCardSurface(fill: ForsettiTheme.glassSurface)
     }
 }
 
