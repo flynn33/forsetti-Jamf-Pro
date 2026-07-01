@@ -12,10 +12,15 @@ jobs:
   test:
     name: Xcode tests
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: forsetti-Jamf-Pro
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          path: forsetti-Jamf-Pro
 
       - name: Checkout Forsetti framework
         uses: actions/checkout@v4
