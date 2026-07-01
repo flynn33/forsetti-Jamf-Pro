@@ -2,9 +2,9 @@ import SwiftUI
 
 struct DeploymentDemoSafetyNotice: View {
     var body: some View {
-        HStack(alignment: .top, spacing: ForsettiTheme.Spacing.compact) {
+        HStack(alignment: .top, spacing: DashboardTheme.Spacing.compact) {
             Image(systemName: "lock.shield")
-                .foregroundStyle(ForsettiTheme.accent)
+                .foregroundStyle(DashboardTheme.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Dummy data only. No live Jamf actions.")
                     .font(.callout.weight(.semibold))
@@ -15,7 +15,7 @@ struct DeploymentDemoSafetyNotice: View {
             }
         }
         .padding(12)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
@@ -24,7 +24,7 @@ struct DeploymentDemoHeroView: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             DeploymentDemoMetalHeroView(
                 deviceCount: viewModel.devices.count,
                 projectCount: viewModel.projects.count,
@@ -40,7 +40,7 @@ struct DeploymentDemoHeroView: View {
             DeploymentDemoSafetyNotice()
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -48,7 +48,7 @@ struct DeploymentDemoScenarioLauncher: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             HStack {
                 Label("Guided Demo Scenarios", systemImage: "rectangle.stack.badge.play")
                     .font(.headline)
@@ -70,15 +70,15 @@ struct DeploymentDemoScenarioLauncher: View {
             }
 
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 250), spacing: ForsettiTheme.Spacing.item)],
+                columns: [GridItem(.adaptive(minimum: 250), spacing: DashboardTheme.Spacing.item)],
                 alignment: .leading,
-                spacing: ForsettiTheme.Spacing.item
+                spacing: DashboardTheme.Spacing.item
             ) {
                 ForEach(DeploymentDemoScenarioCatalog.scenarios) { scenario in
                     Button {
                         viewModel.startDemoScenario(scenario)
                     } label: {
-                        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                             Label(scenario.title, systemImage: scenario.systemImage)
                                 .font(.callout.weight(.semibold))
                             Text(scenario.summary)
@@ -93,16 +93,16 @@ struct DeploymentDemoScenarioLauncher: View {
                                 Spacer()
                                 Text("Run Demo")
                                     .font(.caption.weight(.semibold))
-                                    .foregroundStyle(ForsettiTheme.accent)
+                                    .foregroundStyle(DashboardTheme.accent)
                             }
                         }
                         .frame(maxWidth: .infinity, minHeight: 142, alignment: .topLeading)
                         .padding(12)
-                        .background(ForsettiTheme.groupedSurface)
+                        .background(DashboardTheme.groupedSurface)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         .overlay {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .stroke(ForsettiTheme.border, lineWidth: 1)
+                                .stroke(DashboardTheme.border, lineWidth: 1)
                         }
                     }
                     .buttonStyle(.plain)
@@ -114,7 +114,7 @@ struct DeploymentDemoScenarioLauncher: View {
             }
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -123,11 +123,13 @@ struct DeploymentDemoSimulationTimelineView: View {
 
     var body: some View {
         if let scenario = viewModel.activeDemoScenario {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
-                HStack {
-                    Label("Demo Timeline", systemImage: "timeline.selection")
-                        .font(.subheadline.weight(.semibold))
-                    Spacer()
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
+                Label("Demo Timeline", systemImage: "timeline.selection")
+                    .font(.subheadline.weight(.semibold))
+                // Controls scroll horizontally so the seven actions never crush or
+                // clip on iPhone / iPad portrait.
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: DashboardTheme.Spacing.compact) {
                     Button {
                         viewModel.rewindDemoScenarioStep()
                     } label: {
@@ -165,6 +167,8 @@ struct DeploymentDemoSimulationTimelineView: View {
                     } label: {
                         Label("Skip", systemImage: "xmark.circle")
                     }
+                    }
+                    .padding(.vertical, 2)
                 }
                 DeploymentDemoScenarioProgressRailView(
                     scenario: scenario,
@@ -173,7 +177,7 @@ struct DeploymentDemoSimulationTimelineView: View {
                 )
             }
             .padding(12)
-            .background(ForsettiTheme.groupedSurface)
+            .background(DashboardTheme.groupedSurface)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
     }
@@ -183,7 +187,7 @@ struct DeploymentDemoSimulationResultCard: View {
     let result: DeploymentDemoSimulationResult
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             DeploymentDemoRibbonView()
             Label(result.title, systemImage: result.externalDataChanged ? "exclamationmark.triangle" : "checkmark.seal")
                 .font(.headline)
@@ -191,7 +195,7 @@ struct DeploymentDemoSimulationResultCard: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: ForsettiTheme.Spacing.item) {
+            HStack(spacing: DashboardTheme.Spacing.item) {
                 DeploymentDemoFact(label: "System", value: result.simulatedSystem)
                 DeploymentDemoFact(label: "Demo records", value: "\(result.affectedDemoRecordCount)")
                 DeploymentDemoFact(label: "External changed", value: result.externalDataChanged ? "Yes" : "No")
@@ -203,11 +207,11 @@ struct DeploymentDemoSimulationResultCard: View {
             if let next = result.nextRecommendedDemoAction {
                 Text("Next Demo action: \(next)")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(ForsettiTheme.accent)
+                    .foregroundStyle(DashboardTheme.accent)
             }
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -217,8 +221,8 @@ struct DeploymentDemoScenarioOverlayView: View {
     var body: some View {
         if let scenario = viewModel.activeDemoScenario,
            let step = viewModel.activeDemoScenarioStep {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
-                HStack(alignment: .top, spacing: ForsettiTheme.Spacing.compact) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
+                HStack(alignment: .top, spacing: DashboardTheme.Spacing.compact) {
                     Label(scenario.title, systemImage: scenario.systemImage)
                         .font(.headline)
                     Spacer()
@@ -229,7 +233,7 @@ struct DeploymentDemoScenarioOverlayView: View {
 
                 DeploymentDemoCoachMarkView(step: step, isPaused: viewModel.isDemoScenarioPaused)
 
-                HStack(spacing: ForsettiTheme.Spacing.compact) {
+                HStack(spacing: DashboardTheme.Spacing.compact) {
                     Button {
                         viewModel.rewindDemoScenarioStep()
                     } label: {
@@ -257,7 +261,7 @@ struct DeploymentDemoScenarioOverlayView: View {
                     }
                 }
 
-                HStack(spacing: ForsettiTheme.Spacing.compact) {
+                HStack(spacing: DashboardTheme.Spacing.compact) {
                     Button {
                         viewModel.isDemoScenarioPaused ? viewModel.resumeDemoScenario() : viewModel.pauseDemoScenario()
                     } label: {
@@ -278,15 +282,17 @@ struct DeploymentDemoScenarioOverlayView: View {
                 }
             }
             .padding(14)
-            .frame(width: 380, alignment: .leading)
+            // maxWidth (not a hard width) so the coach-mark shrinks to fit narrow
+            // iPhones instead of overflowing off-screen as a bottom-trailing overlay.
+            .frame(maxWidth: 380, alignment: .leading)
             .background(.regularMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(ForsettiTheme.border, lineWidth: 1)
+                    .stroke(DashboardTheme.border, lineWidth: 1)
             }
             .shadow(radius: 12, y: 4)
-            .padding(ForsettiTheme.Spacing.section)
+            .padding(DashboardTheme.Spacing.section)
         }
     }
 }
@@ -296,7 +302,7 @@ struct DeploymentDemoCoachMarkView: View {
     let isPaused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             HStack {
                 Label(step.title, systemImage: iconName)
                     .font(.subheadline.weight(.semibold))
@@ -313,11 +319,11 @@ struct DeploymentDemoCoachMarkView: View {
                 .fixedSize(horizontal: false, vertical: true)
             Text("Expected: \(step.expectedResult)")
                 .font(.caption)
-                .foregroundStyle(ForsettiTheme.accent)
+                .foregroundStyle(DashboardTheme.accent)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(12)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
@@ -342,7 +348,7 @@ struct DeploymentDemoCompletionCardView: View {
     let openGuide: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             DeploymentDemoRibbonView(compact: true)
             Label("Demo Complete", systemImage: "checkmark.seal")
                 .font(.headline)
@@ -352,7 +358,7 @@ struct DeploymentDemoCompletionCardView: View {
                 .fixedSize(horizontal: false, vertical: true)
             Text("Dummy data only. No live Jamf actions. External data changed: No.")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(ForsettiTheme.accent)
+                .foregroundStyle(DashboardTheme.accent)
             HStack {
                 Button {
                     openGuide()
@@ -367,15 +373,17 @@ struct DeploymentDemoCompletionCardView: View {
             }
         }
         .padding(14)
-        .frame(width: 340, alignment: .leading)
+        // maxWidth so the completion card shrinks on narrow iPhones rather than
+        // overflowing as a bottom-trailing overlay.
+        .frame(maxWidth: 340, alignment: .leading)
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(ForsettiTheme.border, lineWidth: 1)
+                .stroke(DashboardTheme.border, lineWidth: 1)
         }
         .shadow(radius: 12, y: 4)
-        .padding(ForsettiTheme.Spacing.section)
+        .padding(DashboardTheme.Spacing.section)
     }
 }
 
@@ -394,7 +402,7 @@ private struct DeploymentDemoFact: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(8)
-        .background(ForsettiTheme.surface)
+        .background(DashboardTheme.surface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }

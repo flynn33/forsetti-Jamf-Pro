@@ -9,7 +9,7 @@ struct DeploymentDashboardKPIView: View {
     let projection: DeploymentDashboardProjection
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
             HStack(alignment: .firstTextBaseline) {
                 Label("Dashboard", systemImage: "chart.xyaxis.line")
                     .font(.headline)
@@ -20,23 +20,30 @@ struct DeploymentDashboardKPIView: View {
             }
 
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 148), spacing: ForsettiTheme.Spacing.item)],
+                columns: [GridItem(.adaptive(minimum: 148), spacing: DashboardTheme.Spacing.item)],
                 alignment: .leading,
-                spacing: ForsettiTheme.Spacing.item
+                spacing: DashboardTheme.Spacing.item
             ) {
                 ForEach(projection.operationalTotals) { kpi in
                     DeploymentMetricTile(projection: kpi)
                 }
             }
 
-            HStack(alignment: .top, spacing: ForsettiTheme.Spacing.section) {
+            // Adaptive so the three KPI panels sit side-by-side when there's room
+            // (Mac / iPad landscape) and stack into one full-width column on iPhone /
+            // iPad portrait instead of being crushed in a fixed 3-column HStack.
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 240), spacing: DashboardTheme.Spacing.section)],
+                alignment: .leading,
+                spacing: DashboardTheme.Spacing.section
+            ) {
                 DeploymentRingGroup(title: "Integration Health", projections: projection.integrationHealth)
                 DeploymentStatusIndicatorList(projections: projection.statusIndicators)
                 DeploymentDeviceTypeDistributionView(projections: projection.deviceTypeDistribution)
             }
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -123,7 +130,7 @@ struct DeploymentDashboardTaskCardsView: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             HStack(alignment: .firstTextBaseline) {
                 Label("What do you want to do?", systemImage: "bolt.circle")
                     .font(.headline)
@@ -137,9 +144,9 @@ struct DeploymentDashboardTaskCardsView: View {
             }
 
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 260), spacing: ForsettiTheme.Spacing.item)],
+                columns: [GridItem(.adaptive(minimum: 260), spacing: DashboardTheme.Spacing.item)],
                 alignment: .leading,
-                spacing: ForsettiTheme.Spacing.item
+                spacing: DashboardTheme.Spacing.item
             ) {
                 ForEach(tasks) { task in
                     DeploymentDashboardTaskCard(task: task, viewModel: viewModel)
@@ -147,7 +154,7 @@ struct DeploymentDashboardTaskCardsView: View {
             }
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -181,7 +188,7 @@ private struct DeploymentDashboardTaskCard: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label(task.title, systemImage: task.iconSystemName)
                 .font(.callout.weight(.semibold))
                 .lineLimit(2)
@@ -192,7 +199,7 @@ private struct DeploymentDashboardTaskCard: View {
                 .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Spacer(minLength: ForsettiTheme.Spacing.compact)
+            Spacer(minLength: DashboardTheme.Spacing.compact)
 
             HStack {
                 Button {
@@ -210,11 +217,11 @@ private struct DeploymentDashboardTaskCard: View {
         }
         .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
         .padding(12)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(ForsettiTheme.border, lineWidth: 1)
+                .stroke(DashboardTheme.border, lineWidth: 1)
         }
     }
 
@@ -251,7 +258,7 @@ private struct DeploymentMetricTile: View {
     let projection: DeploymentKPIProjection
 
     var body: some View {
-        HStack(spacing: ForsettiTheme.Spacing.compact) {
+        HStack(spacing: DashboardTheme.Spacing.compact) {
             Circle()
                 .fill(color)
                 .frame(width: 9, height: 9)
@@ -268,7 +275,7 @@ private struct DeploymentMetricTile: View {
         }
         .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
         .padding(10)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(projection.accessibilitySummary))
@@ -286,16 +293,16 @@ private struct DeploymentRingGroup: View {
     let projections: [DeploymentKPIProjection]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
 
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 96), spacing: ForsettiTheme.Spacing.item)],
-                spacing: ForsettiTheme.Spacing.item
+                columns: [GridItem(.adaptive(minimum: 96), spacing: DashboardTheme.Spacing.item)],
+                spacing: DashboardTheme.Spacing.item
             ) {
                 ForEach(projections) { projection in
-                    VStack(spacing: ForsettiTheme.Spacing.compact) {
+                    VStack(spacing: DashboardTheme.Spacing.compact) {
                         DeploymentKPIRingView(projection: projection)
                             .frame(width: 88, height: 88)
                         Text(projection.displayName)
@@ -319,7 +326,7 @@ private struct DeploymentStatusIndicatorList: View {
     let projections: [DeploymentKPIProjection]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Text("Status Indicators")
                 .font(.subheadline.weight(.semibold))
 
@@ -329,7 +336,7 @@ private struct DeploymentStatusIndicatorList: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(projections.prefix(8)) { projection in
-                    HStack(spacing: ForsettiTheme.Spacing.compact) {
+                    HStack(spacing: DashboardTheme.Spacing.compact) {
                         Circle()
                             .fill(color(for: projection))
                             .frame(width: 8, height: 8)
@@ -359,7 +366,7 @@ private struct DeploymentDeviceTypeDistributionView: View {
     let projections: [DeploymentKPIProjection]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Text("Device Types")
                 .font(.subheadline.weight(.semibold))
 

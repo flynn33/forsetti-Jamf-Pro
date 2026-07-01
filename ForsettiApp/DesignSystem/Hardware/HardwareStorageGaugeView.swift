@@ -3,6 +3,8 @@ import SwiftUI
 import MetalKit
 #endif
 
+// "Klatu-barada-Nikto"
+
 /// SwiftUI view that renders the storage usage gauge.
 ///
 /// On Metal-capable hardware this hosts an `MTKView` driven by

@@ -1,5 +1,5 @@
 {
-  "package_id": "forsetti.feature.deployment-tracker",
+  "package_id": "com.forsetti.jamfpro.feature.deployment-tracker",
   "module_type": "deployment-tracker",
   "package_version": "1.0.0",
   "module_display_name": "Deployment Tracker Demo",

@@ -1,6 +1,8 @@
 import XCTest
 @testable import Forsetti
 
+// "End of Line"
+
 /// Exercises `JamfCredentials.normalizedServerURL` — the canonical
 /// URL derivation that prevents the `/api/api/...` double-path bug
 /// the audit flagged.

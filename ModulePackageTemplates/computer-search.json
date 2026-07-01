@@ -1,5 +1,5 @@
 {
-  "package_id": "forsetti.feature.computer-search",
+  "package_id": "com.forsetti.jamfpro.feature.computer-search",
   "module_type": "computer-search",
   "package_version": "1.0.0",
   "module_display_name": "Computer Search",

@@ -20,7 +20,7 @@ struct ReportMetricCardView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 104, alignment: .topLeading)
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -33,7 +33,7 @@ struct ReportSegmentedGaugePanel: View {
         // card — the composition panel reads as a single centered hero
         // unit instead of mixing leading-aligned text with a centered
         // gauge.
-        VStack(alignment: .center, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .center, spacing: DashboardTheme.Spacing.item) {
             Text("Composition")
                 .font(.headline.weight(.semibold))
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -59,7 +59,7 @@ struct ReportSegmentedGaugePanel: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -86,7 +86,7 @@ struct ReportRankedBarChartView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             HStack {
                 Text(title)
                     .font(.headline.weight(.semibold))
@@ -120,7 +120,7 @@ struct ReportRankedBarChartView: View {
                                         Capsule()
                                             .fill(.secondary.opacity(0.16))
                                         Capsule()
-                                            .fill(ForsettiColors.bluePrimary)
+                                            .fill(DashboardColors.bluePrimary)
                                             .frame(width: max(6, proxy.size.width * fraction))
                                     }
                                 }
@@ -133,7 +133,7 @@ struct ReportRankedBarChartView: View {
             }
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -146,7 +146,7 @@ struct ReportDistributionMeterView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             Text(title)
                 .font(.headline.weight(.semibold))
             ForEach(values.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
@@ -158,11 +158,11 @@ struct ReportDistributionMeterView: View {
                 }
                 .font(.caption)
                 ProgressView(value: Double(value), total: Double(total))
-                    .tint(ForsettiColors.greenPrimary)
+                    .tint(DashboardColors.greenPrimary)
             }
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -172,6 +172,7 @@ struct ReportDataTableView: View {
         case name
         case model
         case os
+        case enrolled
         case confidence
 
         var id: String { rawValue }
@@ -182,6 +183,7 @@ struct ReportDataTableView: View {
             case .name: return "Name"
             case .model: return "Model"
             case .os: return "OS"
+            case .enrolled: return "Enrolled"
             case .confidence: return "Confidence"
             }
         }
@@ -203,7 +205,7 @@ struct ReportDataTableView: View {
     var maxRowsHeight: CGFloat = 520
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             HStack {
                 Text("Details")
                     .font(.headline.weight(.semibold))
@@ -232,7 +234,7 @@ struct ReportDataTableView: View {
             .frame(maxHeight: maxRowsHeight)
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var reportHeader: some View {
@@ -241,6 +243,7 @@ struct ReportDataTableView: View {
             Text("Name").frame(maxWidth: .infinity, alignment: .leading)
             Text("Model").frame(maxWidth: .infinity, alignment: .leading)
             Text("OS").frame(width: 82, alignment: .leading)
+            Text("Enrolled").frame(width: 104, alignment: .leading)
             Text("Confidence").frame(width: 136, alignment: .leading)
         }
         .font(.caption.weight(.semibold))
@@ -254,6 +257,7 @@ struct ReportDataTableView: View {
         case .name: return record.displayName ?? ""
         case .model: return record.identity.marketingName ?? record.model ?? ""
         case .os: return record.osVersion ?? ""
+        case .enrolled: return record.value(for: "enrollmentDate") ?? ""
         case .confidence: return record.identity.confidence.displayName
         }
     }
@@ -278,6 +282,9 @@ private struct ReportDataRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text(record.osVersion ?? "")
                 .frame(width: 82, alignment: .leading)
+            Text(record.value(for: "enrollmentDate") ?? "—")
+                .frame(width: 104, alignment: .leading)
+                .foregroundStyle(.secondary)
             Text(record.identity.confidence.displayName)
                 .frame(width: 136, alignment: .leading)
                 .foregroundStyle(record.identity.confidence.isInferred ? .orange : .secondary)

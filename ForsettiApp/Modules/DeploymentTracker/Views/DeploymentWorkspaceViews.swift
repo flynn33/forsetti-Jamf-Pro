@@ -103,15 +103,15 @@ struct DeploymentWorkspaceChrome<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
             DeploymentDemoRibbonView()
             DeploymentDemoWorkspaceAccentStripView(
                 workspace: workspace,
                 scenario: activeScenario,
                 isPaused: isScenarioPaused
             )
-            HStack(alignment: .top, spacing: ForsettiTheme.Spacing.item) {
-                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+            HStack(alignment: .top, spacing: DashboardTheme.Spacing.item) {
+                VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                     Text(title)
                         .font(.system(.title2, design: .rounded).weight(.semibold))
                     Text(subtitle)
@@ -119,7 +119,7 @@ struct DeploymentWorkspaceChrome<Content: View>: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: ForsettiTheme.Spacing.item)
+                Spacer(minLength: DashboardTheme.Spacing.item)
                 if let runDemo {
                     Button {
                         runDemo()
@@ -143,7 +143,7 @@ struct DeploymentWorkspaceChrome<Content: View>: View {
             content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(ForsettiTheme.Spacing.section)
+        .padding(DashboardTheme.Spacing.section)
     }
 }
 
@@ -168,12 +168,11 @@ struct DeploymentProjectsWorkspaceView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .projects) },
             runDemo: { viewModel.startDemoScenario(for: .projects) }
         ) {
-            HStack(alignment: .bottom, spacing: ForsettiTheme.Spacing.item) {
+            HStack(alignment: .bottom, spacing: DashboardTheme.Spacing.item) {
                 TextField("Project name", text: $projectName)
                     .textFieldStyle(.roundedBorder)
                 TextField("Code", text: $projectCode)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 140)
                 Button {
                     viewModel.createProject(name: projectName, code: projectCode)
                     projectName = ""
@@ -184,7 +183,7 @@ struct DeploymentProjectsWorkspaceView: View {
                 .disabled(projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding(12)
-            .forsettiCardSurface()
+            .dashboardCardSurface()
 
             DeploymentSimpleTable(
                 rows: viewModel.projects.map {
@@ -222,12 +221,11 @@ struct DeploymentDevicesWorkspaceView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .devices) },
             runDemo: { viewModel.startDemoScenario(for: .devices) }
         ) {
-            HStack(alignment: .bottom, spacing: ForsettiTheme.Spacing.item) {
+            HStack(alignment: .bottom, spacing: DashboardTheme.Spacing.item) {
                 TextField("Serial number", text: $serialNumber)
                     .textFieldStyle(.roundedBorder)
                 TextField("Asset tag", text: $assetTag)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 160)
                 Button {
                     viewModel.createDevice(serialNumber: serialNumber, assetTag: assetTag)
                     serialNumber = ""
@@ -238,7 +236,7 @@ struct DeploymentDevicesWorkspaceView: View {
                 .disabled(serialNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding(12)
-            .forsettiCardSurface()
+            .dashboardCardSurface()
 
             DeploymentSimpleTable(
                 rows: viewModel.devices.map {
@@ -276,7 +274,10 @@ struct DeploymentJamfPreloadWorkspaceView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .jamfPreload) },
             runDemo: { viewModel.startDemoScenario(for: .jamfPreload) }
         ) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 320), spacing: ForsettiTheme.Spacing.section)], alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+            // 260 minimum so the three cards sit side-by-side on Mac / iPad and
+            // collapse to one full-width column on iPhone / iPad portrait (a 320
+            // minimum exceeded the padded iPhone width and overflowed the right edge).
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), spacing: DashboardTheme.Spacing.section)], alignment: .leading, spacing: DashboardTheme.Spacing.section) {
                 preloadLookupCard
                 preloadSubmissionCard
                 preloadDiagnosticsCard
@@ -309,7 +310,7 @@ struct DeploymentJamfPreloadWorkspaceView: View {
     private var preloadLookupCard: some View {
         // Lookup controls support both single serials and pasted batches. Force
         // refresh buttons use the same service path while bypassing local cache.
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             Label("Simulation Lookup", systemImage: "magnifyingglass")
                 .font(.headline)
             TextField("Serial number", text: $viewModel.preloadSerialInput)
@@ -345,13 +346,13 @@ struct DeploymentJamfPreloadWorkspaceView: View {
             }
         }
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var preloadSubmissionCard: some View {
         // Submission actions act on the current Workbench selection or filtered
         // row set, matching the batch behavior documented in the guide.
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             Label("Simulation Actions", systemImage: "arrow.up.doc")
                 .font(.headline)
             Text("Selected Demo workbench rows are validated locally and rendered as a Demo Jamf Inventory Preload CSV. No live Jamf actions are run.")
@@ -379,14 +380,14 @@ struct DeploymentJamfPreloadWorkspaceView: View {
             }
         }
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var preloadDiagnosticsCard: some View {
         // Permission diagnostics are displayed without making a Jamf write, so a
         // technician can confirm required privileges before retrying a failed
         // lookup or upload.
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             Label("Permission Diagnostics", systemImage: "lock.shield")
                 .font(.headline)
             Text("Demo diagnostics preview the future Jamf privileges: create and update Inventory Preload records, create and update user data, and read Inventory Preload records. No live Jamf actions.")
@@ -399,7 +400,7 @@ struct DeploymentJamfPreloadWorkspaceView: View {
             }
         }
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -419,7 +420,7 @@ struct DeploymentABMWorkspaceView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .abmVerification) },
             runDemo: { viewModel.startDemoScenario(for: .abmVerification) }
         ) {
-            HStack(spacing: ForsettiTheme.Spacing.item) {
+            HStack(spacing: DashboardTheme.Spacing.item) {
                 Button {
                     viewModel.verifySelectedWithABM()
                 } label: {
@@ -432,7 +433,7 @@ struct DeploymentABMWorkspaceView: View {
                 }
             }
             .padding(12)
-            .forsettiCardSurface()
+            .dashboardCardSurface()
 
             DeploymentSimpleTable(
                 rows: viewModel.exceptions.map {
@@ -460,7 +461,7 @@ struct DeploymentSDPlusWorkspaceView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .sdPlusExport) },
             runDemo: { viewModel.startDemoScenario(for: .sdPlusExport) }
         ) {
-            HStack(spacing: ForsettiTheme.Spacing.item) {
+            HStack(spacing: DashboardTheme.Spacing.item) {
                 Button {
                     viewModel.previewSDPlusExport()
                 } label: {
@@ -473,7 +474,7 @@ struct DeploymentSDPlusWorkspaceView: View {
                 }
             }
             .padding(12)
-            .forsettiCardSurface()
+            .dashboardCardSurface()
 
             if let preview = viewModel.sdPlusPreview {
                 DeploymentPreloadPreviewView(title: "Demo SD+ Export Preview", text: preview)
@@ -506,7 +507,7 @@ struct DeploymentAppleCatalogWorkspaceView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .appleCatalog) },
             runDemo: { viewModel.startDemoScenario(for: .appleCatalog) }
         ) {
-            HStack(spacing: ForsettiTheme.Spacing.item) {
+            HStack(spacing: DashboardTheme.Spacing.item) {
                 Button {
                     viewModel.importSampleAppleCatalogEntries()
                 } label: {
@@ -519,7 +520,7 @@ struct DeploymentAppleCatalogWorkspaceView: View {
                 }
             }
             .padding(12)
-            .forsettiCardSurface()
+            .dashboardCardSurface()
 
             DeploymentSimpleTable(
                 rows: viewModel.appleCatalogEntries.map {
@@ -553,7 +554,7 @@ struct DeploymentRecordsWorkspaceView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .recordsManagement) },
             runDemo: { viewModel.startDemoScenario(for: .recordsManagement) }
         ) {
-            HStack(spacing: ForsettiTheme.Spacing.item) {
+            HStack(spacing: DashboardTheme.Spacing.item) {
                 Button {
                     viewModel.exportRecordsPackage()
                 } label: {
@@ -566,7 +567,7 @@ struct DeploymentRecordsWorkspaceView: View {
                 }
             }
             .padding(12)
-            .forsettiCardSurface()
+            .dashboardCardSurface()
 
             DeploymentSimpleTable(
                 rows: viewModel.recordsExportJobs.map {
@@ -622,7 +623,7 @@ struct DeploymentIntakeWorkspaceView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .intakeImports) },
             runDemo: { viewModel.startDemoScenario(for: .intakeImports) }
         ) {
-            HStack(spacing: ForsettiTheme.Spacing.item) {
+            HStack(spacing: DashboardTheme.Spacing.item) {
                 Button {
                     viewModel.stageVendorImportPreview()
                 } label: {
@@ -635,7 +636,7 @@ struct DeploymentIntakeWorkspaceView: View {
                 }
             }
             .padding(12)
-            .forsettiCardSurface()
+            .dashboardCardSurface()
         }
     }
 }
@@ -736,7 +737,7 @@ struct DeploymentSimpleTable: View {
                     .padding(16)
             } else {
                 ForEach(rows) { row in
-                    HStack(spacing: ForsettiTheme.Spacing.item) {
+                    HStack(spacing: DashboardTheme.Spacing.item) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(row.title)
                                 .font(.callout.weight(.semibold))
@@ -763,7 +764,7 @@ struct DeploymentSimpleTable: View {
                 }
             }
         }
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -828,7 +829,7 @@ private struct DeploymentPreloadValidationView: View {
     let result: JamfInventoryPreloadValidationResult
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label("Demo Validation Results", systemImage: result.isReadyForUpload ? "checkmark.circle" : "exclamationmark.triangle")
                 .font(.headline)
             Text("\(result.readyDeviceIds.count) ready, \(result.blockedIssues.count) blocked, \(result.warningIssues.count) warnings.")
@@ -840,7 +841,7 @@ private struct DeploymentPreloadValidationView: View {
             }
         }
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -852,7 +853,7 @@ private struct DeploymentPreloadPreviewView: View {
     let text: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label(title, systemImage: "doc.plaintext")
                 .font(.headline)
             ScrollView([.horizontal, .vertical]) {
@@ -862,10 +863,10 @@ private struct DeploymentPreloadPreviewView: View {
                     .padding(10)
             }
             .frame(minHeight: 120, maxHeight: 240)
-            .background(ForsettiTheme.groupedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card, style: .continuous))
+            .background(DashboardTheme.groupedSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.card, style: .continuous))
         }
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }

@@ -39,17 +39,18 @@ final class ForsettiRetailIdentityTests: XCTestCase {
         let specs = ForsettiRetailBootstrap.manifestSpecs
         let moduleIDs = Set(specs.map(\.moduleID))
 
-        XCTAssertEqual(specs.filter { $0.moduleType == .ui }.map(\.moduleID), ["forsetti.retail.ui"])
+        XCTAssertEqual(specs.filter { $0.moduleType == .ui }.map(\.moduleID), ["com.forsetti.jamfpro.retail.ui"])
         XCTAssertTrue(moduleIDs.isSuperset(of: [
-            "forsetti.service.jamf",
-            "forsetti.service.diagnostics",
-            "forsetti.service.scanner",
-            "forsetti.feature.computer-search",
-            "forsetti.feature.mobile-device-search",
-            "forsetti.feature.support-technician",
-            "forsetti.feature.prestage-director",
-            "forsetti.feature.reports",
-            "forsetti.feature.deployment-tracker"
+            "com.forsetti.jamfpro.service.jamf",
+            "com.forsetti.jamfpro.service.diagnostics",
+            "com.forsetti.jamfpro.service.scanner",
+            "com.forsetti.jamfpro.feature.computer-search",
+            "com.forsetti.jamfpro.feature.mobile-device-search",
+            "com.forsetti.jamfpro.feature.support-technician",
+            "com.forsetti.jamfpro.feature.prestage-director",
+            "com.forsetti.jamfpro.feature.reports",
+            "com.forsetti.jamfpro.feature.deployment-tracker",
+            "com.forsetti.jamfpro.feature.permissions-matrix"
         ]))
     }
 

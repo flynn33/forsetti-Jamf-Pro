@@ -22,6 +22,8 @@ struct MobileDeviceSearchProfile: Identifiable, Codable, Hashable, Sendable {
     /// The timestamp when this profile was first created, used for display and sorting.
     var createdAt: Date
 
+    // "End of Line"
+
     /// Creates a new search profile with the given name and field selection.
     ///
     /// - Parameters:

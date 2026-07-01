@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "End of Line"
+
 /// The primary view for the Prestage Director module.
 ///
 /// Displays a list of prestage enrollment profiles in a picker, the devices assigned to the
@@ -64,7 +66,7 @@ struct PrestageDirectorView: View {
                 } label: {
                     Label("Refresh Pre-Stages", systemImage: "arrow.clockwise")
                 }
-                .buttonStyle(.forsettiSecondary)
+                .buttonStyle(.dashboardSecondary)
                 .disabled(viewModel.isLoadingPrestages || viewModel.isApplyingChanges)
             }
 
@@ -95,7 +97,7 @@ struct PrestageDirectorView: View {
                             .foregroundStyle(.primary)
 
                         ProgressView(value: progress.fractionCompleted, total: 1.0)
-                            .tint(ForsettiColors.bluePrimary)
+                            .tint(DashboardColors.bluePrimary)
 
                         Text(progress.detail)
                             .font(.caption)
@@ -133,7 +135,21 @@ struct PrestageDirectorView: View {
                 }
             }
         }
-        .forsettiInsetGroupedListStyle()
+        .dashboardInsetGroupedListStyle()
+        .toolbar {
+            ToolbarItem(placement: .dashboardTopBarTrailing) {
+                // Share the selected in-view devices (of the current prestage) as plain
+                // Markdown text, so the share sheet's Copy pastes normally.
+                if selectedDevices.isEmpty == false {
+                    ShareLink(item: RecordMarkdown.document(for: selectedDevices)) {
+                        Label("Share \(selectedDevices.count)", systemImage: "square.and.arrow.up")
+                    }
+                } else {
+                    Button { } label: { Label("Share", systemImage: "square.and.arrow.up") }
+                        .disabled(true)
+                }
+            }
+        }
         .searchable(text: $viewModel.deviceSerialSearchText.strippingControlCharacters(), prompt: "Find serial number")
         .task {
             // Load prestages and their devices on first appearance
@@ -163,6 +179,13 @@ struct PrestageDirectorView: View {
         }
     }
 
+    /// The in-view devices the technician has selected (within the current prestage),
+    /// gathered for sharing. Intersects the selection keys with the filtered list so it
+    /// only ever includes devices currently on screen.
+    private var selectedDevices: [PrestageAssignedDevice] {
+        viewModel.filteredScopedDevices.filter { viewModel.selectedDeviceKeys.contains($0.selectionKey) }
+    }
+
     /// The bottom action bar containing selection controls and move/remove buttons.
     ///
     /// Provides a "Select All / Clear" toggle, a "Remove" button (danger-styled) to
@@ -178,7 +201,7 @@ struct PrestageDirectorView: View {
                 Button(viewModel.allDevicesSelected ? "Clear" : "Select All") {
                     viewModel.toggleSelectAll()
                 }
-                .buttonStyle(.forsettiSecondary)
+                .buttonStyle(.dashboardSecondary)
                 .disabled(
                     viewModel.filteredScopedDevices.isEmpty ||
                         viewModel.isLoadingScopedDevices ||
@@ -191,19 +214,19 @@ struct PrestageDirectorView: View {
                         await viewModel.confirmRemoval()
                     }
                 }
-                .buttonStyle(.forsettiDanger)
+                .buttonStyle(.dashboardDanger)
                 .disabled(viewModel.canRemoveSelection == false)
 
                 Button("Move") {
                     viewModel.presentMoveDestinationPicker()
                 }
-                .buttonStyle(.forsettiPrimary)
+                .buttonStyle(.dashboardPrimary)
                 .disabled(viewModel.canMoveSelection == false)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .forsettiBottomBarSurface()
+        .dashboardBottomBarSurface()
     }
 }
 
@@ -237,39 +260,39 @@ private struct PrestageDeviceRow: View {
         HStack(alignment: .top, spacing: 12) {
             // Checkmark circle toggles between filled (selected) and empty (unselected)
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(isSelected ? ForsettiColors.greenPrimary : .secondary)
-                .font(ForsettiSearchResultTypography.title3())
+                .foregroundStyle(isSelected ? DashboardColors.greenPrimary : .secondary)
+                .font(DashboardSearchResultTypography.title3())
                 .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(device.deviceName)
-                    .font(ForsettiSearchResultTypography.headline())
+                    .font(DashboardSearchResultTypography.headline())
                     .foregroundStyle(.primary)
 
                 if isCrossScope, let prestageName = device.prestageName {
                     Text("Pre-Stage: \(prestageName)")
-                        .font(ForsettiSearchResultTypography.subheadline())
-                        .foregroundStyle(ForsettiColors.bluePrimary)
+                        .font(DashboardSearchResultTypography.subheadline())
+                        .foregroundStyle(DashboardColors.bluePrimary)
                 }
 
                 if let serial = device.normalizedSerialNumber {
                     Text("Serial: \(serial)")
-                        .font(ForsettiSearchResultTypography.subheadline())
+                        .font(DashboardSearchResultTypography.subheadline())
                 } else {
                     Text("Serial unavailable")
-                        .font(ForsettiSearchResultTypography.subheadline())
+                        .font(DashboardSearchResultTypography.subheadline())
                         .foregroundStyle(.red)
                 }
 
                 if let model = device.model {
                     Text("Model: \(model)")
-                        .font(ForsettiSearchResultTypography.caption())
+                        .font(DashboardSearchResultTypography.caption())
                         .foregroundStyle(.secondary)
                 }
 
                 if let udid = device.udid {
                     Text("UDID: \(udid)")
-                        .font(ForsettiSearchResultTypography.caption2())
+                        .font(DashboardSearchResultTypography.caption2())
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -347,7 +370,7 @@ private struct PrestageMoveDestinationView: View {
                                     Image(systemName: selectedPrestageID == prestage.id ? "largecircle.fill.circle" : "circle")
                                         .foregroundStyle(
                                             selectedPrestageID == prestage.id
-                                                ? ForsettiColors.greenPrimary
+                                                ? DashboardColors.greenPrimary
                                                 : .secondary
                                         )
                                         .font(.title3)
@@ -361,7 +384,7 @@ private struct PrestageMoveDestinationView: View {
                         }
                     }
                 }
-                .forsettiInsetGroupedListStyle()
+                .dashboardInsetGroupedListStyle()
                 .disabled(isApplyingChanges)
                 .searchable(text: $searchText, prompt: "Find pre-stage")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -369,7 +392,7 @@ private struct PrestageMoveDestinationView: View {
                 moveConfirmationBar
             }
             .navigationTitle("Move To Pre-Stage")
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
             .toolbar {
                 // Apple HIG: Cancel uses the semantic .cancellationAction
                 // placement — leading, Escape-activated on macOS.
@@ -403,12 +426,12 @@ private struct PrestageMoveDestinationView: View {
                 onConfirm(selectedPrestage)
                 dismiss()
             }
-            .buttonStyle(.forsettiPrimary)
+            .buttonStyle(.dashboardPrimary)
             .disabled(selectedPrestage == nil || isApplyingChanges)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .forsettiBottomBarSurface()
+        .dashboardBottomBarSurface()
     }
 }
 

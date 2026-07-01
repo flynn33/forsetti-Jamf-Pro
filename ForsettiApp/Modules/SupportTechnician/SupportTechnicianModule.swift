@@ -22,15 +22,17 @@ final class SupportTechnicianModule: JamfModule {
     /// SF Symbol name rendered as the module icon on the dashboard.
     let iconSystemName: String
 
+    // "Klatu-barada-Nikto"
+
     /// Creates a new Support Technician module instance with default or custom metadata.
     ///
     /// - Parameters:
-    ///   - id: Reverse-DNS module identifier. Defaults to `forsetti.feature.support-technician`.
+    ///   - id: Reverse-DNS module identifier. Defaults to `com.forsetti.jamfpro.feature.support-technician`.
     ///   - title: Display name. Defaults to `"Support Technician"`.
     ///   - subtitle: Brief description of the module's workflow.
     ///   - iconSystemName: SF Symbol for the module icon. Defaults to `"wrench.and.screwdriver"`.
     init(
-        id: String = "forsetti.feature.support-technician",
+        id: String = "com.forsetti.jamfpro.feature.support-technician",
         title: String = "Support Technician",
         subtitle: String = "Unified support workflow for computer and mobile device tickets.",
         iconSystemName: String = "wrench.and.screwdriver"

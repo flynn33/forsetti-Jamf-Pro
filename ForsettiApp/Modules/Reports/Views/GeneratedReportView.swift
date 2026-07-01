@@ -13,7 +13,7 @@ struct GeneratedReportView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
                 header
                 metricGrid
 
@@ -33,11 +33,11 @@ struct GeneratedReportView: View {
                     ReportDataTableView(records: report.dataSet.records)
                 }
             }
-            .padding(ForsettiTheme.Spacing.section)
+            .padding(DashboardTheme.Spacing.section)
         }
-        .forsettiAppBackground()
+        .dashboardAppBackground()
         .toolbar {
-            ToolbarItem(placement: .forsettiTopBarTrailing) {
+            ToolbarItem(placement: .dashboardTopBarTrailing) {
                 Button {
                     isFormatPickerPresented = true
                 } label: {
@@ -94,12 +94,12 @@ struct GeneratedReportView: View {
     @ViewBuilder
     private var visualRow1: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(alignment: .top, spacing: ForsettiTheme.Spacing.section) {
+            HStack(alignment: .top, spacing: DashboardTheme.Spacing.section) {
                 if frames.contains(.compositionGauge) {
                     ReportSegmentedGaugePanel(aggregate: report.aggregate)
                         .frame(maxWidth: 430)
                 }
-                VStack(spacing: ForsettiTheme.Spacing.section) {
+                VStack(spacing: DashboardTheme.Spacing.section) {
                     if frames.contains(.topModels) {
                         ReportRankedBarChartView(title: "Top Models", values: report.aggregate.countsByModel)
                     }
@@ -109,7 +109,7 @@ struct GeneratedReportView: View {
                 }
             }
 
-            VStack(spacing: ForsettiTheme.Spacing.section) {
+            VStack(spacing: DashboardTheme.Spacing.section) {
                 if frames.contains(.compositionGauge) {
                     ReportSegmentedGaugePanel(aggregate: report.aggregate)
                 }
@@ -129,7 +129,7 @@ struct GeneratedReportView: View {
     @ViewBuilder
     private var visualRow2: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(alignment: .top, spacing: ForsettiTheme.Spacing.section) {
+            HStack(alignment: .top, spacing: DashboardTheme.Spacing.section) {
                 if frames.contains(.storage) {
                     ReportDistributionMeterView(title: "Storage", values: report.aggregate.storageBuckets)
                 }
@@ -140,7 +140,7 @@ struct GeneratedReportView: View {
                     ReportRankedBarChartView(title: "OS Versions", values: report.aggregate.countsByOSVersion)
                 }
             }
-            VStack(spacing: ForsettiTheme.Spacing.section) {
+            VStack(spacing: DashboardTheme.Spacing.section) {
                 if frames.contains(.storage) {
                     ReportDistributionMeterView(title: "Storage", values: report.aggregate.storageBuckets)
                 }
@@ -171,8 +171,8 @@ struct GeneratedReportView: View {
     }
 
     private var metricGrid: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: ForsettiTheme.Spacing.item)], spacing: ForsettiTheme.Spacing.item) {
-            ReportMetricCardView(title: "Total", value: report.aggregate.totalCount.formatted(), systemImage: "number", tint: ForsettiColors.bluePrimary)
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: DashboardTheme.Spacing.item)], spacing: DashboardTheme.Spacing.item) {
+            ReportMetricCardView(title: "Total", value: report.aggregate.totalCount.formatted(), systemImage: "number", tint: DashboardColors.bluePrimary)
             ReportMetricCardView(title: "Mac", value: report.aggregate.count(for: .mac).formatted(), systemImage: ReportDeviceType.mac.symbolName, tint: ReportsChartPalette.color(for: .mac))
             ReportMetricCardView(title: "iPad", value: report.aggregate.count(for: .ipad).formatted(), systemImage: ReportDeviceType.ipad.symbolName, tint: ReportsChartPalette.color(for: .ipad))
             ReportMetricCardView(title: "iPhone", value: report.aggregate.count(for: .iphone).formatted(), systemImage: ReportDeviceType.iphone.symbolName, tint: ReportsChartPalette.color(for: .iphone))
@@ -190,7 +190,7 @@ struct GeneratedReportView: View {
         .foregroundStyle(.secondary)
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var criteriaSummary: String {
@@ -236,7 +236,7 @@ private struct ReportFormatPickerView: View {
                         VStack(alignment: .center, spacing: 10) {
                             Image(systemName: format.systemImage)
                                 .font(.title2.weight(.semibold))
-                                .foregroundStyle(ForsettiColors.bluePrimary)
+                                .foregroundStyle(DashboardColors.bluePrimary)
                             Text(format.displayName)
                                 .font(.headline)
                             Text(".\(format.fileExtension)")
@@ -245,14 +245,14 @@ private struct ReportFormatPickerView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 110, alignment: .center)
                         .padding(14)
-                        .forsettiCardSurface()
+                        .dashboardCardSurface()
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(ForsettiTheme.Spacing.section)
+            .padding(DashboardTheme.Spacing.section)
             .navigationTitle("Export")
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

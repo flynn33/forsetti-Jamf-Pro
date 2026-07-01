@@ -47,7 +47,7 @@ final class SupportTechnicianPrestageParserTests: XCTestCase {
             "general": [
                 "enrollmentMethod": [
                     "id": 7,
-                    "objectName": "Retail ZT Base",
+                    "objectName": "Standard ZT Base",
                     "objectType": "PreStage enrollment"
                 ],
                 "enrolledViaAutomatedDeviceEnrollment": true
@@ -56,7 +56,7 @@ final class SupportTechnicianPrestageParserTests: XCTestCase {
 
         XCTAssertEqual(
             SupportTechnicianPrestageParser.displayValue(from: payload),
-            "Retail ZT Base"
+            "Standard ZT Base"
         )
     }
 

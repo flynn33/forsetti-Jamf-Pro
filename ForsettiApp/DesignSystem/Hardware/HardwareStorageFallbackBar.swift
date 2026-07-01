@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "End of Line"
+
 /// Pure-SwiftUI rendering of the storage gauge for hosts without Metal.
 ///
 /// Reached when `MTLCreateSystemDefaultDevice()` returns nil — chiefly older

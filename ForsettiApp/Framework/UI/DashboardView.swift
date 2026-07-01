@@ -37,7 +37,7 @@ struct DashboardView: View {
         [
             .init(
                 title: "UI module",
-                value: "forsetti.retail.ui",
+                value: "com.forsetti.jamfpro.retail.ui",
                 kind: .ready
             ),
             .init(
@@ -209,7 +209,7 @@ struct DashboardModuleSummary: Identifiable, Hashable {
     }
 
     private static func category(for moduleID: String) -> Category {
-        if moduleID == "forsetti.feature.deployment-tracker" {
+        if moduleID == "com.forsetti.jamfpro.feature.deployment-tracker" {
             return .deployment
         }
         if moduleID.contains("reports") {

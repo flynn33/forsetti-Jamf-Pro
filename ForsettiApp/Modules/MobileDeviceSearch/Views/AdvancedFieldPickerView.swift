@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "Klatu-barada-Nikto"
+
 /// Field-selection sheet for the Advanced Search criterion editor.
 ///
 /// Lists every catalog field with `isFilterable == true`, grouped by inventory
@@ -79,9 +81,9 @@ struct AdvancedFieldPickerView: View {
             }
             .searchable(text: $searchText, prompt: "Search fields")
             .navigationTitle("Choose a field")
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .forsettiTopBarTrailing) {
+                ToolbarItem(placement: .dashboardTopBarTrailing) {
                     Button("Cancel") { dismiss() }
                 }
             }

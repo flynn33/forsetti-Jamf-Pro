@@ -65,7 +65,7 @@ final class ReportsDeviceTypeGaugeRenderer: NSObject, MTKViewDelegate {
     }()
 
     nonisolated(unsafe) static var lastInitError: String?
-    private static let logger = Logger(subsystem: ForsettiAppIdentity.bundleIdentifier, category: "ReportsDeviceTypeGaugeRenderer")
+    private static let logger = Logger(subsystem: "com.jamfdashboard.app", category: "ReportsDeviceTypeGaugeRenderer")
 
     private let stateLock = NSLock()
     private var segmentUniforms: [ReportsGaugeSegmentUniform]

@@ -3,7 +3,6 @@ import Combine
 
 // MARK: - Deployment Tracker module entry point
 //
-//
 // This file is the composition root for Deployment Tracker. It connects the
 // Forsetti framework services to the tracker-specific view model, keeps
 // the module independent from other feature modules, and owns the root SwiftUI
@@ -24,7 +23,7 @@ final class DeploymentTrackerModule: JamfModule {
     // import behavior and visible navigation labels, so keep them aligned with
     // ModulePackageType defaults and tests.
     init(
-        id: String = "forsetti.feature.deployment-tracker",
+        id: String = "com.forsetti.jamfpro.feature.deployment-tracker",
         title: String = "Deployment Tracker Demo",
         subtitle: String = "Interactive preview of the upcoming Deployment Tracker Module. Dummy data only. No live Jamf actions.",
         iconSystemName: String = "sparkles.rectangle.stack"
@@ -1932,7 +1931,7 @@ struct DeploymentTrackerRootView: View {
             sidebar
         } detail: {
             ScrollView {
-                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+                VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
                     header
                     if let userFacingError = viewModel.userFacingError {
                         DeploymentStructuredErrorView(error: userFacingError) { topicID in
@@ -1945,12 +1944,12 @@ struct DeploymentTrackerRootView: View {
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(12)
-                            .forsettiCardSurface()
+                            .dashboardCardSurface()
                     }
                     workspaceView
                 }
-                .padding(.horizontal, ForsettiTheme.Spacing.section)
-                .padding(.vertical, ForsettiTheme.Spacing.section)
+                .padding(.horizontal, DashboardTheme.Spacing.section)
+                .padding(.vertical, DashboardTheme.Spacing.section)
             }
         }
         .background {
@@ -1958,9 +1957,9 @@ struct DeploymentTrackerRootView: View {
             // the module visually matches the rest of Forsetti while still
             // allowing workspace cards to remain legible.
             ZStack {
-                ForsettiTheme.groupedSurface
-                ForsettiMetalBackgroundView()
-                ForsettiTheme.appBackdropGradient.opacity(0.62)
+                DashboardTheme.groupedSurface
+                DashboardMetalBackgroundView()
+                DashboardTheme.appBackdropGradient.opacity(0.62)
             }
             .ignoresSafeArea()
         }
@@ -1985,7 +1984,11 @@ struct DeploymentTrackerRootView: View {
         }
         .sheet(isPresented: $viewModel.isGuidePresented) {
             DeploymentTrackerGuideView(viewModel: viewModel, showCloseButton: true)
+#if os(macOS)
+                // Roomy on macOS; on iPhone/iPad the sheet sizes to the device
+                // (a hard 840pt minWidth would overflow and clip the screen).
                 .frame(minWidth: 840, minHeight: 640)
+#endif
         }
         .overlay(alignment: .bottomTrailing) {
             if viewModel.activeDemoScenario != nil {
@@ -2008,8 +2011,8 @@ struct DeploymentTrackerRootView: View {
         // The header stays outside individual workspace views so the guide entry
         // point and module title remain consistent while the selected workspace
         // changes below.
-        HStack(alignment: .top, spacing: ForsettiTheme.Spacing.section) {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        HStack(alignment: .top, spacing: DashboardTheme.Spacing.section) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
                 DeploymentDemoRibbonView()
                 Label("Deployment Tracker Demo", systemImage: "sparkles.rectangle.stack")
                     .font(.system(.largeTitle, design: .rounded).weight(.bold))
@@ -2020,7 +2023,7 @@ struct DeploymentTrackerRootView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: ForsettiTheme.Spacing.item)
+            Spacer(minLength: DashboardTheme.Spacing.item)
             Button {
                 viewModel.resetDemoData()
             } label: {
@@ -2041,7 +2044,7 @@ struct DeploymentTrackerRootView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     @ViewBuilder
@@ -2115,14 +2118,14 @@ struct DeploymentTrackerRootView: View {
                     } label: {
                         HStack {
                             Label(workspace.displayName, systemImage: workspace.iconSystemName)
-                            Spacer(minLength: ForsettiTheme.Spacing.compact)
+                            Spacer(minLength: DashboardTheme.Spacing.compact)
                             if viewModel.selectedWorkspace == workspace {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(ForsettiTheme.accent)
+                                    .foregroundStyle(DashboardTheme.accent)
                             }
                         }
                     }
-                    .foregroundStyle(viewModel.selectedWorkspace == workspace ? ForsettiTheme.accent : .primary)
+                    .foregroundStyle(viewModel.selectedWorkspace == workspace ? DashboardTheme.accent : .primary)
                 }
             }
         }
@@ -2151,7 +2154,7 @@ private struct DeploymentStructuredErrorView: View {
         // Structured errors are deliberately verbose. They tell the technician
         // what failed, whether any local or external data changed, whether retry
         // is safe, and which guide topic contains recovery steps.
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label(error.title, systemImage: "exclamationmark.octagon")
                 .font(.headline)
                 .foregroundStyle(.red)
@@ -2190,7 +2193,7 @@ private struct DeploymentStructuredErrorView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 

@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "Klatu-barada-Nikto"
+
 /// Saved smart-filter section displayed inside `MobileDeviceSearchView`.
 ///
 /// Mirrors the look of the existing Search Profiles section: each row shows

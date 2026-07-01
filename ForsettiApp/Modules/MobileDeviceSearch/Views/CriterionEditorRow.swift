@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "End of Line"
+
 /// One editable row in the Advanced Search builder: a field picker, an
 /// operator picker, and a typed value control.
 ///
@@ -46,7 +48,7 @@ struct CriterionEditorRow: View {
                     .padding(.horizontal, 10)
                     .background(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(ForsettiTheme.border, lineWidth: 1)
+                            .stroke(DashboardTheme.border, lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)

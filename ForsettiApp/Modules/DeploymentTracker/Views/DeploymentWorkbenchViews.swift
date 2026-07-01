@@ -21,7 +21,7 @@ struct DeploymentInProgressWorkbenchView: View {
             openGuide: { viewModel.openGuide(topicID: $0, sourceWorkspace: .inProgress) },
             runDemo: { viewModel.startDemoScenario(for: .inProgress) }
         ) {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
                 InProgressOnboardingStrip(viewModel: viewModel)
                 InProgressToolbarView(viewModel: viewModel)
 
@@ -49,7 +49,11 @@ struct DeploymentInProgressWorkbenchView: View {
             // grid stays stable while column visibility, order, width, and
             // pinned state are being edited.
             InProgressFieldCatalogPanel(viewModel: viewModel)
+#if os(macOS)
+                // A roomy sheet on macOS; on iPhone/iPad the sheet sizes to the
+                // device (a hard minWidth would overflow the screen).
                 .frame(minWidth: 560, minHeight: 640)
+#endif
         }
     }
 }
@@ -60,33 +64,42 @@ private struct InProgressOnboardingStrip: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        HStack(alignment: .top, spacing: ForsettiTheme.Spacing.item) {
-            Image(systemName: "wand.and.stars")
-                .font(.title3)
-                .foregroundStyle(ForsettiTheme.accent)
-            Text("Use this workbench to review, edit, validate, and run simulated actions on active Demo deployment devices. Select rows to preview Jamf Preload, ABM Verification, SD+ Export, or shipping actions. Dummy data only. No live Jamf actions.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: ForsettiTheme.Spacing.item)
-            Button {
-                viewModel.openGuide(topicID: "workbench", sourceWorkspace: .inProgress)
-            } label: {
-                Label("Open Guide", systemImage: "questionmark.circle")
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
+            HStack(alignment: .top, spacing: DashboardTheme.Spacing.item) {
+                Image(systemName: "wand.and.stars")
+                    .font(.title3)
+                    .foregroundStyle(DashboardTheme.accent)
+                Text("Use this workbench to review, edit, validate, and run simulated actions on active Demo deployment devices. Select rows to preview Jamf Preload, ABM Verification, SD+ Export, or shipping actions. Dummy data only. No live Jamf actions.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
             }
-            Button {
-                viewModel.showFieldCatalog()
-            } label: {
-                Label("Customize Columns", systemImage: "rectangle.grid.2x2")
-            }
-            Button {
-                viewModel.selectWorkspace(.intakeImports)
-            } label: {
-                Label("Import Devices", systemImage: "tray.and.arrow.down")
+            // Buttons scroll horizontally so they sit below the text and never crush
+            // it on narrow widths.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DashboardTheme.Spacing.item) {
+                    Button {
+                        viewModel.openGuide(topicID: "workbench", sourceWorkspace: .inProgress)
+                    } label: {
+                        Label("Open Guide", systemImage: "questionmark.circle")
+                    }
+                    Button {
+                        viewModel.showFieldCatalog()
+                    } label: {
+                        Label("Customize Columns", systemImage: "rectangle.grid.2x2")
+                    }
+                    Button {
+                        viewModel.selectWorkspace(.intakeImports)
+                    } label: {
+                        Label("Import Devices", systemImage: "tray.and.arrow.down")
+                    }
+                }
+                .padding(.vertical, 2)
             }
         }
         .padding(12)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -97,15 +110,27 @@ private struct InProgressToolbarView: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        HStack(spacing: ForsettiTheme.Spacing.item) {
-            Picker("Workspace layout", selection: Binding(get: { viewModel.workbenchLayout.id }, set: { viewModel.selectLayout(id: $0) })) {
-                ForEach(viewModel.workbenchLayouts) { layout in
-                    Text(layout.displayName).tag(layout.id)
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
+            // View config (layout + filter) on its own row with flexible widths so it
+            // never overflows on iPhone / iPad portrait.
+            HStack(spacing: DashboardTheme.Spacing.item) {
+                Picker("Workspace layout", selection: Binding(get: { viewModel.workbenchLayout.id }, set: { viewModel.selectLayout(id: $0) })) {
+                    ForEach(viewModel.workbenchLayouts) { layout in
+                        Text(layout.displayName).tag(layout.id)
+                    }
                 }
-            }
-            .labelsHidden()
-            .frame(width: 190)
+                .labelsHidden()
+                .frame(maxWidth: 240)
 
+                TextField("Filter", text: Binding(get: { viewModel.filterText }, set: { viewModel.updateFilterText($0) }))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 320)
+            }
+
+            // Action buttons scroll horizontally so the row never compresses or clips
+            // on narrow widths (it stays a single static row when there's room).
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DashboardTheme.Spacing.item) {
             Button {
                 viewModel.showFieldCatalog()
             } label: {
@@ -193,20 +218,12 @@ private struct InProgressToolbarView: View {
             .disabled(viewModel.selectedDeviceID == nil)
             .help("Archive Demo Record")
 
-            Spacer(minLength: ForsettiTheme.Spacing.item)
-
-            TextField(
-                "Filter",
-                text: Binding(
-                    get: { viewModel.filterText },
-                    set: { viewModel.updateFilterText($0) }
-                )
-            )
-            .textFieldStyle(.roundedBorder)
-            .frame(width: 260)
+                }
+                .padding(.vertical, 2)
+            }
         }
         .padding(12)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -264,7 +281,7 @@ private struct InProgressGridView: View {
                 .frame(minHeight: 320, maxHeight: 520)
             }
         }
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var headerRow: some View {
@@ -284,12 +301,12 @@ private struct InProgressGridView: View {
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
-                        .background(ForsettiTheme.surface)
+                        .background(DashboardTheme.surface)
                         .clipShape(Capsule())
                     if column.layoutColumn.pinned {
                         Image(systemName: "pin.fill")
                             .font(.caption2)
-                            .foregroundStyle(ForsettiTheme.accent)
+                            .foregroundStyle(DashboardTheme.accent)
                     }
                     Spacer(minLength: 0)
                     Button {
@@ -303,10 +320,10 @@ private struct InProgressGridView: View {
                 }
                 .frame(width: columnWidth(column), height: 38, alignment: .leading)
                 .padding(.horizontal, 10)
-                .background(ForsettiTheme.groupedSurface)
+                .background(DashboardTheme.groupedSurface)
                 .overlay(alignment: .trailing) {
                     Rectangle()
-                        .fill(ForsettiTheme.border)
+                        .fill(DashboardTheme.border)
                         .frame(width: 4)
                         .contentShape(Rectangle())
                         .gesture(
@@ -355,12 +372,12 @@ private struct InProgressGridView: View {
                 .padding(.horizontal, 8)
                 .overlay(alignment: .trailing) {
                     Rectangle()
-                        .fill(ForsettiTheme.border.opacity(0.75))
+                        .fill(DashboardTheme.border.opacity(0.75))
                         .frame(width: 1)
                 }
             }
         }
-        .background(row.id == viewModel.selectedDeviceID ? ForsettiTheme.accent.opacity(0.14) : Color.clear)
+        .background(row.id == viewModel.selectedDeviceID ? DashboardTheme.accent.opacity(0.14) : Color.clear)
         .contentShape(Rectangle())
         .onTapGesture {
             viewModel.selectRow(id: row.id)
@@ -414,7 +431,7 @@ private struct DeploymentWorkbenchEmptyState: View {
     let secondaryAction: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label(title, systemImage: "tray")
                 .font(.headline)
             Text(message)
@@ -577,7 +594,7 @@ private struct InProgressFieldCatalogPanel: View {
     @State private var selectedEditability = "All"
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
             HStack {
                 Label("Field Catalog", systemImage: "rectangle.grid.2x2")
                     .font(.system(.title2, design: .rounded).weight(.semibold))
@@ -591,34 +608,37 @@ private struct InProgressFieldCatalogPanel: View {
                 .help("Close")
             }
 
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                 TextField("Search fields by name, key, category, source, or type", text: $searchText)
                     .textFieldStyle(.roundedBorder)
                     .accessibilityLabel("Search Field Catalog")
 
-                HStack(spacing: ForsettiTheme.Spacing.item) {
-                    Picker("Category", selection: $selectedCategory) {
-                        Text("All Categories").tag("All")
-                        ForEach(categories, id: \.self) { category in
-                            Text(category).tag(category)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: DashboardTheme.Spacing.item) {
+                        Picker("Category", selection: $selectedCategory) {
+                            Text("All Categories").tag("All")
+                            ForEach(categories, id: \.self) { category in
+                                Text(category).tag(category)
+                            }
+                        }
+                        Picker("Source", selection: $selectedSource) {
+                            Text("All Sources").tag("All")
+                            ForEach(DeploymentFieldSourceOfTruth.allCases, id: \.rawValue) { source in
+                                Text(source.rawValue).tag(source.rawValue)
+                            }
+                        }
+                        Picker("Visibility", selection: $selectedVisibility) {
+                            Text("All Fields").tag("All")
+                            Text("Visible").tag("Visible")
+                            Text("Hidden").tag("Hidden")
+                        }
+                        Picker("Editability", selection: $selectedEditability) {
+                            Text("Editable and Read-only").tag("All")
+                            Text("Editable").tag("Editable")
+                            Text("Read-only").tag("Read-only")
                         }
                     }
-                    Picker("Source", selection: $selectedSource) {
-                        Text("All Sources").tag("All")
-                        ForEach(DeploymentFieldSourceOfTruth.allCases, id: \.rawValue) { source in
-                            Text(source.rawValue).tag(source.rawValue)
-                        }
-                    }
-                    Picker("Visibility", selection: $selectedVisibility) {
-                        Text("All Fields").tag("All")
-                        Text("Visible").tag("Visible")
-                        Text("Hidden").tag("Hidden")
-                    }
-                    Picker("Editability", selection: $selectedEditability) {
-                        Text("Editable and Read-only").tag("All")
-                        Text("Editable").tag("Editable")
-                        Text("Read-only").tag("Read-only")
-                    }
+                    .padding(.vertical, 2)
                 }
             }
 
@@ -631,9 +651,9 @@ private struct InProgressFieldCatalogPanel: View {
                     )
                     .frame(maxWidth: .infinity, minHeight: 260)
                 } else {
-                    VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+                    VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
                         ForEach(groupedFields) { group in
-                            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                                 Text(group.category)
                                     .font(.headline)
 
@@ -647,8 +667,8 @@ private struct InProgressFieldCatalogPanel: View {
                 }
             }
         }
-        .padding(ForsettiTheme.Spacing.section)
-        .background(ForsettiTheme.groupedSurface)
+        .padding(DashboardTheme.Spacing.section)
+        .background(DashboardTheme.groupedSurface)
     }
 
     private var categories: [String] {
@@ -706,7 +726,7 @@ private struct InProgressFieldCatalogPanel: View {
     private func fieldRow(_ field: DeploymentFieldDefinition) -> some View {
         // A field row edits only layout metadata. It never mutates device data,
         // external snapshots, or field definitions.
-        HStack(alignment: .center, spacing: ForsettiTheme.Spacing.compact) {
+        HStack(alignment: .center, spacing: DashboardTheme.Spacing.compact) {
             Toggle(
                 isOn: Binding(
                     get: { viewModel.isFieldVisible(field.fieldKey) },
@@ -721,7 +741,7 @@ private struct InProgressFieldCatalogPanel: View {
                             .font(.caption2.weight(.semibold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(ForsettiTheme.groupedSurface)
+                            .background(DashboardTheme.groupedSurface)
                             .clipShape(Capsule())
                         Text(field.fieldType.rawValue)
                             .font(.caption)
@@ -733,7 +753,7 @@ private struct InProgressFieldCatalogPanel: View {
                 }
             }
 
-            Spacer(minLength: ForsettiTheme.Spacing.compact)
+            Spacer(minLength: DashboardTheme.Spacing.compact)
 
             Button {
                 viewModel.moveVisibleColumn(field.fieldKey, offset: -1)
@@ -776,11 +796,11 @@ private struct InProgressFieldCatalogPanel: View {
             .help(viewModel.isFieldPinned(field.fieldKey) ? "Unpin Column" : "Pin Column")
         }
         .padding(10)
-        .background(ForsettiTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card, style: .continuous))
+        .background(DashboardTheme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.card, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card, style: .continuous)
-                .stroke(ForsettiTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DashboardTheme.Radius.card, style: .continuous)
+                .stroke(DashboardTheme.border, lineWidth: 1)
         }
     }
 }
@@ -802,12 +822,12 @@ private struct InProgressInspectorView: View {
     let fieldDefinitions: [DeploymentFieldDefinition]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label("Inspector", systemImage: "sidebar.right")
                 .font(.headline)
 
             ForEach(groupedCells) { group in
-                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(group.title)
                             .font(.subheadline.weight(.semibold))
@@ -815,7 +835,7 @@ private struct InProgressInspectorView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), alignment: .leading)], alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), alignment: .leading)], alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                         ForEach(group.items) { item in
                             InspectorFieldTile(item: item)
                         }
@@ -824,7 +844,7 @@ private struct InProgressInspectorView: View {
             }
         }
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var definitionsByKey: [String: DeploymentFieldDefinition] {
@@ -951,7 +971,7 @@ private struct InspectorFieldTile: View {
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 2)
-                    .background(ForsettiTheme.surface)
+                    .background(DashboardTheme.surface)
                     .clipShape(Capsule())
             }
             if item.field.fieldType == .boolean {
@@ -969,7 +989,7 @@ private struct InspectorFieldTile: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
@@ -982,7 +1002,7 @@ private struct InProgressValidationDrawer: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label("Validation", systemImage: "checklist")
                 .font(.headline)
 
@@ -1010,12 +1030,12 @@ private struct InProgressValidationDrawer: View {
                     }
                 }
                 .padding(10)
-                .background(ForsettiTheme.groupedSurface)
+                .background(DashboardTheme.groupedSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
         }
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var groups: [ValidationMessageGroup] {
@@ -1097,7 +1117,7 @@ private struct DeploymentUserFacingErrorView: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label("Workbench data could not refresh", systemImage: "exclamationmark.octagon")
                 .font(.headline)
                 .foregroundStyle(.red)
@@ -1121,7 +1141,7 @@ private struct DeploymentUserFacingErrorView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -1132,7 +1152,7 @@ private struct InProgressExportPreviewView: View {
     let csv: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label("Export Preview", systemImage: "doc.plaintext")
                 .font(.headline)
             ScrollView(.horizontal) {
@@ -1142,10 +1162,10 @@ private struct InProgressExportPreviewView: View {
                     .padding(10)
             }
             .frame(maxHeight: 160)
-            .background(ForsettiTheme.groupedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card, style: .continuous))
+            .background(DashboardTheme.groupedSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.card, style: .continuous))
         }
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }

@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "Klatu-barada-Nikto"
+
 /// The Prestage Director module provides a workflow for viewing mobile device prestage enrollment
 /// profiles and managing the devices assigned to each profile. Users can move devices between
 /// prestages or remove them from the current prestage entirely.
@@ -22,12 +24,12 @@ final class PrestageDirectorModule: JamfModule {
     /// Creates a new Prestage Director module instance with default or custom metadata.
     ///
     /// - Parameters:
-    ///   - id: Reverse-DNS module identifier. Defaults to `forsetti.feature.prestage-director`.
+    ///   - id: Reverse-DNS module identifier. Defaults to `com.forsetti.jamfpro.feature.prestage-director`.
     ///   - title: Display name. Defaults to `"Prestage Director"`.
     ///   - subtitle: Brief description. Defaults to a sentence explaining prestage management.
     ///   - iconSystemName: SF Symbol for the module icon. Defaults to `"arrow.left.arrow.right.square"`.
     init(
-        id: String = "forsetti.feature.prestage-director",
+        id: String = "com.forsetti.jamfpro.feature.prestage-director",
         title: String = "Prestage Director",
         subtitle: String = "View prestages and move or remove assigned devices.",
         iconSystemName: String = "arrow.left.arrow.right.square"

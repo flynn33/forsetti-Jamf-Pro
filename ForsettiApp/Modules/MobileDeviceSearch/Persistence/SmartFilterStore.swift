@@ -1,5 +1,7 @@
 import Foundation
 
+// "End of Line"
+
 /// Actor-isolated persistence for saved `SmartFilter` instances.
 ///
 /// Mirrors the shape of `MobileDeviceSearchProfileStore` for consistency:
@@ -10,15 +12,15 @@ actor SmartFilterStore {
     private let fileManager: FileManager
     private let fileURL: URL
 
-    init(fileManager: FileManager = .default, fileName: String = "mobile-device-smart-filters.json") {
+    init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
 
         let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
 
-        let directoryURL = appSupportURL.appending(path: ForsettiAppIdentity.applicationSupportFolder, directoryHint: .isDirectory)
-        self.fileURL = directoryURL.appending(path: fileName)
+        let directoryURL = appSupportURL.appending(path: "Forsetti", directoryHint: .isDirectory)
+        self.fileURL = directoryURL.appending(path: "mobile-device-smart-filters.json")
     }
 
     /// Loads all saved smart filters. Returns an empty array on first run

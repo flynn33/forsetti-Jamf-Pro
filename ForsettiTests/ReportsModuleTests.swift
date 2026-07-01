@@ -109,6 +109,41 @@ final class ReportsModuleTests: XCTestCase {
         XCTAssertEqual(ReportCSVRenderer.escape("a\"b"), "\"a\"\"b\"")
     }
 
+    func test_enrollmentDateNormalization() {
+        XCTAssertEqual(ReportsEnrollmentDate.normalize("2024-05-12T14:30:00.000Z"), "2024-05-12")
+        XCTAssertEqual(ReportsEnrollmentDate.normalize("2024-05-12T14:30:00Z"), "2024-05-12")
+        XCTAssertEqual(ReportsEnrollmentDate.normalize("2024-05-12"), "2024-05-12")
+        XCTAssertEqual(ReportsEnrollmentDate.normalize("  2024-05-12T00:00:00Z  "), "2024-05-12")
+        XCTAssertNil(ReportsEnrollmentDate.normalize(nil))
+        XCTAssertNil(ReportsEnrollmentDate.normalize(""))
+        XCTAssertNil(ReportsEnrollmentDate.normalize("   "))
+        // A value that isn't an ISO date is surfaced unchanged rather than dropped.
+        XCTAssertEqual(ReportsEnrollmentDate.normalize("Never"), "Never")
+    }
+
+    func test_fieldCatalogContainsEnrollmentDate() {
+        let field = ReportsFieldCatalog.field(for: "enrollmentDate")
+        XCTAssertEqual(field?.displayName, "Device Enrollment Date")
+        XCTAssertEqual(field?.dataType, .string)
+        XCTAssertEqual(field?.computerSection, .general)
+        XCTAssertEqual(field?.mobileSection, .general)
+        XCTAssertTrue(field?.domains.contains(.computer) == true)
+        XCTAssertTrue(field?.domains.contains(.mobile) == true)
+        // Selectable as a criterion field for both computer and mobile reports.
+        XCTAssertTrue(ReportsFieldCatalog.fields(for: .computers).contains { $0.key == "enrollmentDate" })
+        XCTAssertTrue(ReportsFieldCatalog.fields(for: .mobileDevices).contains { $0.key == "enrollmentDate" })
+    }
+
+    func test_csvIncludesEnrollmentDateColumnAndValue() throws {
+        let data = try ReportCSVRenderer().render(payload: samplePayload())
+        let csv = try XCTUnwrap(String(data: data, encoding: .utf8))
+        let lines = csv.split(separator: "\n").map(String.init)
+        let headerCols = try XCTUnwrap(lines.first).components(separatedBy: ",")
+        let index = try XCTUnwrap(headerCols.firstIndex(of: "Enrollment Date"))
+        let firstRow = try XCTUnwrap(lines.dropFirst().first).components(separatedBy: ",")
+        XCTAssertEqual(firstRow[index], "2024-05-12")
+    }
+
     func test_textMarkdownDocAndPDFRenderersProduceSmokeOutput() throws {
         let payload = samplePayload()
 
@@ -217,6 +252,7 @@ final class ReportsModuleTests: XCTestCase {
                 "model": type.displayName,
                 "building": "HQ",
                 "managed": "true",
+                "enrollmentDate": "2024-05-12",
                 "sourceConfidence": confidence.displayName
             ]
         )

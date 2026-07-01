@@ -8,8 +8,8 @@ struct ReportBuilderView: View {
     let isGenerating: Bool
     let onGenerate: (ReportRequest) async -> Void
 
-    // The builder follows the same `List` + `.forsettiInsetGroupedListStyle()` +
-    // sticky `.forsettiBottomBarSurface()` bottom bar pattern that `Advanced
+    // The builder follows the same `List` + `.dashboardInsetGroupedListStyle()` +
+    // sticky `.dashboardBottomBarSurface()` bottom bar pattern that `Advanced
     // Search` (and the other complex modal sheets in the app) already use.
     // Form gave the picker labels and the multi-line Frames toggles a
     // cramped, asymmetric layout on macOS; List with the standard inset-
@@ -23,11 +23,11 @@ struct ReportBuilderView: View {
                 framesSection
                 criteriaSection
             }
-            .forsettiInsetGroupedListStyle()
+            .dashboardInsetGroupedListStyle()
             .navigationTitle("New Report")
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .forsettiTopBarLeading) {
+                ToolbarItem(placement: .dashboardTopBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
             }
@@ -161,11 +161,11 @@ struct ReportBuilderView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.forsettiPrimary)
+            .buttonStyle(.dashboardPrimary)
             .disabled(isGenerating)
         }
         .padding(16)
-        .forsettiBottomBarSurface()
+        .dashboardBottomBarSurface()
     }
 
     // MARK: - Helpers
@@ -247,7 +247,7 @@ private struct ReportCriterionEditorRow: View {
             }
         default:
             TextField("Value", text: $criterion.value)
-                .forsettiNoAutoCorrectionTextInput()
+                .dashboardNoAutoCorrectionTextInput()
         }
     }
 

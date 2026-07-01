@@ -5,6 +5,10 @@ import QuartzCore
 import os
 #endif
 
+// "A robot may not injure a human being or, through inaction, allow a human being to come to harm.
+//  A robot must obey the orders given it by human beings except where such orders would conflict with the First Law.
+//  A robot must protect its own existence as long as such protection does not conflict with the First or Second Law."
+
 /// Visual presentation mode for the storage gauge.
 ///
 /// - `.inline`: small bar embedded in a search-result row. Renders paused;
@@ -112,7 +116,7 @@ final class HardwareStorageRenderer: NSObject, MTKViewDelegate {
     /// alongside the rest of the search log.
     nonisolated(unsafe) static var lastInitError: String?
 
-    private static let logger = Logger(subsystem: ForsettiAppIdentity.bundleIdentifier, category: "HardwareStorageRenderer")
+    private static let logger = Logger(subsystem: "com.jamfdashboard.app", category: "HardwareStorageRenderer")
 
     // MARK: - Per-instance state
 

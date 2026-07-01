@@ -20,7 +20,7 @@ struct CommandStatusFallbackView: View {
                             LinearGradient(
                                 colors: [
                                     accentColor.opacity(0.20),
-                                    ForsettiTheme.groupedSurface.opacity(0.92),
+                                    DashboardTheme.groupedSurface.opacity(0.92),
                                     accentColor.opacity(0.10)
                                 ],
                                 startPoint: .topLeading,
@@ -161,7 +161,7 @@ struct CommandStatusFallbackView: View {
         time: TimeInterval
     ) -> some View {
         let pulse = CGFloat((sin(time * 2.6) + 1.0) / 2.0)
-        let nodeColor = isActive ? accentColor : ForsettiColors.textTertiary.opacity(0.52)
+        let nodeColor = isActive ? accentColor : Color.gray.opacity(0.52)
 
         return ZStack {
             Circle()
@@ -172,7 +172,7 @@ struct CommandStatusFallbackView: View {
                 )
                 .blur(radius: isActive ? 1 : 0)
             Circle()
-                .fill(ForsettiTheme.surface)
+                .fill(DashboardTheme.surface)
                 .frame(width: 26, height: 26)
                 .overlay(Circle().stroke(nodeColor, lineWidth: 1.5))
                 .shadow(color: nodeColor.opacity(isActive ? 0.36 : 0.12), radius: isActive ? 6 : 2)
@@ -200,19 +200,17 @@ struct CommandStatusFallbackView: View {
     private var accentColor: Color {
         switch phase {
         case .idle:
-            return ForsettiColors.textTertiary
-        case .sending:
-            return ForsettiColors.accentCyan
-        case .queued:
-            return ForsettiColors.accentBlue
+            return Color.gray
+        case .sending, .queued:
+            return DashboardColors.bluePrimary
         case .verifying:
-            return ForsettiColors.warning
+            return .orange
         case .succeeded:
-            return ForsettiColors.success
+            return DashboardColors.greenPrimary
         case .failed:
-            return ForsettiColors.critical
+            return .red
         case .timedOut:
-            return ForsettiColors.warning
+            return .orange
         }
     }
 

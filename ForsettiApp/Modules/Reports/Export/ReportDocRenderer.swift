@@ -54,11 +54,11 @@ struct ReportDocRenderer: ReportExportRendering {
     private func detailTable(_ records: [ReportDeviceRecord]) -> String {
         let rows = records.prefix(300).map { record in
             """
-            <tr><td>\(escape(record.deviceType.displayName))</td><td>\(escape(record.displayName ?? ""))</td><td>\(escape(record.serialNumber ?? ""))</td><td>\(escape(record.identity.marketingName ?? record.model ?? ""))</td><td>\(escape(record.osVersion ?? ""))</td><td>\(escape(record.identity.confidence.displayName))</td></tr>
+            <tr><td>\(escape(record.deviceType.displayName))</td><td>\(escape(record.displayName ?? ""))</td><td>\(escape(record.serialNumber ?? ""))</td><td>\(escape(record.identity.marketingName ?? record.model ?? ""))</td><td>\(escape(record.osVersion ?? ""))</td><td>\(escape(record.value(for: "enrollmentDate") ?? ""))</td><td>\(escape(record.identity.confidence.displayName))</td></tr>
             """
         }.joined()
         let suffix = records.count > 300 ? "<p class=\"note\">Details truncated to first 300 records.</p>" : ""
-        return "<h2>Details</h2><table><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Model</th><th>OS</th><th>Confidence</th></tr></thead><tbody>\(rows)</tbody></table>\(suffix)"
+        return "<h2>Details</h2><table><thead><tr><th>Type</th><th>Name</th><th>Serial</th><th>Model</th><th>OS</th><th>Enrolled</th><th>Confidence</th></tr></thead><tbody>\(rows)</tbody></table>\(suffix)"
     }
 
     private func escape(_ value: String) -> String {

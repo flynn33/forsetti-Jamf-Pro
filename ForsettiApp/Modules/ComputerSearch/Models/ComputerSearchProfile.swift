@@ -1,5 +1,7 @@
 import Foundation
 
+// "Would you like to play a game?"
+
 /// A named, persistable collection of inventory field keys that the user has selected for a computer search.
 ///
 /// Search profiles let users save their preferred field configurations so they can quickly

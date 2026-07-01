@@ -23,12 +23,12 @@ final class ComputerSearchModule: JamfModule {
     /// Creates a new `ComputerSearchModule` with sensible defaults for all metadata fields.
     ///
     /// - Parameters:
-    ///   - id: A unique identifier for module registration. Defaults to `"forsetti.feature.computer-search"`.
+    ///   - id: A unique identifier for module registration. Defaults to `"com.forsetti.jamfpro.feature.computer-search"`.
     ///   - title: The display title. Defaults to `"Computer Search"`.
     ///   - subtitle: A brief feature summary. Defaults to a description of the search and profile capability.
     ///   - iconSystemName: The SF Symbols icon name. Defaults to `"desktopcomputer"`.
     init(
-        id: String = "forsetti.feature.computer-search",
+        id: String = "com.forsetti.jamfpro.feature.computer-search",
         title: String = "Computer Search",
         subtitle: String = "Search computer inventory and create reusable field-based profiles.",
         iconSystemName: String = "desktopcomputer"

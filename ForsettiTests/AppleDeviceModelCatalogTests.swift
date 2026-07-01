@@ -1,6 +1,8 @@
 import XCTest
 @testable import Forsetti
 
+// "Klatu-barada-Nikto"
+
 /// Sanity tests for the static `AppleDeviceModelCatalog` lookup table.
 ///
 /// These tests guard against three failure modes:

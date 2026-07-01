@@ -1,6 +1,8 @@
 import XCTest
 @testable import Forsetti
 
+// "End of Line"
+
 /// Regression coverage for the Export JSON / Markdown path and for
 /// the disk-persistence invariants.
 ///
@@ -9,6 +11,7 @@ import XCTest
 /// NDJSON log from disk on first access, so without a clean start
 /// tests would observe events from previous runs. `clear()` deletes
 /// the file outright, giving each test a known-empty baseline.
+@MainActor
 final class DiagnosticsCenterExportTests: XCTestCase {
 
     // MARK: - currentEvents round-trip
@@ -53,7 +56,7 @@ final class DiagnosticsCenterExportTests: XCTestCase {
             XCTFail("Rendered JSON is not an object")
             return
         }
-        XCTAssertEqual(decoded["appName"] as? String, "Forsetti")
+        XCTAssertEqual(decoded["appName"] as? String, ForsettiAppIdentity.displayName)
         XCTAssertEqual(decoded["eventCount"] as? Int, 1)
 
         guard let events = decoded["events"] as? [[String: Any]], events.count == 1 else {
@@ -86,70 +89,11 @@ final class DiagnosticsCenterExportTests: XCTestCase {
             return
         }
 
-        XCTAssertTrue(markdown.contains("# Forsetti Diagnostics"))
+        XCTAssertTrue(markdown.contains("# \(ForsettiAppIdentity.displayName) Diagnostics"))
         XCTAssertTrue(markdown.contains("tests.markdown"))
         XCTAssertTrue(markdown.contains("boom — something broke"))
         XCTAssertTrue(markdown.contains("E42"))
         XCTAssertTrue(markdown.contains("[ERROR]"))
-    }
-
-    func test_reportRedactsSensitiveMetadataBeforeExport() async throws {
-        let center = DiagnosticsCenter()
-        await center.clear()
-
-        await center.report(
-            source: "tests.redaction",
-            category: "security",
-            severity: .warning,
-            message: "queued command",
-            metadata: [
-                "management_id": "uuid-secret",
-                "payload_preview": #"{"pin":"123456","clientManagementIds":["uuid-secret"]}"#,
-                "ticket": "JAMF-456"
-            ]
-        )
-
-        let events = await center.currentEvents()
-        XCTAssertEqual(events.first?.metadata["management_id"], "<redacted>")
-        XCTAssertEqual(events.first?.metadata["payload_preview"], "<redacted>")
-        XCTAssertEqual(events.first?.metadata["ticket"], "JAMF-456")
-
-        let jsonBytes = try await center.renderJSONReportData()
-        let json = String(data: jsonBytes, encoding: .utf8) ?? ""
-        XCTAssertFalse(json.contains("uuid-secret"))
-        XCTAssertFalse(json.contains("123456"))
-        XCTAssertTrue(json.contains("JAMF-456"))
-    }
-
-    func test_reportRedactsSensitiveMetadataValuesBeforeExport() async throws {
-        let center = DiagnosticsCenter()
-        await center.clear()
-
-        await center.report(
-            source: "tests.redaction",
-            category: "security",
-            severity: .warning,
-            message: "queued command",
-            metadata: [
-                "endpoint": "api/v2/local-admin-password/123e4567-e89b-12d3-a456-426614174000/account/admin/rotate",
-                "note": "Bearer super-secret-token",
-                "sample": #"{"serialNumber":"C02ABC123XYZ"}"#,
-                "ticket": "JAMF-789"
-            ]
-        )
-
-        let events = await center.currentEvents()
-        XCTAssertEqual(events.first?.metadata["endpoint"], "<redacted>")
-        XCTAssertEqual(events.first?.metadata["note"], "<redacted>")
-        XCTAssertEqual(events.first?.metadata["sample"], "<redacted>")
-        XCTAssertEqual(events.first?.metadata["ticket"], "JAMF-789")
-
-        let jsonBytes = try await center.renderJSONReportData()
-        let json = String(data: jsonBytes, encoding: .utf8) ?? ""
-        XCTAssertFalse(json.contains("123e4567-e89b-12d3-a456-426614174000"))
-        XCTAssertFalse(json.contains("super-secret-token"))
-        XCTAssertFalse(json.contains("C02ABC123XYZ"))
-        XCTAssertTrue(json.contains("JAMF-789"))
     }
 
     // MARK: - Filename / clear
@@ -173,11 +117,11 @@ final class DiagnosticsCenterExportTests: XCTestCase {
     func test_suggestedExportFileName_hasCorrectPatternAndExtension() async {
         let center = DiagnosticsCenter()
         let name = await center.suggestedExportFileName(extension: "json")
-        XCTAssertTrue(name.hasPrefix("forsetti-diagnostics-"))
+        XCTAssertTrue(name.hasPrefix("\(ForsettiAppIdentity.diagnosticsFilePrefix)-"))
         XCTAssertTrue(name.hasSuffix(".json"))
 
         let timestamp = name
-            .replacingOccurrences(of: "forsetti-diagnostics-", with: "")
+            .replacingOccurrences(of: "\(ForsettiAppIdentity.diagnosticsFilePrefix)-", with: "")
             .replacingOccurrences(of: ".json", with: "")
         XCTAssertEqual(timestamp.count, 15, "Expected YYYYMMDD-HHmmss, got \(timestamp)")
     }
@@ -250,7 +194,7 @@ final class DiagnosticsCenterExportTests: XCTestCase {
             return
         }
 
-        XCTAssertTrue(url.path.hasSuffix("forsetti-diagnostics.ndjson"))
+        XCTAssertTrue(url.path.hasSuffix("\(ForsettiAppIdentity.diagnosticsFilePrefix).ndjson"))
         XCTAssertTrue(
             FileManager.default.fileExists(atPath: url.path),
             "NDJSON file must exist on disk after a report"

@@ -1,6 +1,8 @@
 import XCTest
 @testable import Forsetti
 
+// "End of Line"
+
 /// Exercises the shared RSQL filter builder.
 ///
 /// These tests lock in the audit-fixed grammar: logical OR is `,`, not

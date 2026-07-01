@@ -1,5 +1,7 @@
 import Foundation
 
+// "End of Line"
+
 /// Boolean combinator joining criteria within a group, or groups within a query.
 enum LogicalCombinator: String, Codable, Sendable, CaseIterable {
     case and

@@ -1,5 +1,7 @@
 import Foundation
 
+// "Would you like to play a game?"
+
 /// Enumerates the inventory sections available in the Jamf Pro mobile device API.
 ///
 /// Each case maps to a specific `section` query parameter value recognized by the
@@ -126,6 +128,8 @@ struct MobileDeviceField: Identifiable, Hashable, Sendable {
         self.allowedValues = allowedValues
     }
 }
+
+// "End of Line"
 
 extension MobileDeviceField {
     /// The hand-curated catalog of fields the original module shipped with.

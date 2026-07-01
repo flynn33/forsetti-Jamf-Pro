@@ -1,8 +1,30 @@
 {
-  "package_id": "forsetti.feature.support-technician",
+  "package_id": "com.forsetti.jamfpro.feature.support-technician",
   "module_type": "support-technician",
   "package_version": "1.0.0",
   "module_display_name": "Support Technician",
   "module_subtitle": "Unified support workflow for computer and mobile device tickets.",
-  "icon_system_name": "wrench.and.screwdriver"
+  "icon_system_name": "wrench.and.screwdriver",
+  "temporaryAdminElevation": {
+    "enabled": false,
+    "requireTicketReference": true,
+    "pollIntervalSeconds": 30,
+    "confirmationTimeoutMinutes": 25,
+    "cleanupAfterTimeout": true,
+    "allowedDurationsMinutes": [5, 15, 30, 60],
+    "requestScopes": {
+      "5": { "id": "", "name": "Forsetti - Temp Admin Requests - 5m", "kind": "staticComputerGroup" },
+      "15": { "id": "", "name": "Forsetti - Temp Admin Requests - 15m", "kind": "staticComputerGroup" },
+      "30": { "id": "", "name": "Forsetti - Temp Admin Requests - 30m", "kind": "staticComputerGroup" },
+      "60": { "id": "", "name": "Forsetti - Temp Admin Requests - 60m", "kind": "staticComputerGroup" }
+    },
+    "demoteNowScope": { "id": "", "name": "Forsetti - Temp Admin Demote Now", "kind": "staticComputerGroup" },
+    "extensionAttributeNames": {
+      "status": "Forsetti - Temporary Admin Status",
+      "user": "Forsetti - Temporary Admin User",
+      "expiresAt": "Forsetti - Temporary Admin Expires At",
+      "lastChange": "Forsetti - Temporary Admin Last Change",
+      "runId": "Forsetti - Temporary Admin Run ID"
+    }
+  }
 }

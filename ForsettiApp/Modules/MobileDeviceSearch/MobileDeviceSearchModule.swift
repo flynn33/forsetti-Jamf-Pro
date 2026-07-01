@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "Klatu-barada-Nikto"
+
 /// A module that provides mobile device search functionality within the Forsetti.
 ///
 /// `MobileDeviceSearchModule` conforms to `JamfModule` and serves as the entry point
@@ -25,12 +27,12 @@ final class MobileDeviceSearchModule: JamfModule {
     /// for standard use, or customized for testing and alternate configurations.
     ///
     /// - Parameters:
-    ///   - id: Reverse-DNS identifier for the module. Defaults to `"forsetti.feature.mobile-device-search"`.
+    ///   - id: Reverse-DNS identifier for the module. Defaults to `"com.forsetti.jamfpro.feature.mobile-device-search"`.
     ///   - title: Display title. Defaults to `"Mobile Device Search"`.
     ///   - subtitle: Brief description. Defaults to a summary of the search and profile features.
     ///   - iconSystemName: SF Symbol name for the module icon. Defaults to `"iphone.gen3"`.
     init(
-        id: String = "forsetti.feature.mobile-device-search",
+        id: String = "com.forsetti.jamfpro.feature.mobile-device-search",
         title: String = "Mobile Device Search",
         subtitle: String = "Search inventory and create reusable field-based profiles.",
         iconSystemName: String = "iphone.gen3"

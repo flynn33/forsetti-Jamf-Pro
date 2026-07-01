@@ -96,8 +96,9 @@ struct ReportPDFRenderer: ReportExportRendering {
     }
 
     private func drawTable(records: [ReportDeviceRecord], context: CGContext) {
-        let headers = ["Type", "Name", "Serial", "Model", "OS", "Confidence"]
-        let widths: [CGFloat] = [54, 120, 90, 130, 54, 106]
+        let headers = ["Type", "Name", "Serial", "Model", "OS", "Enrolled", "Confidence"]
+        // Rebalanced to keep the same total table width (554pt) with the added column.
+        let widths: [CGFloat] = [50, 102, 80, 110, 50, 70, 92]
         var x: CGFloat = 48
         let headerY: CGFloat = 694
         context.setFillColor(CGColor(red: 0.93, green: 0.96, blue: 1, alpha: 1))
@@ -116,6 +117,7 @@ struct ReportPDFRenderer: ReportExportRendering {
                 record.serialNumber ?? "",
                 record.identity.marketingName ?? record.model ?? "",
                 record.osVersion ?? "",
+                record.value(for: "enrollmentDate") ?? "",
                 record.identity.confidence.displayName
             ]
             for (index, value) in values.enumerated() {

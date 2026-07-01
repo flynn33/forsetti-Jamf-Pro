@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.service.jamf",
+  "displayName": "Jamf Service",
+  "moduleVersion": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": null
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 4,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "networking",
+    "secure_storage",
+    "authentication",
+    "api",
+    "security",
+    "diagnostics"
+  ],
+  "iapProductID": null,
+  "entryPoint": "ForsettiJamfServiceModule",
+  "defaultModuleRole": "api",
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "jamf-api-network",
+        "kind": "networking",
+        "access": "read_write",
+        "required": true,
+        "description": "Jamf API requests."
+      },
+      {
+        "requirementID": "jamf-secure-credentials",
+        "kind": "secure_storage",
+        "access": "read_write",
+        "required": true,
+        "description": "Credential/token storage."
+      },
+      {
+        "requirementID": "jamf-authentication",
+        "kind": "authentication",
+        "access": "read_write",
+        "required": true,
+        "description": "Authentication lifecycle."
+      },
+      {
+        "requirementID": "jamf-api-role",
+        "kind": "api",
+        "access": "execute",
+        "required": true,
+        "description": "API service role."
+      },
+      {
+        "requirementID": "jamf-security",
+        "kind": "security",
+        "access": "read",
+        "required": true,
+        "description": "Security state and credential protection."
+      },
+      {
+        "requirementID": "jamf-diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": true,
+        "description": "Diagnostics for API/auth failures."
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "forsetti-jamf-service"
+      ],
+      "requiredDefaultRoles": [
+        "api"
+      ]
+    }
+  }
+}

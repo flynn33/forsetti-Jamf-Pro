@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "Klatu-barada-Nikto"
+
 /// A single row in the mobile-device search results list.
 ///
 /// Renders the device name, the active-profile fields with non-empty values,
@@ -33,24 +35,24 @@ struct MobileDeviceResultRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(displayTitle)
-                .font(ForsettiSearchResultTypography.headline())
+                .font(DashboardSearchResultTypography.headline())
 
             if visibleFields.isEmpty && prestageDisplayValue == nil {
                 Text("Serial: \(record.serialNumber)")
-                    .font(ForsettiSearchResultTypography.subheadline())
+                    .font(DashboardSearchResultTypography.subheadline())
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(visibleFields) { field in
                     if let value = record.value(for: field.key) {
                         Text("\(field.displayName): \(value)")
-                            .font(ForsettiSearchResultTypography.caption())
+                            .font(DashboardSearchResultTypography.caption())
                             .foregroundStyle(.secondary)
                     }
                 }
 
                 if let prestageDisplayValue {
                     Text("Pre-Stage Enrollment: \(prestageDisplayValue)")
-                        .font(ForsettiSearchResultTypography.caption())
+                        .font(DashboardSearchResultTypography.caption())
                         .foregroundStyle(.secondary)
                 }
             }

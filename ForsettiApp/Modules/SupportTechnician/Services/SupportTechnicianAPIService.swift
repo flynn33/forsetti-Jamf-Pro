@@ -1,5 +1,7 @@
 import Foundation
 
+// "End of Line"
+
 /// Encapsulates all Jamf Pro API interactions for the Support Technician module.
 ///
 /// This actor provides thread-safe methods for searching assets, fetching device
@@ -67,10 +69,11 @@ actor SupportTechnicianAPIService {
     /// for iOS/iPadOS. Rebuilt when a detail fetch passes `bypassCache: true`.
     private var cachedMobilePrestageScopeMap: [String: String]?
 
-    /// Displayed PreStage fallback for a mobile device when both real API sources
-    /// resolve nil. Keep this nil unless a tenant-specific deployment explicitly
-    /// owns the mapping.
-    private static let mobilePrestageNilFallback: String? = nil
+    /// Displayed PreStage for a mobile device when both real API sources (bulk
+    /// inventory `enrollmentMethodPrestage` and the prestage scope walk) resolve
+    /// nil. AuthEnroll is a tenant prestage that isn't exposed through either
+    /// API, so a device that resolves to nothing is treated as AuthEnroll.
+    private static let mobilePrestageNilFallback = "AuthEnroll"
 
     /// Creates a new API service wired to the given gateway and diagnostics reporter.
     ///
@@ -168,8 +171,10 @@ actor SupportTechnicianAPIService {
             await cache.storePayload(rawJSON, forDeviceID: result.id)
         }
 
-        // Diagnostic dump writes a redacted payload only. The unredacted
-        // response stays in memory long enough to build the detail view.
+        // Diagnostic dump so the operator can verify exactly what Jamf
+        // returned. Writes to the sandboxed Documents directory; if the
+        // write fails (sandbox denial / disk full) we silently continue
+        // — the dump is best-effort only.
         Self.dumpPayloadForDiagnostics(rawJSON: rawJSON, deviceID: result.id)
         let (sections, categorized) = buildSectionsAndCategorize(from: payload)
         let extensionAttributes = extractExtensionAttributes(from: payload)
@@ -200,6 +205,10 @@ actor SupportTechnicianAPIService {
             ) {
                 resolvedMobilePrestage = fromScope
             } else {
+                // AuthEnroll doesn't surface through the inventory or scope
+                // APIs — it reports nil everywhere — so a mobile device that
+                // resolves to nothing through both real sources is, per tenant
+                // policy, an AuthEnroll enrollment.
                 resolvedMobilePrestage = Self.mobilePrestageNilFallback
             }
             await diagnosticsReporter.report(
@@ -225,7 +234,7 @@ actor SupportTechnicianAPIService {
             diagnostics: diagnostics,
             sections: sections,
             applications: applications,
-            rawJSON: Self.redactedJSONString(from: payload),
+            rawJSON: rawJSON,
             categorized: categorized,
             extensionAttributes: extensionAttributes,
             hardwareSpecs: hardwareSpecs,
@@ -768,52 +777,6 @@ actor SupportTechnicianAPIService {
                 sensitiveValue: nil
             )
 
-        case .remoteManagement:
-            // "Remote Desktop Control" — enables Apple Remote Desktop /
-            // Screen Sharing on the target Mac via Jamf's Modern API:
-            //   POST /api/v2/mdm/commands
-            //   { "clientData": [{"managementId": "<uuid>"}],
-            //     "commandData": {"commandType": "ENABLE_REMOTE_DESKTOP"} }
-            //
-            // Tenant's API client holds `Send Computer Remote Desktop
-            // Command` + the gate privilege, confirmed via
-            // introspection. macOS 10.14.4+ only.
-            //
-            // After the command is delivered, the Mac's Remote
-            // Management setting is enabled for all users. The
-            // technician then connects via macOS Screen Sharing
-            // (`vnc://<hostname>`) or Apple Remote Desktop. We open
-            // `vnc://<hostname-or-ip>` from the action result so
-            // Screen Sharing launches pre-populated. No web-UI
-            // redirect; the technician does not need Jamf Pro admin
-            // access.
-            guard detail.summary.assetType == .computer else {
-                throw SupportTechnicianError.unsupportedAction
-            }
-            let managementID = try resolveManagementID(from: detail)
-            _ = try await queueMDMCommand(commandType: "ENABLE_REMOTE_DESKTOP", managementID: managementID)
-            let connectionTarget = remoteDesktopConnectionTarget(for: detail)
-            let vncURL = URL(string: "vnc://\(connectionTarget)")
-            await diagnosticsReporter.report(
-                source: "module.support-technician",
-                category: "remote-desktop-control",
-                severity: .warning,
-                message: "Enabled Remote Desktop on computer via Modern API (ENABLE_REMOTE_DESKTOP).",
-                metadata: [
-                    "inventory_id": detail.summary.inventoryID,
-                    "management_id": managementID,
-                    "endpoint": "api/v2/mdm/commands",
-                    "command_type": "ENABLE_REMOTE_DESKTOP",
-                    "connection_target": connectionTarget
-                ]
-            )
-            return SupportActionResult(
-                title: action.title,
-                detail: "ENABLE_REMOTE_DESKTOP command queued on \(detail.summary.displayName). When the Mac checks in with MDM, Remote Management turns on and macOS Screen Sharing opens to \(connectionTarget). If that host doesn't resolve, use the device's last-known IP from its inventory detail.",
-                sensitiveValue: nil,
-                openURL: vncURL
-            )
-
         case .eraseDevice:
             switch detail.summary.assetType {
             case .computer:
@@ -984,19 +947,6 @@ actor SupportTechnicianAPIService {
             return SupportActionResult(
                 title: action.title,
                 detail: "Requested LAPS password rotation for this computer.",
-                sensitiveValue: nil
-            )
-
-        case .disableRemoteDesktop:
-            // Macs only — turns off Apple Remote Desktop / Screen Sharing.
-            guard detail.summary.assetType == .computer else {
-                throw SupportTechnicianError.unsupportedAction
-            }
-            let managementID = try resolveManagementID(from: detail)
-            _ = try await queueMDMCommand(commandType: "DISABLE_REMOTE_DESKTOP", managementID: managementID)
-            return SupportActionResult(
-                title: action.title,
-                detail: "Disable Remote Desktop command queued in Jamf Pro.",
                 sensitiveValue: nil
             )
 
@@ -1565,7 +1515,7 @@ actor SupportTechnicianAPIService {
                     let pageResults = try parseMobileSearchResults(from: data)
                     allResults.append(contentsOf: pageResults)
 
-                    // Ground-truth diagnostics: dump a redacted bulk body and log
+                    // Ground-truth diagnostics: dump the exact bulk body and log
                     // which devices yielded a PreStage from the search dict. This
                     // makes it unambiguous whether the bulk `general` section
                     // carries `enrollmentMethodPrestage` for a given device.
@@ -2104,13 +2054,13 @@ actor SupportTechnicianAPIService {
         let endpoint = "api/v1/scripts"
         let appName = action.appName
         let actionVerb = action.verb
-        let name = "Forsetti \(actionVerb): \(appName) (\(timestamp)) [serial \(serialNumber)]"
+        let name = "Dashboard \(actionVerb): \(appName) (\(timestamp)) [serial \(serialNumber)]"
         let scriptContents = generateApplicationActionScript(action: action, serialNumber: serialNumber)
 
         let payload: [String: Any] = [
             "name": name,
-            "info": "Temporary one-shot \(actionVerb.lowercased()) wrapper for \(appName) on \(deviceDisplayName) (serial \(serialNumber)). Safe to delete after the paired one-shot policy has executed.",
-            "notes": "Custom-trigger wrapper. Parameter 4 = exact app display name. Fires \(action.customTrigger) on the target Mac. Prepared \(timestamp).",
+            "info": "Auto-added by Forsetti to \(actionVerb.lowercased()) \(appName) on \(deviceDisplayName) (serial \(serialNumber)). Safe to delete after the paired one-shot policy has executed.",
+            "notes": "Custom-trigger wrapper. Parameter 4 = exact app display name. Fires \(action.customTrigger) on the target Mac. Generated \(timestamp).",
             "priority": "AFTER",
             "osRequirements": "",
             "parameter4": appName,
@@ -2118,7 +2068,7 @@ actor SupportTechnicianAPIService {
         ]
 
         let body = try JSONSerialization.data(withJSONObject: payload, options: [])
-        let bodyPreview = Self.redactedTextPreview(from: body)
+        let bodyPreview = String(data: body, encoding: .utf8).map { String($0.prefix(600)) } ?? "<non-utf8>"
 
         await diagnosticsReporter.report(
             source: "module.support-technician",
@@ -2259,7 +2209,7 @@ actor SupportTechnicianAPIService {
         TRIGGER="\(triggerPrefix)${APP_NAME}"
         START_EPOCH="$(date +%s)"
 
-        echo "Forsetti \(verb): intended_serial=\(serialNumber) actual_serial=${ACTUAL_SERIAL} app='${APP_NAME}' trigger='${TRIGGER}' start=${START_EPOCH}"
+        echo "Dashboard \(verb): intended_serial=\(serialNumber) actual_serial=${ACTUAL_SERIAL} app='${APP_NAME}' trigger='${TRIGGER}' start=${START_EPOCH}"
 
         # Capture stdout+stderr so we can grep for the "No policies" sentinel.
         # jamf policy returns 0 even when no matching policy exists, so grep is
@@ -2283,7 +2233,7 @@ actor SupportTechnicianAPIService {
     /// Persisted record of a one-shot Application Manager dispatch. Stored
     /// so `purgeStaleApplicationActionArtifacts` can delete the Jamf Pro
     /// script and policy it generated after 24 hours, preventing
-    /// accumulation of `Forsetti …` records on the Jamf Pro scripts and
+    /// accumulation of `Dashboard …` records on the Jamf Pro scripts and
     /// policies pages.
     struct ApplicationActionCleanupRecord: Codable, Sendable {
         let scriptID: String
@@ -2766,7 +2716,7 @@ actor SupportTechnicianAPIService {
             "clientManagementIds": [managementID]
         ]
         let body = try JSONSerialization.data(withJSONObject: payload, options: [])
-        let payloadPreview = Self.redactedTextPreview(from: body)
+        let payloadPreview = String(data: body, encoding: .utf8) ?? "<non-utf8>"
 
         await diagnosticsReporter.report(
             source: "module.support-technician",
@@ -2809,7 +2759,7 @@ actor SupportTechnicianAPIService {
             throw error
         }
 
-            let responsePreview = Self.redactedTextPreview(from: responseData)
+        let responsePreview = String(data: responseData, encoding: .utf8) ?? "<empty>"
 
         await diagnosticsReporter.report(
             source: "module.support-technician",
@@ -2872,7 +2822,7 @@ actor SupportTechnicianAPIService {
         let endpoint = "JSSResource/policies/id/0"
         let appName = action.appName
         let actionVerb = action.verb
-        let policyName = "Forsetti \(actionVerb): \(appName) (\(timestamp)) for \(deviceDisplayName) [serial \(serialNumber)]"
+        let policyName = "Dashboard \(actionVerb): \(appName) (\(timestamp)) for \(deviceDisplayName) [serial \(serialNumber)]"
 
         let xmlBody = """
         <policy>
@@ -3084,23 +3034,73 @@ actor SupportTechnicianAPIService {
         return String(pin)
     }
 
-    /// Builds the best-effort Screen Sharing (`vnc://`) hostname for a
-    /// device. Jamf Pro's inventory doesn't always include a usable IP
-    /// in the summary record, so this falls back through:
-    ///   1. displayName + `.local` (Bonjour — works for most managed Macs)
-    ///   2. displayName alone (if the admin put an FQDN in the name)
-    ///   3. the serial number (not usable but at least identifies the
-    ///      device — the technician edits the host before connecting)
-    private nonisolated func remoteDesktopConnectionTarget(for detail: SupportDeviceDetail) -> String {
-        let name = detail.summary.displayName.trimmingCharacters(in: .whitespaces)
-        if name.isEmpty == false {
-            // If the name already looks like an FQDN or IP, use it as-is.
-            if name.contains(".") {
-                return name
-            }
-            return "\(name).local"
+    // Screen Sharing connection-target resolution moved to the deterministic, unit-tested
+    // `SupportRemoteSupportTargetResolver` (Models/Services). The serial number is never used
+    // as a host, and the `vnc://` URL is built safely (percent-encoded) by the resolved target.
+
+    // MARK: - Remote Support (Apple-native Screen Sharing)
+
+    /// Queues `ENABLE_REMOTE_DESKTOP` for the Mac with the given management ID so Apple Remote
+    /// Management turns on at the next MDM check-in. Queueing is acceptance only — it is not
+    /// readiness and never opens Screen Sharing. Returns a command identifier when the Jamf
+    /// response carries one (best-effort). Routes through the existing gateway + DiagnosticsCenter.
+    func enableRemoteManagement(managementID: String) async throws -> String? {
+        let data = try await queueMDMCommand(commandType: "ENABLE_REMOTE_DESKTOP", managementID: managementID)
+        let commandID = Self.remoteSupportCommandID(from: data)
+        await diagnosticsReporter.report(
+            source: "module.support-technician",
+            category: "remote-support",
+            severity: .info,
+            message: "Queued ENABLE_REMOTE_DESKTOP for Remote Support.",
+            metadata: [
+                "endpoint": "api/v2/mdm/commands",
+                "command_type": "ENABLE_REMOTE_DESKTOP",
+                "management_id": managementID,
+                "command_id": commandID ?? "unknown",
+                "jamf_command_queued": "true"
+            ]
+        )
+        return commandID
+    }
+
+    /// Queues `DISABLE_REMOTE_DESKTOP` to turn Apple Remote Management back off (cleanup).
+    func disableRemoteManagement(managementID: String) async throws -> String? {
+        let data = try await queueMDMCommand(commandType: "DISABLE_REMOTE_DESKTOP", managementID: managementID)
+        let commandID = Self.remoteSupportCommandID(from: data)
+        await diagnosticsReporter.report(
+            source: "module.support-technician",
+            category: "remote-support",
+            severity: .info,
+            message: "Queued DISABLE_REMOTE_DESKTOP for Remote Support cleanup.",
+            metadata: [
+                "endpoint": "api/v2/mdm/commands",
+                "command_type": "DISABLE_REMOTE_DESKTOP",
+                "management_id": managementID,
+                "command_id": commandID ?? "unknown",
+                "jamf_command_queued": "true"
+            ]
+        )
+        return commandID
+    }
+
+    /// Best-effort extraction of a command identifier from a queue response. Returns `nil` when
+    /// the response shape carries no recognizable id — the workflow tolerates an unknown id.
+    private nonisolated static func remoteSupportCommandID(from data: Data) -> String? {
+        guard let object = try? JSONSerialization.jsonObject(with: data) else { return nil }
+        let dict: [String: Any]?
+        if let direct = object as? [String: Any] {
+            dict = direct
+        } else if let array = object as? [[String: Any]] {
+            dict = array.first
+        } else {
+            dict = nil
         }
-        return detail.summary.serialNumber
+        guard let dict else { return nil }
+        for key in ["commandUuid", "uuid", "id", "commandId"] {
+            if let value = dict[key] as? String, value.isEmpty == false { return value }
+            if let value = dict[key] as? Int { return String(value) }
+        }
+        return nil
     }
 
     // MARK: - Modern API MDM Commands
@@ -3140,7 +3140,7 @@ actor SupportTechnicianAPIService {
                 path: endpoint,
                 method: .post
             )
-            let responsePreview = Self.redactedTextPreview(from: data)
+            let responsePreview = String(data: data, encoding: .utf8) ?? "<non-utf8>"
             await diagnosticsReporter.report(
                 source: "module.support-technician",
                 category: "ddm-sync",
@@ -3184,7 +3184,7 @@ actor SupportTechnicianAPIService {
             "clientManagementIds": [managementID]
         ]
         let payloadData = try JSONSerialization.data(withJSONObject: payload, options: [])
-        let payloadPreview = Self.redactedTextPreview(from: payloadData)
+        let payloadPreview = String(data: payloadData, encoding: .utf8) ?? "<non-utf8>"
 
         await diagnosticsReporter.report(
             source: "module.support-technician",
@@ -3204,7 +3204,7 @@ actor SupportTechnicianAPIService {
                 method: .post,
                 body: payloadData
             )
-            let responsePreview = Self.redactedTextPreview(from: data)
+            let responsePreview = String(data: data, encoding: .utf8) ?? "<non-utf8>"
             await diagnosticsReporter.report(
                 source: "module.support-technician",
                 category: "blank-push",
@@ -3313,7 +3313,7 @@ actor SupportTechnicianAPIService {
 
             for (index, payload) in payloadCandidates.enumerated() {
                 let payloadData = try JSONSerialization.data(withJSONObject: payload, options: [])
-                let payloadPreview = Self.redactedTextPreview(from: payloadData)
+                let payloadPreview = String(data: payloadData, encoding: .utf8) ?? "<non-utf8>"
 
                 do {
                     let response = try await apiGateway.request(
@@ -3508,7 +3508,7 @@ actor SupportTechnicianAPIService {
 
     /// ISO-8601 timestamp formatted as `yyyyMMdd'T'HHmmss'Z'` — embedded in
     /// system-created script and policy names so an admin can match pairs
-    /// and bulk-clean Forsetti-created artifacts later.
+    /// and bulk-clean Dashboard-generated artifacts later.
     private nonisolated func isoTimestampForGeneratedArtifacts() -> String {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -3521,18 +3521,14 @@ actor SupportTechnicianAPIService {
     // MARK: - Jamf Pro Web UI Deep Links
 
     /// Builds the Jamf Pro web UI URL for a device's management page. Used by
-    /// actions that delegate to Jamf's native web workflow (Remote Assist,
-    /// application deployment orchestration) rather than reinventing them in
-    /// our app.
+    /// the "Open in Jamf" action so a technician can jump straight to the
+    /// device's record in the tenant console when the full web UI is needed.
     ///
     /// URL format for Jamf Pro 11.x:
     /// - Computer: `https://<server>/computers.html?id=<inventoryId>&o=r`
     /// - Mobile:   `https://<server>/mobileDevices.html?id=<inventoryId>&o=r`
     ///
-    /// The `o=r` query parameter selects the Management tab where Remote
-    /// Assist is available on computer records in supported Jamf Pro
-    /// versions. If Remote Assist isn't enabled for the tenant, the page
-    /// still loads at the device's management section.
+    /// The `o=r` query parameter selects the device record's Management tab.
     ///
     /// - Throws: `SupportTechnicianError` if the server URL isn't configured.
     func jamfProDeviceManagementURL(
@@ -3606,67 +3602,26 @@ actor SupportTechnicianAPIService {
 
     // MARK: - Secret Value Extraction
 
-    /// Extracts a sensitive string value from a JSON response by searching for keys
-    /// matching the preferred fragments, recursively traversing the structure.
+    /// Extracts a sensitive string value (password, recovery key, device PIN)
+    /// from a JSON response, preferring keys that match `preferredKeyFragments`.
     ///
-    /// Falls back to extracting the first available string value if no preferred key matches.
+    /// Delegates to `SupportSecretValueExtractor`, which honours fragment
+    /// priority, prefers an exact key match over a substring match, and never
+    /// returns a metadata field — e.g. FileVault's
+    /// `individualRecoveryKeyValidityStatus` (= "VALID"), which also contains
+    /// the `recoveryKey` fragment. See that type for the rules.
     private func extractSecretValue(
         from data: Data,
         preferredKeyFragments: [String]
     ) throws -> String {
-        let object = try jsonObject(from: data)
-
-        // Try preferred key names first (e.g. "personalRecoveryKey", "password")
-        if let directValue = recursivelyExtractFirstString(
-            in: object,
-            matchingAnyKeyFragment: preferredKeyFragments
-        ) {
-            return directValue
+        do {
+            return try SupportSecretValueExtractor.extract(
+                from: data,
+                preferredKeyFragments: preferredKeyFragments
+            )
+        } catch SupportSecretValueExtractor.ExtractionError.noSecretValue {
+            throw SupportTechnicianError.unsupportedSecretPayload
         }
-
-        // Fall back to any string value in the response
-        if let fallbackValue = extractStringValue(from: object) {
-            return fallbackValue
-        }
-
-        throw SupportTechnicianError.unsupportedSecretPayload
-    }
-
-    /// Recursively searches a JSON structure for the first string value whose key
-    /// contains any of the specified fragments (case-insensitive).
-    private func recursivelyExtractFirstString(
-        in value: Any,
-        matchingAnyKeyFragment keyFragments: [String]
-    ) -> String? {
-        if let dictionary = value as? [String: Any] {
-            for (key, nestedValue) in dictionary {
-                if keyFragments.contains(where: { key.localizedCaseInsensitiveContains($0) }),
-                   let extracted = extractStringValue(from: nestedValue)
-                {
-                    return extracted
-                }
-
-                if let recursive = recursivelyExtractFirstString(
-                    in: nestedValue,
-                    matchingAnyKeyFragment: keyFragments
-                ) {
-                    return recursive
-                }
-            }
-        }
-
-        if let array = value as? [Any] {
-            for element in array {
-                if let recursive = recursivelyExtractFirstString(
-                    in: element,
-                    matchingAnyKeyFragment: keyFragments
-                ) {
-                    return recursive
-                }
-            }
-        }
-
-        return nil
     }
 
     // MARK: - JSON Parsing Utilities
@@ -3884,85 +3839,6 @@ actor SupportTechnicianAPIService {
         }
 
         return string
-    }
-
-    private nonisolated static func redactedJSONString(from dictionary: [String: Any]) -> String {
-        let redacted = redactedJSONObject(dictionary)
-        guard JSONSerialization.isValidJSONObject(redacted),
-              let data = try? JSONSerialization.data(withJSONObject: redacted, options: [.prettyPrinted, .sortedKeys]),
-              let string = String(data: data, encoding: .utf8)
-        else {
-            return "{}"
-        }
-
-        return string
-    }
-
-    private nonisolated static func redactedTextPreview(from data: Data) -> String {
-        guard let text = String(data: data, encoding: .utf8), text.isEmpty == false else {
-            return "<empty>"
-        }
-        return redactedJSONText(text)
-    }
-
-    private nonisolated static func redactedJSONText(_ text: String) -> String {
-        guard let data = text.data(using: .utf8),
-              let object = try? JSONSerialization.jsonObject(with: data)
-        else {
-            return "<redacted non-json payload>"
-        }
-
-        let redacted = redactedJSONObject(object)
-        guard JSONSerialization.isValidJSONObject(redacted),
-              let outputData = try? JSONSerialization.data(withJSONObject: redacted, options: [.prettyPrinted, .sortedKeys]),
-              let output = String(data: outputData, encoding: .utf8)
-        else {
-            return "<redacted payload>"
-        }
-
-        return output
-    }
-
-    private nonisolated static func redactedJSONObject(_ value: Any, key: String? = nil) -> Any {
-        if let key, isSensitiveMetadataKey(key) {
-            return "<redacted>"
-        }
-
-        switch value {
-        case let dictionary as [String: Any]:
-            return dictionary.reduce(into: [String: Any]()) { result, pair in
-                result[pair.key] = redactedJSONObject(pair.value, key: pair.key)
-            }
-        case let array as [Any]:
-            return array.map { redactedJSONObject($0, key: key) }
-        default:
-            return value
-        }
-    }
-
-    private nonisolated static func isSensitiveMetadataKey(_ key: String) -> Bool {
-        let normalized = key.lowercased().filter { $0.isLetter || $0.isNumber }
-        let sensitiveFragments = [
-            "authorization",
-            "bearer",
-            "clientmanagementid",
-            "deviceid",
-            "filevault",
-            "jssmanage",
-            "laps",
-            "managementid",
-            "passcode",
-            "password",
-            "personalrecovery",
-            "pin",
-            "recoverykey",
-            "secret",
-            "serial",
-            "token",
-            "udid",
-            "username"
-        ]
-        return sensitiveFragments.contains { normalized.contains($0) }
     }
 
     // MARK: - Section Building
@@ -4562,7 +4438,7 @@ actor SupportTechnicianAPIService {
             chipName = info.chipName
             // Only fill in derived CPU fields when the payload didn't carry them
             // (so Macs that report cpuType="Apple M3" / coreCount=8 directly
-            // don't get overwritten by the catalog).
+            // aren't replaced by the catalog).
             if coreCount == nil { coreCount = info.cpuCoreCount }
             if cpuType == nil { cpuType = info.chipName }
             gpuCoreCount = info.gpuCoreCount
@@ -5488,8 +5364,8 @@ actor SupportTechnicianAPIService {
                 )
                 let records = Self.parseModernMDMCommandHistory(from: data)
 
-                // Persist a redacted payload plus a flat shape summary so the
-                // response shape can be inspected after a test send.
+                // Persist the raw payload + a flat shape summary so the
+                // exact Jamf response can be inspected after a test send.
                 // The colored bucket boxes reading zero against a non-empty
                 // response is a parse/bucket fault, and these two artifacts
                 // pinpoint it without another debugging round.
@@ -5987,8 +5863,8 @@ actor SupportTechnicianAPIService {
         .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    /// Writes the most recent redacted payload to the sandboxed Documents folder so
-    /// the operator can inspect the response shape Jamf returned. Filename is
+    /// Writes the most recent payload to the sandboxed Documents folder so
+    /// the operator can inspect the exact shape Jamf returned. Filename is
     /// `last-<kind>-<id>.json` — per-device so successive loads don't
     /// clobber each other (handy when comparing iPad vs Mac responses, or
     /// the detail payload vs the command-history payload for one device).
@@ -6001,11 +5877,11 @@ actor SupportTechnicianAPIService {
             for: .documentDirectory,
             in: .userDomainMask
         ).first else { return }
-        let folder = documents.appendingPathComponent(ForsettiAppIdentity.diagnosticsFolder, isDirectory: true)
+        let folder = documents.appendingPathComponent("ForsettiDiagnostics", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let safeID = deviceID.replacingOccurrences(of: "/", with: "_")
         let url = folder.appendingPathComponent("last-\(kind)-\(safeID).json")
-        try? Self.redactedJSONText(rawJSON).write(to: url, atomically: true, encoding: .utf8)
+        try? rawJSON.write(to: url, atomically: true, encoding: .utf8)
     }
 
     /// Boolean extractor mirroring `extractString` and `extractInt`. Recognises

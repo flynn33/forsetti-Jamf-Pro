@@ -1,6 +1,8 @@
 import XCTest
 @testable import Forsetti
 
+// "End of Line"
+
 /// Exercises the typed RSQL composer used by Advanced Search.
 ///
 /// The shape contract these tests lock in:

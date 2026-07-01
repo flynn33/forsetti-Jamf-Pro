@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env bash
+set -euo pipefail
+
+python3 - "$@" <<'PY'
 import json
 import os
 import re
@@ -63,16 +66,16 @@ def is_binary(path):
     try:
         with path.open("rb") as handle:
             sample = handle.read(4096)
-    except OSError:
-        return True
+    except OSError as error:
+        raise RuntimeError(f"Unable to read {path}: {error}") from error
     return b"\0" in sample
 
 
 def read_text(path):
     try:
         return path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return ""
+    except OSError as error:
+        raise RuntimeError(f"Unable to read {path}: {error}") from error
 
 
 def tracked_paths(root):
@@ -140,9 +143,13 @@ def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
     findings = []
 
-    scan_paths_and_contents(root, findings)
-    scan_commit_messages(root, findings)
-    scan_event_payload(findings)
+    try:
+        scan_paths_and_contents(root, findings)
+        scan_commit_messages(root, findings)
+        scan_event_payload(findings)
+    except RuntimeError as error:
+        print(f"Provenance guard failed: {error}", file=sys.stderr)
+        return 1
 
     if findings:
         print("forbidden provenance marker found:")
@@ -156,3 +163,4 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+PY

@@ -1,4 +1,7 @@
 import SwiftUI
+import UniformTypeIdentifiers
+
+// "End of Line"
 
 /// The primary view for the Computer Search module, providing a search interface,
 /// profile management, and a results list for Jamf Pro computer inventory queries.
@@ -12,7 +15,17 @@ import SwiftUI
 struct ComputerSearchView: View {
     /// The view model that drives search execution, profile management, and state.
     @StateObject private var viewModel: ComputerSearchViewModel
+
+    /// Live state for the Advanced Search sheet. Created on demand so each open
+    /// starts from the current field selection without retaining stale state.
     @State private var advancedSearchViewModel: ComputerAdvancedSearchViewModel?
+
+    /// Whether the results list is in multi-select (share) mode.
+    @State private var isSelecting = false
+    /// IDs of records currently selected for sharing.
+    @State private var selectedIDs: Set<String> = []
+    /// Drives the `.fileExporter` Save panel (both platforms).
+    @State private var isExporting = false
 
     /// Creates the search view with an injected view model.
     ///
@@ -27,7 +40,7 @@ struct ComputerSearchView: View {
             Section("Search") {
                 HStack(spacing: 8) {
                     TextField("Computer name, serial, username, email", text: $viewModel.query.strippingControlCharacters())
-                        .forsettiNoAutoCorrectionTextInput()
+                        .dashboardNoAutoCorrectionTextInput()
 
                     // Barcode/QR scanner button for quick serial or asset tag entry
                     ScanIntoTextFieldButton(text: $viewModel.query.strippingControlCharacters())
@@ -45,13 +58,14 @@ struct ComputerSearchView: View {
                     Button("Fields") {
                         viewModel.isFieldCatalogPresented = true
                     }
-                    .buttonStyle(.forsettiSecondary)
+                    .buttonStyle(.dashboardSecondary)
 
+                    // Opens the multi-criteria Advanced Search sheet
                     Button("Advanced") {
                         advancedSearchViewModel = viewModel.makeAdvancedSearchViewModel()
                         viewModel.isAdvancedSearchPresented = true
                     }
-                    .buttonStyle(.forsettiSecondary)
+                    .buttonStyle(.dashboardSecondary)
 
                     Spacer()
 
@@ -62,7 +76,7 @@ struct ComputerSearchView: View {
                     } label: {
                         Label("Search", systemImage: "magnifyingglass")
                     }
-                    .buttonStyle(.forsettiPrimary)
+                    .buttonStyle(.dashboardPrimary)
                 }
             }
 
@@ -101,7 +115,7 @@ struct ComputerSearchView: View {
                             // Checkmark badge indicates the currently active profile
                             if viewModel.selectedProfileID == profile.id {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(ForsettiColors.greenPrimary)
+                                    .foregroundStyle(DashboardColors.greenPrimary)
                             }
                         }
                         .contentShape(Rectangle())
@@ -114,6 +128,7 @@ struct ComputerSearchView: View {
                 }
             }
 
+            // MARK: - Smart Filters Section
             if viewModel.smartFilters.isEmpty == false {
                 Section("Smart Filters") {
                     SmartFilterListView(
@@ -122,7 +137,7 @@ struct ComputerSearchView: View {
                             advancedSearchViewModel = viewModel.loadSmartFilterIntoAdvancedSearch(filter)
                             viewModel.isAdvancedSearchPresented = true
                         },
-                        onDelete: viewModel.deleteSmartFilters
+                        onDelete: viewModel.deleteSmartFilters(at:)
                     )
                 }
             }
@@ -136,19 +151,61 @@ struct ComputerSearchView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(viewModel.searchResults) { record in
-                        NavigationLink(value: ComputerRecordRoute(id: record.id)) {
-                            ComputerResultRow(record: record)
-                        }
+                        resultRow(for: record)
                     }
                 }
             }
         }
-        .forsettiInsetGroupedListStyle()
+        .dashboardInsetGroupedListStyle()
+        .toolbar {
+            if isSelecting {
+                ToolbarItem(placement: .dashboardTopBarLeading) {
+                    Button("Cancel") { exitSelection() }
+                }
+                ToolbarItemGroup(placement: .dashboardTopBarTrailing) {
+                    Button(allSelected ? "Deselect All" : "Select All") { toggleSelectAll() }
+                        .disabled(viewModel.searchResults.isEmpty)
+
+                    if selectedIDs.isEmpty == false {
+                        // Shares the selected records' Markdown as plain text, so the share
+                        // sheet's Copy behaves as normal text copy/paste; Save writes the file.
+                        ShareLink(item: RecordMarkdown.document(for: selectedRecords)) {
+                            Label("Share \(selectedIDs.count)", systemImage: "square.and.arrow.up")
+                        }
+                    } else {
+                        Button { } label: { Label("Share", systemImage: "square.and.arrow.up") }
+                            .disabled(true)
+                    }
+
+                    Button { isExporting = true } label: {
+                        Label("Save", systemImage: "square.and.arrow.down")
+                    }
+                    .disabled(selectedIDs.isEmpty)
+                }
+            } else {
+                ToolbarItem(placement: .dashboardTopBarTrailing) {
+                    Button { isSelecting = true } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(viewModel.searchResults.isEmpty)
+                }
+            }
+        }
+        .onChange(of: viewModel.searchResults.map(\.id)) { _, _ in
+            if isSelecting { exitSelection() }
+        }
+        .fileExporter(
+            isPresented: $isExporting,
+            document: TextFileDocument(text: RecordMarkdown.document(for: selectedRecords)),
+            contentType: .dashboardMarkdown,
+            defaultFilename: "Computers"
+        ) { _ in isExporting = false }
         .navigationDestination(for: ComputerRecordRoute.self) { route in
             ComputerDetailView(viewModel: viewModel, recordID: route.id)
         }
         .task {
-            // Load saved profiles from disk when the view first appears
+            // Load saved profiles and smart filters from disk, and hydrate the
+            // tenant's extension attributes, on first appearance.
             await viewModel.loadProfiles()
             await viewModel.loadSmartFilters()
             await viewModel.loadExtensionAttributes()
@@ -159,6 +216,7 @@ struct ComputerSearchView: View {
         .sheet(isPresented: $viewModel.isFieldCatalogPresented) {
             ComputerFieldCatalogView(
                 selectedFieldKeys: $viewModel.selectedFieldKeys,
+                availableFields: viewModel.allCatalogFields,
                 onSaveProfileRequested: {
                     viewModel.isFieldCatalogPresented = false
 
@@ -187,7 +245,7 @@ struct ComputerSearchView: View {
                     },
                     onSaveSmartFilter: { filter in
                         Task {
-                            await viewModel.saveSmartFilter(filter)
+                            await viewModel.saveOrUpdateSmartFilter(filter)
                         }
                     }
                 )
@@ -206,81 +264,123 @@ struct ComputerSearchView: View {
             Text("This profile stores the currently selected field toggles.")
         }
     }
+
+    // MARK: - Multi-select sharing
+
+    /// Records currently selected, in results order.
+    private var selectedRecords: [ComputerRecord] {
+        viewModel.searchResults.filter { selectedIDs.contains($0.id) }
+    }
+
+    /// Whether every visible result is selected.
+    private var allSelected: Bool {
+        viewModel.searchResults.isEmpty == false && selectedIDs.count == viewModel.searchResults.count
+    }
+
+    /// A results row: a selectable button in selection mode, otherwise the navigating link.
+    @ViewBuilder
+    private func resultRow(for record: ComputerRecord) -> some View {
+        if isSelecting {
+            Button {
+                toggleSelection(record.id)
+            } label: {
+                HStack(spacing: 12) {
+                    SelectionCircle(isSelected: selectedIDs.contains(record.id))
+                    ComputerResultRow(record: record, fields: viewModel.resultFields)
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } else {
+            NavigationLink(value: ComputerRecordRoute(id: record.id)) {
+                ComputerResultRow(record: record, fields: viewModel.resultFields)
+            }
+        }
+    }
+
+    private func toggleSelection(_ id: String) {
+        if selectedIDs.contains(id) { selectedIDs.remove(id) } else { selectedIDs.insert(id) }
+    }
+
+    private func toggleSelectAll() {
+        if allSelected { selectedIDs.removeAll() }
+        else { selectedIDs = Set(viewModel.searchResults.map(\.id)) }
+    }
+
+    /// Leaves selection mode and clears the current selection.
+    private func exitSelection() {
+        isSelecting = false
+        selectedIDs.removeAll()
+    }
 }
 
 /// A row view that displays a single computer record in the search results list.
 ///
-/// Shows the computer name and serial number prominently, then conditionally renders
-/// additional details (model, OS, user, email, IP, asset tag, prestage, UDID) only
-/// when those fields contain non-empty values.
+/// Renders the computer name and serial number as the header, then the active
+/// profile's fields with non-empty values resolved dynamically through
+/// `ComputerRecord.value(for:)`, plus the Pre-Stage Enrollment composite when
+/// present. Columns track the user's field selection rather than a fixed layout.
 private struct ComputerResultRow: View {
     /// The computer record to display.
     let record: ComputerRecord
 
+    /// The active catalog fields whose values should render as detail rows.
+    let fields: [ComputerField]
+
+    /// Field keys already represented by the row header (name + serial); skipped
+    /// in the dynamic detail list to avoid duplication.
+    private static let headerFieldKeys: Set<String> = [
+        "id",
+        "general.name",
+        "computerName",
+        "hardware.serialNumber",
+        "serialNumber"
+    ]
+
+    private var displayTitle: String {
+        record.value(for: "general.name") ?? record.computerName
+    }
+
+    private var visibleFields: [ComputerField] {
+        fields.filter { field in
+            guard Self.headerFieldKeys.contains(field.key) == false else {
+                return false
+            }
+            guard let value = record.value(for: field.key) else { return false }
+            return value.isEmpty == false
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Primary identifier: the computer's display name
-            Text(record.computerName)
-                .font(ForsettiSearchResultTypography.headline())
+            Text(displayTitle)
+                .font(DashboardSearchResultTypography.headline())
 
             // Always show the serial number as the secondary identifier
             Text("Serial: \(record.serialNumber)")
-                .font(ForsettiSearchResultTypography.subheadline())
+                .font(DashboardSearchResultTypography.subheadline())
 
-            // Conditional detail rows -- only shown when the data is present and non-empty
-            if let model = record.model {
-                Text("Model: \(model)")
-                    .font(ForsettiSearchResultTypography.caption())
-                    .foregroundStyle(.secondary)
+            // Dynamic detail rows for each selected field with a non-empty value
+            ForEach(visibleFields) { field in
+                if let value = record.value(for: field.key) {
+                    Text("\(field.displayName): \(value)")
+                        .font(DashboardSearchResultTypography.caption())
+                        .foregroundStyle(.secondary)
+                }
             }
 
-            if let osVersion = record.osVersion {
-                // Append the build number in parentheses if available
-                let osBuildSuffix = record.osBuild.map { " (\($0))" } ?? ""
-                Text("OS: \(osVersion)\(osBuildSuffix)")
-                    .font(ForsettiSearchResultTypography.caption())
-                    .foregroundStyle(.secondary)
-            }
-
-            if let username = record.username, username.isEmpty == false {
-                Text("User: \(username)")
-                    .font(ForsettiSearchResultTypography.caption())
-                    .foregroundStyle(.secondary)
-            }
-
-            if let email = record.email, email.isEmpty == false {
-                Text("Email: \(email)")
-                    .font(ForsettiSearchResultTypography.caption())
-                    .foregroundStyle(.secondary)
-            }
-
-            if let ipAddress = record.lastIpAddress, ipAddress.isEmpty == false {
-                Text("Last IP: \(ipAddress)")
-                    .font(ForsettiSearchResultTypography.caption())
-                    .foregroundStyle(.secondary)
-            }
-
-            if let assetTag = record.assetTag, assetTag.isEmpty == false {
-                Text("Asset Tag: \(assetTag)")
-                    .font(ForsettiSearchResultTypography.caption())
-                    .foregroundStyle(.secondary)
-            }
-
+            // Pre-Stage Enrollment is resolved from first-class properties rather
+            // than the field catalog, so it renders independently of selection.
             if let prestageDisplay = record.prestageDisplayValue, prestageDisplay.isEmpty == false {
                 Text("Pre-Stage Enrollment: \(prestageDisplay)")
-                    .font(ForsettiSearchResultTypography.caption())
+                    .font(DashboardSearchResultTypography.caption())
                     .foregroundStyle(.secondary)
-            }
-
-            if let udid = record.udid {
-                Text("UDID: \(udid)")
-                    .font(ForsettiSearchResultTypography.caption2())
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
     }
 }
 

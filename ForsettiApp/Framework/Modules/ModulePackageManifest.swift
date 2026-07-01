@@ -18,6 +18,8 @@ enum ModulePackageType: String, Codable, CaseIterable, Sendable {
     case reports = "reports"
     /// A module for tracking Apple deployment workflows, Jamf Inventory Preload, SD+ exports, and ABM verification.
     case deploymentTracker = "deployment-tracker"
+    /// A module for looking up the Jamf Pro privileges required for dashboard actions and API endpoints.
+    case permissionsMatrix = "permissions-matrix"
 
     /// The default user-facing title displayed for this module type when no custom name is provided.
     var defaultTitle: String {
@@ -34,6 +36,8 @@ enum ModulePackageType: String, Codable, CaseIterable, Sendable {
             return "Reports"
         case .deploymentTracker:
             return "Deployment Tracker Demo"
+        case .permissionsMatrix:
+            return "Permissions Helper"
         }
     }
 
@@ -52,6 +56,8 @@ enum ModulePackageType: String, Codable, CaseIterable, Sendable {
             return "Create visual fleet reports from Jamf Pro inventory."
         case .deploymentTracker:
             return "Interactive preview of the upcoming Deployment Tracker Module. Dummy data only. No live Jamf actions."
+        case .permissionsMatrix:
+            return "Look up Jamf Pro privileges required for Forsetti actions and API endpoints."
         }
     }
 
@@ -70,6 +76,8 @@ enum ModulePackageType: String, Codable, CaseIterable, Sendable {
             return "chart.pie.fill"
         case .deploymentTracker:
             return "sparkles.rectangle.stack"
+        case .permissionsMatrix:
+            return "checklist.checked"
         }
     }
 }
@@ -81,7 +89,7 @@ enum ModulePackageType: String, Codable, CaseIterable, Sendable {
 /// Conforms to `Identifiable` (keyed by `packageID`), `Codable` for JSON round-tripping,
 /// `Hashable` for collection operations, and `Sendable` for concurrency safety.
 struct ModulePackageManifest: Identifiable, Codable, Hashable, Sendable {
-    /// The reverse-DNS-style unique identifier for this package (e.g., "forsetti.feature.computer-search").
+    /// The reverse-DNS-style unique identifier for this package (e.g., "com.forsetti.jamfpro.feature.computer-search").
     let packageID: String
     /// The functional type of this module, determining which concrete module class is instantiated.
     let moduleType: ModulePackageType
@@ -227,7 +235,7 @@ extension ModulePackageManifest {
     /// from the persisted store, `ModulePackageManager` will re-add them during bootstrap.
     static let bundledDefaults: [ModulePackageManifest] = [
         ModulePackageManifest(
-            packageID: "forsetti.feature.computer-search",
+            packageID: "com.forsetti.jamfpro.feature.computer-search",
             moduleType: .computerSearch,
             packageVersion: "1.0.0",
             moduleDisplayName: nil,
@@ -236,7 +244,7 @@ extension ModulePackageManifest {
             installedAt: Date()
         ),
         ModulePackageManifest(
-            packageID: "forsetti.feature.mobile-device-search",
+            packageID: "com.forsetti.jamfpro.feature.mobile-device-search",
             moduleType: .mobileDeviceSearch,
             packageVersion: "1.0.0",
             moduleDisplayName: nil,
@@ -245,7 +253,7 @@ extension ModulePackageManifest {
             installedAt: Date()
         ),
         ModulePackageManifest(
-            packageID: "forsetti.feature.support-technician",
+            packageID: "com.forsetti.jamfpro.feature.support-technician",
             moduleType: .supportTechnician,
             packageVersion: "1.0.0",
             moduleDisplayName: nil,
@@ -254,7 +262,7 @@ extension ModulePackageManifest {
             installedAt: Date()
         ),
         ModulePackageManifest(
-            packageID: "forsetti.feature.prestage-director",
+            packageID: "com.forsetti.jamfpro.feature.prestage-director",
             moduleType: .prestageDirector,
             packageVersion: "1.0.0",
             moduleDisplayName: nil,
@@ -263,7 +271,7 @@ extension ModulePackageManifest {
             installedAt: Date()
         ),
         ModulePackageManifest(
-            packageID: "forsetti.feature.reports",
+            packageID: "com.forsetti.jamfpro.feature.reports",
             moduleType: .reports,
             packageVersion: "1.0.0",
             moduleDisplayName: nil,
@@ -272,8 +280,17 @@ extension ModulePackageManifest {
             installedAt: Date()
         ),
         ModulePackageManifest(
-            packageID: "forsetti.feature.deployment-tracker",
+            packageID: "com.forsetti.jamfpro.feature.deployment-tracker",
             moduleType: .deploymentTracker,
+            packageVersion: "1.0.0",
+            moduleDisplayName: nil,
+            moduleSubtitle: nil,
+            iconSystemName: nil,
+            installedAt: Date()
+        ),
+        ModulePackageManifest(
+            packageID: "com.forsetti.jamfpro.feature.permissions-matrix",
+            moduleType: .permissionsMatrix,
             packageVersion: "1.0.0",
             moduleDisplayName: nil,
             moduleSubtitle: nil,

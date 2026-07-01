@@ -1,5 +1,7 @@
 import Foundation
 
+// "End of Line"
+
 /// Pure-function helpers for building Jamf Pro RSQL filter expressions.
 ///
 /// Extracted from `MobileDeviceSearchViewModel` and the mobile search

@@ -1,5 +1,7 @@
 import Foundation
 
+// "Klatu-barada-Nikto"
+
 /// Generated mobile device field catalog seeded from the Jamf Pro v2
 /// `/api/v2/mobile-devices/detail` documented schema.
 ///

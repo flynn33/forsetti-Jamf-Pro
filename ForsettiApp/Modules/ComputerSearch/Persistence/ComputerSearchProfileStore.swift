@@ -1,9 +1,11 @@
 import Foundation
 
+// "Klatu-barada-Nikto"
+
 /// An actor-isolated store responsible for reading and writing `ComputerSearchProfile` instances to disk.
 ///
 /// Profiles are serialized as a JSON array and stored in the app's Application Support directory
-/// under the app support folder. The actor isolation guarantees that
+/// under `Forsetti/computer-search-profiles.json`. The actor isolation guarantees that
 /// concurrent reads and writes from different tasks are safely serialized, preventing data races.
 actor ComputerSearchProfileStore {
     /// The file manager used for directory creation and file existence checks.
@@ -15,7 +17,7 @@ actor ComputerSearchProfileStore {
     /// Creates a new profile store, resolving the storage path from the system's Application Support directory.
     ///
     /// Falls back to the Documents directory, then to the temporary directory, if Application Support
-    /// is unavailable. Ensures the app support subdirectory is used to keep files organized.
+    /// is unavailable. Ensures a `Forsetti` subdirectory is used to keep files organized.
     ///
     /// - Parameter fileManager: The file manager to use for filesystem operations. Defaults to `.default`.
     init(fileManager: FileManager = .default) {
@@ -26,7 +28,7 @@ actor ComputerSearchProfileStore {
             ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
 
-        let directoryURL = appSupportURL.appending(path: ForsettiAppIdentity.applicationSupportFolder, directoryHint: .isDirectory)
+        let directoryURL = appSupportURL.appending(path: "Forsetti", directoryHint: .isDirectory)
         self.fileURL = directoryURL.appending(path: "computer-search-profiles.json")
     }
 

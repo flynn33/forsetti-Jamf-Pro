@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The primary view for the Mobile Device Search module.
 ///
@@ -18,6 +19,13 @@ struct MobileDeviceSearchView: View {
     /// starts from the user's current field selections without retaining stale state.
     @State private var advancedSearchViewModel: AdvancedSearchViewModel?
 
+    /// Whether the results list is in multi-select (share) mode.
+    @State private var isSelecting = false
+    /// IDs of records currently selected for sharing.
+    @State private var selectedIDs: Set<String> = []
+    /// Drives the `.fileExporter` Save panel (both platforms).
+    @State private var isExporting = false
+
     /// Creates the search view with the given view model.
     ///
     /// The view model is wrapped in a `StateObject` to ensure it survives SwiftUI
@@ -28,13 +36,15 @@ struct MobileDeviceSearchView: View {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
 
+    // "Would you like to play a game?"
+
     var body: some View {
         List {
             // MARK: - Search Input Section
             Section("Search") {
                 HStack(spacing: 8) {
                     TextField("Serial number or username", text: $viewModel.query.strippingControlCharacters())
-                        .forsettiNoAutoCorrectionTextInput()
+                        .dashboardNoAutoCorrectionTextInput()
 
                     // Barcode/QR scanner button for quick serial number entry
                     ScanIntoTextFieldButton(text: $viewModel.query.strippingControlCharacters())
@@ -54,14 +64,14 @@ struct MobileDeviceSearchView: View {
                     Button("Fields") {
                         viewModel.isFieldCatalogPresented = true
                     }
-                    .buttonStyle(.forsettiSecondary)
+                    .buttonStyle(.dashboardSecondary)
 
                     // Opens the multi-criteria Advanced Search sheet
                     Button("Advanced") {
                         advancedSearchViewModel = viewModel.makeAdvancedSearchViewModel()
                         viewModel.isAdvancedSearchPresented = true
                     }
-                    .buttonStyle(.forsettiSecondary)
+                    .buttonStyle(.dashboardSecondary)
 
                     Spacer()
 
@@ -73,7 +83,7 @@ struct MobileDeviceSearchView: View {
                     } label: {
                         Label("Search", systemImage: "magnifyingglass")
                     }
-                    .buttonStyle(.forsettiPrimary)
+                    .buttonStyle(.dashboardPrimary)
                 }
             }
 
@@ -103,7 +113,7 @@ struct MobileDeviceSearchView: View {
                             // Checkmark badge indicates the currently active profile
                             if viewModel.selectedProfileID == profile.id {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(ForsettiColors.greenPrimary)
+                                    .foregroundStyle(DashboardColors.greenPrimary)
                             }
                         }
                         .contentShape(Rectangle())
@@ -139,17 +149,56 @@ struct MobileDeviceSearchView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(viewModel.searchResults) { record in
-                        NavigationLink(value: MobileDeviceRecordRoute(id: record.id)) {
-                            MobileDeviceResultRow(
-                                record: record,
-                                fields: viewModel.resultFields
-                            )
-                        }
+                        resultRow(for: record)
                     }
                 }
             }
         }
-        .forsettiInsetGroupedListStyle()
+        .dashboardInsetGroupedListStyle()
+        .toolbar {
+            if isSelecting {
+                ToolbarItem(placement: .dashboardTopBarLeading) {
+                    Button("Cancel") { exitSelection() }
+                }
+                ToolbarItemGroup(placement: .dashboardTopBarTrailing) {
+                    Button(allSelected ? "Deselect All" : "Select All") { toggleSelectAll() }
+                        .disabled(viewModel.searchResults.isEmpty)
+
+                    if selectedIDs.isEmpty == false {
+                        // Share the selected records' Markdown as plain text so the share
+                        // sheet's Copy behaves as normal text copy/paste. Saving the `.md`
+                        // file is handled by the Save button.
+                        ShareLink(item: RecordMarkdown.document(for: selectedRecords)) {
+                            Label("Share \(selectedIDs.count)", systemImage: "square.and.arrow.up")
+                        }
+                    } else {
+                        Button { } label: { Label("Share", systemImage: "square.and.arrow.up") }
+                            .disabled(true)
+                    }
+
+                    Button { isExporting = true } label: {
+                        Label("Save", systemImage: "square.and.arrow.down")
+                    }
+                    .disabled(selectedIDs.isEmpty)
+                }
+            } else {
+                ToolbarItem(placement: .dashboardTopBarTrailing) {
+                    Button { isSelecting = true } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(viewModel.searchResults.isEmpty)
+                }
+            }
+        }
+        .onChange(of: viewModel.searchResults.map(\.id)) { _, _ in
+            if isSelecting { exitSelection() }
+        }
+        .fileExporter(
+            isPresented: $isExporting,
+            document: TextFileDocument(text: RecordMarkdown.document(for: selectedRecords)),
+            contentType: .dashboardMarkdown,
+            defaultFilename: "Devices"
+        ) { _ in isExporting = false }
         .navigationDestination(for: MobileDeviceRecordRoute.self) { route in
             MobileDeviceDetailView(viewModel: viewModel, recordID: route.id)
         }
@@ -216,6 +265,55 @@ struct MobileDeviceSearchView: View {
         } message: {
             Text("This profile stores the currently selected field toggles.")
         }
+    }
+
+    // MARK: - Multi-select sharing
+
+    /// Records currently selected, in results order.
+    private var selectedRecords: [MobileDeviceRecord] {
+        viewModel.searchResults.filter { selectedIDs.contains($0.id) }
+    }
+
+    /// Whether every visible result is selected.
+    private var allSelected: Bool {
+        viewModel.searchResults.isEmpty == false && selectedIDs.count == viewModel.searchResults.count
+    }
+
+    /// A results row: a selectable button in selection mode, otherwise the navigating link.
+    @ViewBuilder
+    private func resultRow(for record: MobileDeviceRecord) -> some View {
+        if isSelecting {
+            Button {
+                toggleSelection(record.id)
+            } label: {
+                HStack(spacing: 12) {
+                    SelectionCircle(isSelected: selectedIDs.contains(record.id))
+                    MobileDeviceResultRow(record: record, fields: viewModel.resultFields)
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } else {
+            NavigationLink(value: MobileDeviceRecordRoute(id: record.id)) {
+                MobileDeviceResultRow(record: record, fields: viewModel.resultFields)
+            }
+        }
+    }
+
+    private func toggleSelection(_ id: String) {
+        if selectedIDs.contains(id) { selectedIDs.remove(id) } else { selectedIDs.insert(id) }
+    }
+
+    private func toggleSelectAll() {
+        if allSelected { selectedIDs.removeAll() }
+        else { selectedIDs = Set(viewModel.searchResults.map(\.id)) }
+    }
+
+    /// Leaves selection mode and clears the current selection.
+    private func exitSelection() {
+        isSelecting = false
+        selectedIDs.removeAll()
     }
 }
 

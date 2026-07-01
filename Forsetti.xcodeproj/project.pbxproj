@@ -156,7 +156,7 @@
 			mainGroup = A1B2C3D4E5F6000000000004;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				F0F0A001F0F0A001F0F0A001 /* XCRemoteSwiftPackageReference "Forsetti-Framework" */,
+				F0F0A001F0F0A001F0F0A001 /* XCLocalSwiftPackageReference "../Forsetti-Framework-Mac-iOS-main" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1B2C3D4E5F6000000000005 /* Products */;
@@ -552,26 +552,22 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		F0F0A001F0F0A001F0F0A001 /* XCRemoteSwiftPackageReference "Forsetti-Framework" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/flynn33/Forsetti-Framework.git";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		F0F0A001F0F0A001F0F0A001 /* XCLocalSwiftPackageReference "../Forsetti-Framework-Mac-iOS-main" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../Forsetti-Framework-Mac-iOS-main";
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		F0F0A002F0F0A002F0F0A002 /* ForsettiCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = F0F0A001F0F0A001F0F0A001 /* XCRemoteSwiftPackageReference "Forsetti-Framework" */;
+			package = F0F0A001F0F0A001F0F0A001 /* XCLocalSwiftPackageReference "../Forsetti-Framework-Mac-iOS-main" */;
 			productName = ForsettiCore;
 		};
 		F0F0A003F0F0A003F0F0A003 /* ForsettiPlatform */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = F0F0A001F0F0A001F0F0A001 /* XCRemoteSwiftPackageReference "Forsetti-Framework" */;
+			package = F0F0A001F0F0A001F0F0A001 /* XCLocalSwiftPackageReference "../Forsetti-Framework-Mac-iOS-main" */;
 			productName = ForsettiPlatform;
 		};
 /* End XCSwiftPackageProductDependency section */
