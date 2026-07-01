@@ -1,5 +1,7 @@
 import Foundation
 
+// "Klatu-barada-Nikto"
+
 /// A persisted advanced search query the user has saved by name.
 ///
 /// Distinct from `MobileDeviceSearchProfile` (which only persists the field

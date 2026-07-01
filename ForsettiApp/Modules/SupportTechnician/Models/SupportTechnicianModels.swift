@@ -25,6 +25,8 @@ enum SupportSearchScope: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+// "Would you like to play a game?"
+
 /// Categorizes a managed asset as either a computer or mobile device.
 ///
 /// Determines which API endpoints are used for detail fetching, which management
@@ -131,6 +133,10 @@ nonisolated struct SupportDetailSection: Identifiable, Hashable, Sendable {
     /// The section title serves as the stable identifier.
     var id: String { title }
 }
+
+// "A robot may not injure a human being or, through inaction, allow a human being to come to harm.
+//  A robot must obey the orders given it by human beings except where such orders would conflict with the First Law.
+//  A robot must protect its own existence as long as such protection does not conflict with the First or Second Law."
 
 /// Severity levels for device health diagnostic indicators.
 ///
@@ -469,8 +475,6 @@ enum SupportManagementAction: String, CaseIterable, Identifiable, Sendable {
     case sendDeviceLock
     case logOutUser
     case clearPasscode
-    case remoteManagement
-    case disableRemoteDesktop
     case eraseDevice
     case viewFileVaultPersonalRecoveryKey
     case viewRecoveryLockPassword
@@ -519,8 +523,6 @@ enum SupportManagementAction: String, CaseIterable, Identifiable, Sendable {
             return "Log Out User"
         case .clearPasscode:
             return "Clear Passcode"
-        case .remoteManagement:
-            return "Remote Desktop Control"
         case .eraseDevice:
             return "Erase Device"
         case .viewFileVaultPersonalRecoveryKey:
@@ -533,8 +535,6 @@ enum SupportManagementAction: String, CaseIterable, Identifiable, Sendable {
             return "View LAPS Password"
         case .rotateLAPSPassword:
             return "Rotate LAPS Password"
-        case .disableRemoteDesktop:
-            return "Disable Remote Desktop"
         case .enableBluetooth:
             return "Turn On Bluetooth"
         case .disableBluetooth:
@@ -587,8 +587,6 @@ enum SupportManagementAction: String, CaseIterable, Identifiable, Sendable {
             return "Log out the currently signed-in user (Mac)"
         case .clearPasscode:
             return "Clear device passcode (PIN)"
-        case .remoteManagement:
-            return "Enable Remote Desktop on this Mac and open Screen Sharing"
         case .eraseDevice:
             return "Send erase command"
         case .viewFileVaultPersonalRecoveryKey:
@@ -601,8 +599,6 @@ enum SupportManagementAction: String, CaseIterable, Identifiable, Sendable {
             return "Retrieve local admin account password"
         case .rotateLAPSPassword:
             return "Rotate local admin account password"
-        case .disableRemoteDesktop:
-            return "Turn off macOS Remote Desktop"
         case .enableBluetooth:
             return "Settings command — turn Bluetooth on (Classic API)"
         case .disableBluetooth:
@@ -655,8 +651,6 @@ enum SupportManagementAction: String, CaseIterable, Identifiable, Sendable {
             return "rectangle.portrait.and.arrow.right"
         case .clearPasscode:
             return "key.slash"
-        case .remoteManagement:
-            return "display"
         case .eraseDevice:
             return "trash"
         case .viewFileVaultPersonalRecoveryKey:
@@ -669,8 +663,6 @@ enum SupportManagementAction: String, CaseIterable, Identifiable, Sendable {
             return "person.badge.key"
         case .rotateLAPSPassword:
             return "arrow.triangle.2.circlepath"
-        case .disableRemoteDesktop:
-            return "display.trianglebadge.exclamationmark"
         case .enableBluetooth:
             return "antenna.radiowaves.left.and.right"
         case .disableBluetooth:
@@ -777,11 +769,6 @@ struct SupportActionResult: Sendable {
     /// An optional secret value (password, recovery key, PIN) to display securely.
     let sensitiveValue: String?
 
-    /// An optional URL the UI should open when this result is produced. Used
-    /// by actions that deep-link into Jamf Pro's web UI (e.g. Remote Assist)
-    /// rather than completing work entirely through the API.
-    let openURL: URL?
-
     // `nonisolated` is required under Swift 6 strict concurrency because this
     // struct is constructed from `actor SupportTechnicianAPIService` (off the
     // main actor). Without it, the explicit init picks up default actor
@@ -791,13 +778,80 @@ struct SupportActionResult: Sendable {
     nonisolated init(
         title: String,
         detail: String,
-        sensitiveValue: String? = nil,
-        openURL: URL? = nil
+        sensitiveValue: String? = nil
     ) {
         self.title = title
         self.detail = detail
         self.sensitiveValue = sensitiveValue
-        self.openURL = openURL
+    }
+}
+
+/// A secret credential surfaced to the technician for one-time display in a
+/// modal popup with copy-to-clipboard (local admin / LAPS password, jssmanage
+/// password, recovery-lock password, device-lock PIN, FileVault recovery key).
+///
+/// This type exists so the secret value travels only to the popup surface —
+/// it is intentionally never persisted and never written into the sidebar's
+/// result-summary frame. A fresh `id` per instance ensures SwiftUI's
+/// `.sheet(item:)` re-presents the popup for each new credential, even when
+/// the same value is fetched twice.
+struct SupportCredentialDisplay: Identifiable, Sendable {
+    let id = UUID()
+
+    /// The action label shown as the popup title (e.g. "View Local Admin Password").
+    let title: String
+
+    /// The secret value to display and copy. Never logged, never stored.
+    let value: String
+
+    nonisolated init(title: String, value: String) {
+        self.title = title
+        self.value = value
+    }
+}
+
+/// The non-secret summary of a server response, rendered in the sidebar's
+/// scrollable "Server Response" frame. Deliberately carries only the result
+/// title and human-readable detail — never `SupportActionResult.sensitiveValue`.
+struct SupportResultSummary: Identifiable, Equatable, Sendable {
+    let id = UUID()
+    let title: String
+    let detail: String
+
+    nonisolated init(title: String, detail: String) {
+        self.title = title
+        self.detail = detail
+    }
+
+    /// Equality ignores the synthetic `id` so summaries compare on content —
+    /// keeps unit tests and SwiftUI diffing keyed to what the technician sees.
+    nonisolated static func == (lhs: SupportResultSummary, rhs: SupportResultSummary) -> Bool {
+        lhs.title == rhs.title && lhs.detail == rhs.detail
+    }
+}
+
+/// Pure mapping from a server `SupportActionResult` to its two UI surfaces:
+/// the one-time credential popup and the persistent non-secret summary frame.
+///
+/// Extracted as a free function (no view-model or networking dependencies) so
+/// the security-critical guarantee — the secret reaches the popup but never
+/// the summary — is unit-testable in isolation.
+enum SupportActionResultPresentation {
+    /// - Returns: `credential` is non-nil only when the result carries a
+    ///   non-empty secret; `summary` always carries the non-secret title +
+    ///   detail and never contains the secret value.
+    nonisolated static func make(
+        from result: SupportActionResult
+    ) -> (credential: SupportCredentialDisplay?, summary: SupportResultSummary) {
+        let credential: SupportCredentialDisplay?
+        if let value = result.sensitiveValue,
+           value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+            credential = SupportCredentialDisplay(title: result.title, value: value)
+        } else {
+            credential = nil
+        }
+        let summary = SupportResultSummary(title: result.title, detail: result.detail)
+        return (credential, summary)
     }
 }
 
@@ -1498,14 +1552,10 @@ extension SupportManagementAction {
         switch self {
         case .refreshInventory, .blankPush, .discoverApplications, .settingsSync:
             return .general
-        case .restartDevice, .shutDownDevice, .remoteManagement, .disableRemoteDesktop:
+        case .restartDevice, .shutDownDevice:
             // 3.22.9: Restart + Shutdown moved to the General frame so
             // technicians don't have to scroll past Hardware (which now
             // lives inside General as a sub-section anyway).
-            // 3.22.10: Remote Desktop Control + Disable Remote Desktop
-            // joined the General footer per the user — they sit next to
-            // power-state controls because techs invoke them in the
-            // same workflow.
             return .general
         case .scheduleOSUpdate:
             return .os
@@ -1551,13 +1601,19 @@ extension SupportManagementAction {
         }
     }
 
-    /// Confirmation tier. Destructive actions and secret-retrieval actions
-    /// require typed "confirm" before Jamf receives the request.
+    /// Confirmation tier. Destructive actions require typed "confirm" per
+    /// the redesign spec. Credential-view actions skip confirmation but the
+    /// underlying secret display has its own copy-to-clipboard affordance.
     nonisolated var confirmationStrength: ConfirmationStrength {
         switch self {
         case .refreshInventory,
              .blankPush,
              .discoverApplications,
+             .viewFileVaultPersonalRecoveryKey,
+             .viewRecoveryLockPassword,
+             .viewDeviceLockPIN,
+             .viewLAPSAccountPassword,
+             .viewJamfManagementAccountPassword,
              .playLostModeSound,
              .requestDeviceLocation,
              .refreshCellularPlans,
@@ -1569,8 +1625,6 @@ extension SupportManagementAction {
              .logOutUser,
              .clearPasscode,
              .eraseDevice,
-             .remoteManagement,
-             .disableRemoteDesktop,
              .rotateLAPSPassword,
              .enableBluetooth,
              .disableBluetooth,
@@ -1581,12 +1635,7 @@ extension SupportManagementAction {
              .clearRestrictionsPassword,
              .scheduleOSUpdate,
              .enableFileVault,
-             .redeployManagementFramework,
-             .viewFileVaultPersonalRecoveryKey,
-             .viewRecoveryLockPassword,
-             .viewDeviceLockPIN,
-             .viewLAPSAccountPassword,
-             .viewJamfManagementAccountPassword:
+             .redeployManagementFramework:
             return .typed
         }
     }
@@ -1622,8 +1671,6 @@ extension SupportManagementAction {
     private nonisolated func supports(assetType: SupportAssetType) -> Bool {
         switch self {
         case .logOutUser,
-             .remoteManagement,
-             .disableRemoteDesktop,
              .viewFileVaultPersonalRecoveryKey,
              .viewRecoveryLockPassword,
              .viewDeviceLockPIN,
@@ -1654,8 +1701,6 @@ extension SupportManagementAction {
              .sendDeviceLock,
              .logOutUser,
              .clearPasscode,
-             .remoteManagement,
-             .disableRemoteDesktop,
              .enableLostMode,
              .disableLostMode,
              .playLostModeSound,

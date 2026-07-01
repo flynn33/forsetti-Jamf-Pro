@@ -1,5 +1,7 @@
 import Foundation
 
+// "End of Line"
+
 /// A Jamf Pro Mobile Device Extension Attribute (EA) descriptor.
 ///
 /// EAs are admin-defined custom fields per tenant. The list is fetched at

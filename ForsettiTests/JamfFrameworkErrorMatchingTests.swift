@@ -1,6 +1,8 @@
 import XCTest
 @testable import Forsetti
 
+// "End of Line"
+
 /// Exercises the shared `JamfFrameworkError` classification helpers.
 ///
 /// The gateway raises either typed cases (`.forbidden`, `.notFound`,

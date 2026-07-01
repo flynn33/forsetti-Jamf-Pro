@@ -6,7 +6,7 @@ import SwiftUI
 ///
 /// Generalised from the prior `SupportTypedRemovalConfirmationSheet` so the
 /// same component governs every destructive action — Erase, Restart,
-/// Shutdown, Lock, Log Out, Clear Passcode, Rotate LAPS, Remote Management.
+/// Shutdown, Lock, Log Out, Clear Passcode, Rotate LAPS.
 /// The required word is supplied by `SupportManagementAction.requiredTypedPhrase`
 /// (defaults to `"confirm"` across the board).
 ///
@@ -156,9 +156,9 @@ struct SupportTypedConfirmationSheet: View {
                     .padding(.vertical, 2)
                 }
             }
-            .forsettiInsetGroupedListStyle()
+            .dashboardGroupedFormStyle()
             .navigationTitle("Type to confirm")
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {

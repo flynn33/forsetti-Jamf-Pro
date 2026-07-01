@@ -288,6 +288,13 @@ final class ModulePackageManager: ObservableObject {
                 subtitle: package.resolvedModuleSubtitle,
                 iconSystemName: package.resolvedIconSystemName
             )
+        case .permissionsMatrix:
+            return PermissionsMatrixModule(
+                id: package.packageID,
+                title: package.resolvedModuleTitle,
+                subtitle: package.resolvedModuleSubtitle,
+                iconSystemName: package.resolvedIconSystemName
+            )
         }
     }
 

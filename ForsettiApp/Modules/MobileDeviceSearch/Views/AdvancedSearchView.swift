@@ -1,5 +1,9 @@
 import SwiftUI
 
+// "A robot may not injure a human being or, through inaction, allow a human being to come to harm.
+//  A robot must obey the orders given it by human beings except where such orders would conflict with the First Law.
+//  A robot must protect its own existence as long as such protection does not conflict with the First or Second Law."
+
 /// Sheet that hosts the Advanced Search builder.
 ///
 /// Layout: a List of group sections — each group has a combinator picker and
@@ -45,14 +49,14 @@ struct AdvancedSearchView: View {
                     }
                 }
             }
-            .forsettiInsetGroupedListStyle()
+            .dashboardInsetGroupedListStyle()
             .navigationTitle("Advanced Search")
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .forsettiTopBarLeading) {
+                ToolbarItem(placement: .dashboardTopBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
-                ToolbarItem(placement: .forsettiTopBarTrailing) {
+                ToolbarItem(placement: .dashboardTopBarTrailing) {
                     Button("Save Filter") {
                         viewModel.pendingSmartFilterName = ""
                         viewModel.isSaveSmartFilterPromptPresented = true
@@ -159,11 +163,11 @@ struct AdvancedSearchView: View {
                 Label("Search", systemImage: "magnifyingglass")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.forsettiPrimary)
+            .buttonStyle(.dashboardPrimary)
             .disabled(viewModel.query.isEmpty || viewModel.isSearching)
         }
         .padding(16)
-        .forsettiBottomBarSurface()
+        .dashboardBottomBarSurface()
     }
 }
 

@@ -1,26 +1,23 @@
-import CryptoKit
 import Foundation
 
 /// Persistent local cache for the Support Technician module.
 ///
-/// Keeps encrypted disk-backed copies of fetched device-detail payloads,
-/// tenant-wide policy lists, and extension-attribute catalogs. The module hits
-/// this cache before going to Jamf Pro so repeated visits to the same device
-/// don't hammer the server. Refresh / Clear Cache toolbar buttons drive forced
-/// re-fetches and total purges.
+/// Keeps a disk-backed copy of every fetched device-detail payload and
+/// every fetched tenant-wide policy list, keyed by device id. The module
+/// hits this cache before going to Jamf Pro so repeated visits to the
+/// same device don't hammer the server. Refresh / Clear Cache toolbar
+/// buttons drive forced re-fetches and total purges.
 ///
 /// Cache location:
 ///   `<sandbox-Caches>/SupportTechnician/`
-/// inside the sandboxed `~/Library/Containers/com.ravenforge.forsetti`
+/// inside the sandboxed `~/Library/Containers/com.forsetti.jamfdashboard`
 /// container. Files are written atomically so a crash mid-write can't
 /// leave partial JSON behind.
 actor SupportTechnicianCache {
     private let folderURL: URL
     private let fileManager: FileManager
-    private let secureStore: SecureDataStore
-    private static let encryptionKeyIdentifier = "support-technician-cache-key-v1"
     private static let detailPrefix = "device-detail-"
-    private static let policiesFilename = "tenant-policies.cache"
+    private static let policiesFilename = "tenant-policies.json"
     private static let extensionAttributePrefix = "extension-attributes-"
     /// Default cache age — entries younger than this are considered fresh
     /// enough to skip the network. Beyond it, fetchers will re-fetch and
@@ -28,22 +25,17 @@ actor SupportTechnicianCache {
     /// button (which forces `bypassCache: true`) or Clear Cache.
     private let defaultMaxAge: TimeInterval
 
-    init(
-        maxAge: TimeInterval = 300,
-        secureStore: SecureDataStore = KeychainSecureStore(service: "\(ForsettiAppIdentity.bundleIdentifier).support-cache"),
-        folderURL: URL? = nil
-    ) {
+    init(maxAge: TimeInterval = 300) {
         self.fileManager = FileManager.default
         self.defaultMaxAge = maxAge
-        self.secureStore = secureStore
 
         // Caches dir is the right place for regenerable data; macOS may
         // purge it under disk pressure, which is fine — we'll just re-
         // fetch on next access.
         let cachesRoot = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        self.folderURL = folderURL ?? cachesRoot.appendingPathComponent("SupportTechnician", isDirectory: true)
-        try? fileManager.createDirectory(at: self.folderURL, withIntermediateDirectories: true)
+        self.folderURL = cachesRoot.appendingPathComponent("SupportTechnician", isDirectory: true)
+        try? fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
     }
 
     // MARK: - Device-detail payload cache
@@ -62,23 +54,13 @@ actor SupportTechnicianCache {
         {
             return nil
         }
-        guard let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-        guard let decrypted = decryptCachedPayload(data) else {
-            try? fileManager.removeItem(at: url)
-            return nil
-        }
-        return String(data: decrypted, encoding: .utf8)
+        return try? String(contentsOf: url, encoding: .utf8)
     }
 
-    /// Persists a freshly-fetched payload to disk. Writes encrypted bytes atomically.
+    /// Persists a freshly-fetched payload to disk. Writes atomically.
     func storePayload(_ rawJSON: String, forDeviceID id: String) {
         let url = detailURL(forDeviceID: id)
-        guard let encrypted = encryptCachedPayload(Data(rawJSON.utf8)) else {
-            return
-        }
-        try? encrypted.write(to: url, options: .atomic)
+        try? rawJSON.write(to: url, atomically: true, encoding: .utf8)
     }
 
     /// Returns the on-disk modification date of the cached payload, if
@@ -107,22 +89,12 @@ actor SupportTechnicianCache {
         {
             return nil
         }
-        guard let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-        guard let decrypted = decryptCachedPayload(data) else {
-            try? fileManager.removeItem(at: url)
-            return nil
-        }
-        return decrypted
+        return try? Data(contentsOf: url)
     }
 
     func storePolicies(_ data: Data) {
         let url = folderURL.appendingPathComponent(Self.policiesFilename)
-        guard let encrypted = encryptCachedPayload(data) else {
-            return
-        }
-        try? encrypted.write(to: url, options: .atomic)
+        try? data.write(to: url, options: .atomic)
     }
 
     // MARK: - Extension attribute catalog cache
@@ -140,22 +112,12 @@ actor SupportTechnicianCache {
         {
             return nil
         }
-        guard let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-        guard let decrypted = decryptCachedPayload(data) else {
-            try? fileManager.removeItem(at: url)
-            return nil
-        }
-        return decrypted
+        return try? Data(contentsOf: url)
     }
 
     func storeExtensionAttributeCatalog(_ data: Data, key: String) {
         let url = extensionAttributeCatalogURL(forKey: key)
-        guard let encrypted = encryptCachedPayload(data) else {
-            return
-        }
-        try? encrypted.write(to: url, options: .atomic)
+        try? data.write(to: url, options: .atomic)
     }
 
     // MARK: - Wipe
@@ -195,44 +157,14 @@ actor SupportTechnicianCache {
 
     private func detailURL(forDeviceID id: String) -> URL {
         let safeID = id.replacingOccurrences(of: "/", with: "_")
-        return folderURL.appendingPathComponent("\(Self.detailPrefix)\(safeID).cache")
-    }
-
-    private func encryptionKey() throws -> SymmetricKey {
-        if let data = try secureStore.loadData(for: Self.encryptionKeyIdentifier) {
-            return SymmetricKey(data: data)
-        }
-
-        let key = SymmetricKey(size: .bits256)
-        let data = key.withUnsafeBytes { Data($0) }
-        try secureStore.save(data: data, for: Self.encryptionKeyIdentifier)
-        return key
-    }
-
-    private func encryptCachedPayload(_ data: Data) -> Data? {
-        guard let key = try? encryptionKey(),
-              let combined = try? AES.GCM.seal(data, using: key).combined
-        else {
-            return nil
-        }
-        return combined
-    }
-
-    private func decryptCachedPayload(_ data: Data) -> Data? {
-        guard let key = try? encryptionKey(),
-              let sealedBox = try? AES.GCM.SealedBox(combined: data),
-              let opened = try? AES.GCM.open(sealedBox, using: key)
-        else {
-            return nil
-        }
-        return opened
+        return folderURL.appendingPathComponent("\(Self.detailPrefix)\(safeID).json")
     }
 
     private func extensionAttributeCatalogURL(forKey key: String) -> URL {
         let safeKey = key
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: ":", with: "_")
-        return folderURL.appendingPathComponent("\(Self.extensionAttributePrefix)\(safeKey).cache")
+        return folderURL.appendingPathComponent("\(Self.extensionAttributePrefix)\(safeKey).json")
     }
 }
 

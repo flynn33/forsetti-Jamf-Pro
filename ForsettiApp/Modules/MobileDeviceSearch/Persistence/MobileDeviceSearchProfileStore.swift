@@ -5,7 +5,7 @@ import Foundation
 /// arrays to a JSON file on disk.
 ///
 /// `MobileDeviceSearchProfileStore` persists profiles to the Application Support directory
-/// under the app support folder. It uses `actor` isolation to
+/// under `Forsetti/mobile-device-search-profiles.json`. It uses `actor` isolation to
 /// guarantee thread-safe file access, since profiles may be loaded, saved, or deleted from
 /// different async contexts (e.g. view model tasks triggered by user interaction).
 ///
@@ -22,7 +22,7 @@ actor MobileDeviceSearchProfileStore {
     ///
     /// The storage path is resolved by looking for the Application Support directory first,
     /// then falling back to Documents, and finally to the temporary directory as a last resort.
-    /// The app support subdirectory is appended to isolate this app's data.
+    /// A `Forsetti` subdirectory is appended to isolate this app's data.
     ///
     /// - Parameter fileManager: The file manager to use. Defaults to `.default`.
     init(fileManager: FileManager = .default) {
@@ -33,7 +33,7 @@ actor MobileDeviceSearchProfileStore {
             ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
 
-        let directoryURL = appSupportURL.appending(path: ForsettiAppIdentity.applicationSupportFolder, directoryHint: .isDirectory)
+        let directoryURL = appSupportURL.appending(path: "Forsetti", directoryHint: .isDirectory)
         self.fileURL = directoryURL.appending(path: "mobile-device-search-profiles.json")
     }
 

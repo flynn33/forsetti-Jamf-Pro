@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.feature.deployment-tracker",
+  "displayName": "Deployment Tracker Demo",
+  "moduleVersion": {
+    "major": 3,
+    "minor": 32,
+    "patch": 1,
+    "prerelease": null
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 4,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "storage",
+    "diagnostics",
+    "file_export",
+    "telemetry"
+  ],
+  "iapProductID": null,
+  "entryPoint": "ForsettiDeploymentTrackerModule",
+  "defaultModuleRole": null,
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "deployment-demo-storage",
+        "kind": "storage",
+        "access": "read_write",
+        "required": true,
+        "description": "Demo scenario state only."
+      },
+      {
+        "requirementID": "deployment-demo-diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": true,
+        "description": "Demo safety diagnostics."
+      },
+      {
+        "requirementID": "deployment-demo-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": false,
+        "description": "Demo export."
+      },
+      {
+        "requirementID": "deployment-demo-telemetry",
+        "kind": "telemetry",
+        "access": "emit",
+        "required": false,
+        "description": "Optional demo interaction telemetry."
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "forsetti-deployment-tracker"
+      ],
+      "requiredDefaultRoles": []
+    }
+  }
+}

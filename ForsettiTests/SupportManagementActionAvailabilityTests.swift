@@ -31,10 +31,10 @@ final class SupportManagementActionAvailabilityTests: XCTestCase {
         XCTAssertTrue(availability.helpText.localizedCaseInsensitiveContains("management ID"))
     }
 
-    func test_remoteDesktop_unsupportedForMobileDevice() {
+    func test_computerOnlyAction_unsupportedForMobileDevice() {
         let detail = makeDetail(assetType: .mobileDevice)
 
-        let availability = SupportManagementAction.remoteManagement.availability(for: detail)
+        let availability = SupportManagementAction.redeployManagementFramework.availability(for: detail)
 
         XCTAssertFalse(availability.isAvailable)
         XCTAssertEqual(availability.state, .unsupported)
@@ -57,6 +57,27 @@ final class SupportManagementActionAvailabilityTests: XCTestCase {
         XCTAssertFalse(availability.isAvailable)
         XCTAssertEqual(availability.state, .blocked)
         XCTAssertTrue(availability.helpText.localizedCaseInsensitiveContains("client management ID"))
+    }
+
+    /// Locks in the redundancy removal: the Support Technician management-action grid must never
+    /// offer a remote-management / Screen Sharing action again — that workflow is exclusively the
+    /// dedicated Remote Support frame. Guards against the grid being silently re-extended (or the
+    /// Remote Support workflow re-surfacing as a grid button) without anyone noticing.
+    func test_managementGrid_offersNoRemoteManagementOrScreenSharingAction() {
+        for assetType in [SupportAssetType.computer, .mobileDevice] {
+            let detail = makeDetail(assetType: assetType)
+            let actions = SupportTechnicianViewModel.resolvedActions(for: detail)
+            for action in actions {
+                let text = "\(action.rawValue) \(action.title) \(action.subtitle)".lowercased()
+                XCTAssertFalse(
+                    text.contains("remote management")
+                        || text.contains("remote desktop")
+                        || text.contains("screen sharing"),
+                    "Management-action grid must not offer a remote-management/screen-sharing action "
+                        + "(found '\(action.rawValue)' for \(assetType)); that surface is exclusively the Remote Support frame."
+                )
+            }
+        }
     }
 
     private func makeDetail(

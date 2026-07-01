@@ -79,10 +79,10 @@ struct CommandStatusIndicatorView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(ForsettiTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card))
+        .background(DashboardTheme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.card))
         .overlay(
-            RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card)
+            RoundedRectangle(cornerRadius: DashboardTheme.Radius.card)
                 .stroke(accentColor.opacity(0.4), lineWidth: 1)
         )
         .animation(.easeInOut(duration: 0.25), value: phase)
@@ -123,19 +123,17 @@ struct CommandStatusIndicatorView: View {
     private var accentColor: Color {
         switch phase {
         case .idle:
-            return ForsettiColors.textTertiary
-        case .sending:
-            return ForsettiColors.accentCyan
-        case .queued:
-            return ForsettiColors.accentBlue
+            return Color.gray
+        case .sending, .queued:
+            return DashboardColors.bluePrimary
         case .verifying:
-            return ForsettiColors.warning
+            return .orange
         case .succeeded:
-            return ForsettiColors.success
+            return DashboardColors.greenPrimary
         case .failed:
-            return ForsettiColors.critical
+            return .red
         case .timedOut:
-            return ForsettiColors.warning
+            return .orange
         }
     }
 
@@ -173,13 +171,13 @@ struct CommandStatusIndicatorView: View {
     private var captionForeground: Color {
         switch phase {
         case .succeeded:
-            return ForsettiColors.success
+            return DashboardColors.greenPrimary
         case .failed:
-            return ForsettiColors.critical
+            return .red
         case .timedOut:
-            return ForsettiColors.warning
+            return .orange
         default:
-            return ForsettiColors.textSecondary
+            return .secondary
         }
     }
 
@@ -210,28 +208,20 @@ struct CommandStatusIndicatorView: View {
     static func renderPayload(for phase: CommandLifecyclePhase) -> (phase: CommandStatusPhaseFlag, accent: SIMD3<Float>) {
         switch phase {
         case .idle:
-            return (.idle, vector(0x63879A))
+            return (.idle, SIMD3<Float>(0.45, 0.50, 0.60))
         case .sending:
-            return (.inFlight, vector(0x00E5FF))
+            return (.inFlight, SIMD3<Float>(0.22, 0.55, 0.95))
         case .queued:
-            return (.queued, vector(0x2F7FFF))
+            return (.queued, SIMD3<Float>(0.22, 0.55, 0.95))
         case .verifying:
-            return (.verifying, vector(0xFFD166))
+            return (.verifying, SIMD3<Float>(0.95, 0.72, 0.18))
         case .succeeded:
-            return (.succeeded, vector(0x37FFB0))
+            return (.succeeded, SIMD3<Float>(0.18, 0.72, 0.40))
         case .failed:
-            return (.failed, vector(0xFF5C8A))
+            return (.failed, SIMD3<Float>(0.92, 0.30, 0.30))
         case .timedOut:
-            return (.timedOut, vector(0xFFD166))
+            return (.timedOut, SIMD3<Float>(0.96, 0.62, 0.18))
         }
-    }
-
-    private static func vector(_ value: UInt32) -> SIMD3<Float> {
-        SIMD3<Float>(
-            Float((value >> 16) & 0xFF) / 255.0,
-            Float((value >> 8) & 0xFF) / 255.0,
-            Float(value & 0xFF) / 255.0
-        )
     }
 }
 

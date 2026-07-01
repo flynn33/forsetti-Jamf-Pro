@@ -9,12 +9,11 @@ import SwiftUI
 /// contents (per the spec: "All frames inside the main view must be
 /// scrollable").
 struct CategoryFrame<Content: View, Footer: View>: View {
-    /// The category this frame represents (drives title, icon, ordering).
-    let category: SupportDeviceCategory
+    /// SF Symbol shown next to the title.
+    let iconSystemName: String
 
-    /// Optional override for the displayed title. Defaults to the
-    /// category's `displayName`.
-    let titleOverride: String?
+    /// Resolved frame title.
+    let title: String
 
     /// Optional subtitle shown beneath the title — useful for counts
     /// (e.g. "12 attributes") or short scope hints.
@@ -36,6 +35,8 @@ struct CategoryFrame<Content: View, Footer: View>: View {
     /// quickly reduce noise while they work through a device.
     @State private var isExpanded = true
 
+    /// Category-driven frame (Support Technician detail view). Icon, title, and
+    /// ordering are taken from the `SupportDeviceCategory`.
     init(
         category: SupportDeviceCategory,
         titleOverride: String? = nil,
@@ -44,8 +45,29 @@ struct CategoryFrame<Content: View, Footer: View>: View {
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }
     ) {
-        self.category = category
-        self.titleOverride = titleOverride
+        self.init(
+            iconSystemName: category.iconSystemName,
+            title: titleOverride ?? category.displayName,
+            subtitle: subtitle,
+            bodyMaxHeight: bodyMaxHeight,
+            content: content,
+            footer: footer
+        )
+    }
+
+    /// Title + icon frame for callers that don't have a `SupportDeviceCategory`
+    /// (e.g. Computer Search, whose inventory sections aren't technician
+    /// categories). Same chrome, just an explicit symbol and title.
+    init(
+        iconSystemName: String,
+        title: String,
+        subtitle: String? = nil,
+        bodyMaxHeight: CGFloat = 320,
+        @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }
+    ) {
+        self.iconSystemName = iconSystemName
+        self.title = title
         self.subtitle = subtitle
         self.bodyMaxHeight = bodyMaxHeight
         self.content = content
@@ -61,13 +83,13 @@ struct CategoryFrame<Content: View, Footer: View>: View {
                 }
             } label: {
                 HStack(spacing: 10) {
-                    Image(systemName: category.iconSystemName)
+                    Image(systemName: iconSystemName)
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(ForsettiColors.bluePrimary)
+                        .foregroundStyle(DashboardColors.bluePrimary)
                         .frame(width: 28, height: 28)
 
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(titleOverride ?? category.displayName)
+                        Text(title)
                             .font(.headline)
                         if let subtitle, subtitle.isEmpty == false {
                             Text(subtitle)
@@ -91,8 +113,8 @@ struct CategoryFrame<Content: View, Footer: View>: View {
             .background(
                 LinearGradient(
                     colors: [
-                        ForsettiColors.bluePrimary.opacity(0.10),
-                        ForsettiColors.bluePrimary.opacity(0.03)
+                        DashboardColors.bluePrimary.opacity(0.10),
+                        DashboardColors.bluePrimary.opacity(0.03)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -102,7 +124,7 @@ struct CategoryFrame<Content: View, Footer: View>: View {
             if isExpanded {
                 // Independently scrollable body
                 ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                    VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                         content()
                     }
                     .padding(.horizontal, 16)
@@ -115,13 +137,13 @@ struct CategoryFrame<Content: View, Footer: View>: View {
                 footer()
             }
         }
-        .background(ForsettiTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card))
+        .background(DashboardTheme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.card))
         .overlay(
-            RoundedRectangle(cornerRadius: ForsettiTheme.Radius.card)
-                .stroke(ForsettiTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DashboardTheme.Radius.card)
+                .stroke(DashboardTheme.border, lineWidth: 1)
         )
-        .shadow(color: ForsettiTheme.shadowColor, radius: 6, x: 0, y: 2)
+        .shadow(color: DashboardTheme.shadowColor, radius: 6, x: 0, y: 2)
     }
 }
 
@@ -150,7 +172,7 @@ struct HardwareSpecCard: View {
             HStack(spacing: 8) {
                 Image(systemName: iconSystemName)
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(ForsettiColors.bluePrimary)
+                    .foregroundStyle(DashboardColors.bluePrimary)
                     .frame(width: 22)
                 Text(label)
                     .font(.subheadline.weight(.semibold))
@@ -176,11 +198,11 @@ struct HardwareSpecCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
-        .background(ForsettiTheme.groupedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button))
+        .background(DashboardTheme.groupedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.button))
         .overlay(
-            RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button)
-                .stroke(ForsettiTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DashboardTheme.Radius.button)
+                .stroke(DashboardTheme.border, lineWidth: 1)
         )
     }
 
@@ -317,18 +339,18 @@ private struct FieldBinaryIndicator: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .foregroundStyle(.primary)
-        .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button))
+        .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.button))
         .overlay(
-            RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button)
+            RoundedRectangle(cornerRadius: DashboardTheme.Radius.button)
                 .stroke(tint.opacity(0.35), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
     }
 
     private var tint: Color {
-        state.isOn ? ForsettiColors.greenPrimary : Color.gray.opacity(0.82)
+        state.isOn ? DashboardColors.greenPrimary : Color.gray.opacity(0.82)
     }
 }
 

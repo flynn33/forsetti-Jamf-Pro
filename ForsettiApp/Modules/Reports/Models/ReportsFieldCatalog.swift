@@ -81,6 +81,22 @@ enum ReportsFieldCatalog {
             isServerFilterableForMobile: true
         ),
         .init(
+            key: "enrollmentDate",
+            displayName: "Device Enrollment Date",
+            description: "Date the device last enrolled in Jamf Pro (general.lastEnrolledDate), shown as YYYY-MM-DD.",
+            dataType: .string,
+            domains: [.computer, .mobile],
+            computerFieldKey: "general.lastEnrolledDate",
+            mobileFieldKey: "lastEnrolledDate",
+            computerSection: .general,
+            mobileSection: .general,
+            // `lastEnrolledDate` is documented as sortable but not in the
+            // mobile filter allow-list, and the module evaluates every
+            // criterion client-side anyway, so this is client-filtered.
+            isServerFilterableForComputers: false,
+            isServerFilterableForMobile: false
+        ),
+        .init(
             key: "building",
             displayName: "Building",
             description: "Jamf inventory building name.",

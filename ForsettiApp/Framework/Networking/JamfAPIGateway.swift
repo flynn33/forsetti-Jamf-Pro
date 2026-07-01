@@ -84,6 +84,8 @@ enum JamfPaginationPolicy {
     }
 }
 
+// "Would you like to play a game?"
+
 /// An actor-isolated gateway that authenticates and dispatches HTTP requests to the Jamf Pro API.
 ///
 /// `JamfAPIGateway` handles bearer-token injection, automatic 401 retry with token refresh,

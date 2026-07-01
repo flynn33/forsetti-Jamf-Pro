@@ -15,7 +15,7 @@ final class DeploymentTrackerModuleTests: XCTestCase {
 
     func test_deploymentTrackerIsBundledByDefault() {
         let manifest = ModulePackageManifest.bundledDefaults.first {
-            $0.packageID == "forsetti.feature.deployment-tracker"
+            $0.packageID == "com.forsetti.jamfpro.feature.deployment-tracker"
         }
 
         XCTAssertNotNil(manifest)
@@ -26,7 +26,7 @@ final class DeploymentTrackerModuleTests: XCTestCase {
     func test_modulePackageTemplateCanBeImportedByFrameworkParser() throws {
         let packageData = Data("""
         {
-          "package_id": "forsetti.feature.deployment-tracker",
+          "package_id": "com.forsetti.jamfpro.feature.deployment-tracker",
           "module_type": "deployment-tracker",
           "package_version": "1.0.0",
           "module_display_name": "Deployment Tracker Demo",
@@ -36,7 +36,7 @@ final class DeploymentTrackerModuleTests: XCTestCase {
         """.utf8)
         let manifest = try ModulePackageManifest.fromPackageFileData(packageData)
 
-        XCTAssertEqual(manifest.packageID, "forsetti.feature.deployment-tracker")
+        XCTAssertEqual(manifest.packageID, "com.forsetti.jamfpro.feature.deployment-tracker")
         XCTAssertEqual(manifest.moduleType, .deploymentTracker)
         XCTAssertEqual(manifest.resolvedModuleTitle, "Deployment Tracker Demo")
         XCTAssertEqual(manifest.resolvedIconSystemName, "sparkles.rectangle.stack")
@@ -80,14 +80,14 @@ final class DeploymentTrackerModuleTests: XCTestCase {
         }
 
         await manager.bootstrap()
-        XCTAssertNotNil(registry.module(withID: "forsetti.feature.deployment-tracker"))
-        XCTAssertNil(registry.module(withID: "forsetti.feature.deployment-tracker.imported"))
+        XCTAssertNotNil(registry.module(withID: "com.forsetti.jamfpro.feature.deployment-tracker"))
+        XCTAssertNil(registry.module(withID: "com.forsetti.jamfpro.feature.deployment-tracker.imported"))
 
         let installed = try await manager.installPackage(from: manifestURL)
 
         XCTAssertEqual(installed.moduleType, ModulePackageType.deploymentTracker)
-        XCTAssertNotNil(registry.module(withID: "forsetti.feature.deployment-tracker.imported"))
-        XCTAssertEqual(registry.module(withID: "forsetti.feature.deployment-tracker.imported")?.title, "Deployment Tracker Import Test")
+        XCTAssertNotNil(registry.module(withID: "com.forsetti.jamfpro.feature.deployment-tracker.imported"))
+        XCTAssertEqual(registry.module(withID: "com.forsetti.jamfpro.feature.deployment-tracker.imported")?.title, "Deployment Tracker Import Test")
     }
 
     func test_duplicateDeploymentTrackerPackageIDsAreRejected() async throws {
@@ -113,14 +113,14 @@ final class DeploymentTrackerModuleTests: XCTestCase {
             _ = try await manager.installPackage(from: manifestURL)
             XCTFail("Expected duplicate package installation to fail.")
         } catch JamfFrameworkError.duplicateModulePackage(let packageID) {
-            XCTAssertEqual(packageID, "forsetti.feature.deployment-tracker.imported")
+            XCTAssertEqual(packageID, "com.forsetti.jamfpro.feature.deployment-tracker.imported")
         }
     }
 
     func test_unsupportedModuleTypesFailGracefully() {
         let packageData = Data("""
         {
-          "package_id": "forsetti.feature.unknown",
+          "package_id": "com.example.modules.unknown",
           "module_type": "unknown-module",
           "package_version": "1.0.0"
         }
@@ -141,7 +141,7 @@ final class DeploymentTrackerModuleTests: XCTestCase {
             name: "invalid.jamfmodule",
             contents: """
             {
-              "package_id": "forsetti.feature.invalid"
+              "package_id": "com.example.modules.invalid"
             }
             """
         )
@@ -217,7 +217,7 @@ final class DeploymentTrackerModuleTests: XCTestCase {
 
     private static let deploymentTrackerPackageJSON = """
     {
-      "package_id": "forsetti.feature.deployment-tracker",
+      "package_id": "com.forsetti.jamfpro.feature.deployment-tracker",
       "module_type": "deployment-tracker",
       "package_version": "1.0.0",
       "module_display_name": "Deployment Tracker Demo",
@@ -228,7 +228,7 @@ final class DeploymentTrackerModuleTests: XCTestCase {
 
     private static let importedDeploymentTrackerPackageJSON = """
     {
-      "package_id": "forsetti.feature.deployment-tracker.imported",
+      "package_id": "com.forsetti.jamfpro.feature.deployment-tracker.imported",
       "module_type": "deployment-tracker",
       "package_version": "1.0.0",
       "module_display_name": "Deployment Tracker Import Test",

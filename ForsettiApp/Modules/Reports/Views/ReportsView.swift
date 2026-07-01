@@ -13,14 +13,14 @@ struct ReportsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
                 header
                 statusStrip
                 content
             }
-            .padding(ForsettiTheme.Spacing.section)
+            .padding(DashboardTheme.Spacing.section)
         }
-        .forsettiAppBackground()
+        .dashboardAppBackground()
         .task {
             if viewModel.defaultDataSet == nil {
                 // First appear of the module — the inventory service's
@@ -30,14 +30,14 @@ struct ReportsView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .forsettiTopBarLeading) {
+            ToolbarItem(placement: .dashboardTopBarLeading) {
                 Button {
                     dismiss()
                 } label: {
                     Label("Home", systemImage: "house")
                 }
             }
-            ToolbarItem(placement: .forsettiTopBarTrailing) {
+            ToolbarItem(placement: .dashboardTopBarTrailing) {
                 Button {
                     // Toolbar Refresh — discard the cache and re-fetch.
                     Task { await viewModel.refreshDefaultCounts(forceCacheRebuild: true) }
@@ -64,7 +64,7 @@ struct ReportsView: View {
         .navigationDestination(item: $activeReport) { report in
             GeneratedReportView(report: report, viewModel: viewModel)
                 .navigationTitle(report.request.resolvedName)
-                .forsettiInlineNavigationTitle()
+                .dashboardInlineNavigationTitle()
         }
         .alert(
             "Reports",
@@ -98,13 +98,13 @@ struct ReportsView: View {
             } label: {
                 Label("New Report", systemImage: "plus.circle.fill")
             }
-            .buttonStyle(.forsettiPrimary)
+            .buttonStyle(.dashboardPrimary)
             .disabled(viewModel.isGenerating)
         }
     }
 
     private var statusStrip: some View {
-        HStack(spacing: ForsettiTheme.Spacing.item) {
+        HStack(spacing: DashboardTheme.Spacing.item) {
             statusItem(
                 title: "Server",
                 value: viewModel.serverLabel ?? (viewModel.hasCredentials ? "Configured" : "Credentials Required"),
@@ -122,7 +122,7 @@ struct ReportsView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private func statusItem(title: String, value: String, image: String) -> some View {
@@ -136,7 +136,7 @@ struct ReportsView: View {
             }
         } icon: {
             Image(systemName: image)
-                .foregroundStyle(ForsettiColors.bluePrimary)
+                .foregroundStyle(DashboardColors.bluePrimary)
         }
         .labelStyle(.titleAndIcon)
     }
@@ -146,7 +146,7 @@ struct ReportsView: View {
         if viewModel.isRefreshing && viewModel.defaultDataSet == nil {
             ProgressView("Loading report counts...")
                 .frame(maxWidth: .infinity, minHeight: 280)
-                .forsettiCardSurface()
+                .dashboardCardSurface()
         } else if viewModel.hasCredentials == false {
             ContentUnavailableView(
                 "Credentials Required",
@@ -154,15 +154,15 @@ struct ReportsView: View {
                 description: Text("Save verified Jamf Pro credentials in Settings before loading report data.")
             )
             .frame(maxWidth: .infinity, minHeight: 280)
-            .forsettiCardSurface()
+            .dashboardCardSurface()
         } else {
             ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: ForsettiTheme.Spacing.section) {
+                HStack(alignment: .top, spacing: DashboardTheme.Spacing.section) {
                     deviceTypeList
                         .frame(minWidth: 340, maxWidth: 460, alignment: .topLeading)
                     gaugePanel
                 }
-                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+                VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
                     deviceTypeList
                     gaugePanel
                 }
@@ -171,7 +171,7 @@ struct ReportsView: View {
     }
 
     private var deviceTypeList: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
             HStack {
                 Text("Device Types")
                     .font(.headline.weight(.semibold))
@@ -198,11 +198,11 @@ struct ReportsView: View {
             }
         }
         .padding(16)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var gaugePanel: some View {
-        VStack(spacing: ForsettiTheme.Spacing.item) {
+        VStack(spacing: DashboardTheme.Spacing.item) {
             ReportsDeviceTypeGaugeView(aggregate: viewModel.aggregate)
                 .frame(minWidth: 260, idealWidth: 340, maxWidth: 420)
 
@@ -210,7 +210,7 @@ struct ReportsView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private var colorKey: some View {

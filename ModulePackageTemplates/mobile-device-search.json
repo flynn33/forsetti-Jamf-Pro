@@ -1,5 +1,5 @@
 {
-  "package_id": "forsetti.feature.mobile-device-search",
+  "package_id": "com.forsetti.jamfpro.feature.mobile-device-search",
   "module_type": "mobile-device-search",
   "package_version": "1.0.0",
   "module_display_name": "Mobile Device Search",

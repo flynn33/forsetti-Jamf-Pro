@@ -7,7 +7,7 @@ final class ReportsModule: JamfModule {
     let iconSystemName: String
 
     init(
-        id: String = "forsetti.feature.reports",
+        id: String = "com.forsetti.jamfpro.feature.reports",
         title: String = "Reports",
         subtitle: String = "Create visual fleet reports from Jamf Pro inventory.",
         iconSystemName: String = "chart.pie.fill"

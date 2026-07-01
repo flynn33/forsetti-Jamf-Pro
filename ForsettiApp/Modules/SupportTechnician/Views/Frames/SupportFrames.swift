@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "Klatu-barada-Nikto"
+
 /// Layout heights for action buttons inside frame footers. Mirrors the
 /// `SupportTechnicianLayout.controlButtonHeight` used by the main view.
 private enum FrameLayout {
@@ -191,14 +193,23 @@ private struct GeneralFrame: View {
         VStack(alignment: .leading, spacing: 6) {
             CategoryFieldRow(label: "Device Name", value: detail.summary.displayName)
             CategoryFieldRow(label: "Device Type", value: detail.summary.assetType.title)
-            CategoryFieldRow(label: "Serial Number", value: detail.summary.serialNumber)
+            HStack(alignment: .top, spacing: 8) {
+                CategoryFieldRow(label: "Serial Number", value: detail.summary.serialNumber)
+                CopyButton(value: detail.summary.serialNumber, accessibilityLabel: "Copy serial number")
+            }
             CategoryFieldRow(label: "Inventory ID", value: detail.summary.inventoryID)
 
             if let username = detail.summary.username, username.isEmpty == false {
-                CategoryFieldRow(label: "Assigned User", value: username)
+                HStack(alignment: .top, spacing: 8) {
+                    CategoryFieldRow(label: "Assigned User", value: username)
+                    CopyButton(value: username, accessibilityLabel: "Copy assigned user")
+                }
             }
             if let email = detail.summary.email, email.isEmpty == false {
-                CategoryFieldRow(label: "User Email", value: email)
+                HStack(alignment: .top, spacing: 8) {
+                    CategoryFieldRow(label: "User Email", value: email)
+                    CopyButton(value: email, accessibilityLabel: "Copy user email")
+                }
             }
             if let model = detail.summary.model, model.isEmpty == false {
                 CategoryFieldRow(label: "Model", value: model)
@@ -330,14 +341,14 @@ private struct GeneralFrame: View {
                 VStack(spacing: 4) {
                     Image(systemName: "battery.100")
                         .font(.title2)
-                        .foregroundStyle(ForsettiColors.greenPrimary)
+                        .foregroundStyle(DashboardColors.greenPrimary)
                     Text(health)
                         .font(.caption.weight(.semibold))
                         .multilineTextAlignment(.center)
                 }
                 .frame(width: 96, height: 96)
-                .background(ForsettiTheme.groupedSurface)
-                .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button))
+                .background(DashboardTheme.groupedSurface)
+                .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.button))
             }
             .buttonStyle(.plain)
         }
@@ -354,7 +365,7 @@ private struct GeneralFrame: View {
             HStack(spacing: 8) {
                 Image(systemName: "internaldrive")
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(ForsettiColors.bluePrimary)
+                    .foregroundStyle(DashboardColors.bluePrimary)
                     .frame(width: 22)
                 Text("Storage")
                     .font(.subheadline.weight(.semibold))
@@ -385,8 +396,8 @@ private struct GeneralFrame: View {
             }
         }
         .padding(10)
-        .background(ForsettiTheme.groupedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button))
+        .background(DashboardTheme.groupedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.button))
         .contentShape(Rectangle())
         .onTapGesture {
             hardwareDetailKind = .storage
@@ -740,7 +751,7 @@ private struct SecurityFrame: View {
 
     private func severityColor(_ severity: SupportDiagnosticSeverity) -> Color {
         switch severity {
-        case .info: return ForsettiColors.greenPrimary
+        case .info: return DashboardColors.greenPrimary
         case .warning: return .orange
         case .critical: return .red
         }
@@ -992,7 +1003,7 @@ private struct SecurityFrame: View {
 /// configured, orange = unknown.
 ///
 /// Note: NOT marked `nonisolated` because `tint` references
-/// `ForsettiColors.greenPrimary`, which the project's `-default-isolation MainActor`
+/// `DashboardColors.greenPrimary`, which the project's `-default-isolation MainActor`
 /// flag pins to the main actor. The enum stays MainActor-isolated and
 /// the card view is constructed from MainActor view-render paths only.
 enum SecurityStatusState: Sendable {
@@ -1000,7 +1011,7 @@ enum SecurityStatusState: Sendable {
 
     var tint: Color {
         switch self {
-        case .enabled:       return ForsettiColors.greenPrimary
+        case .enabled:       return DashboardColors.greenPrimary
         case .disabled:      return .red
         case .notConfigured: return .yellow
         case .unknown:       return .orange
@@ -1043,10 +1054,10 @@ private struct SecurityStatusCard: View {
             Spacer(minLength: 0)
         }
         .padding(10)
-        .background(ForsettiTheme.groupedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button))
+        .background(DashboardTheme.groupedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.button))
         .overlay(
-            RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button)
+            RoundedRectangle(cornerRadius: DashboardTheme.Radius.button)
                 .stroke(entry.state.tint.opacity(0.35), lineWidth: 1)
         )
     }
@@ -1090,7 +1101,10 @@ private struct NetworkFrame: View {
 
                         networkSectionHeader("Addresses")
                         if let ip = net.ipAddress {
-                            CategoryFieldRow(label: "IP Address", value: ip)
+                            HStack(alignment: .top, spacing: 8) {
+                                CategoryFieldRow(label: "IP Address", value: ip)
+                                CopyButton(value: ip, accessibilityLabel: "Copy IP address")
+                            }
                         }
                         if let lastIp = net.lastReportedIp, lastIp != net.ipAddress {
                             CategoryFieldRow(label: "Last Reported IP", value: lastIp)
@@ -1214,7 +1228,7 @@ private struct NetworkCapabilityRow: View {
     var body: some View {
         HStack(spacing: 9) {
             Circle()
-                .fill(isEnabled ? ForsettiColors.greenPrimary : Color.gray.opacity(0.65))
+                .fill(isEnabled ? DashboardColors.greenPrimary : Color.gray.opacity(0.65))
                 .frame(width: 10, height: 10)
             Image(systemName: systemImage)
                 .font(.caption.weight(.semibold))
@@ -1231,7 +1245,7 @@ private struct NetworkCapabilityRow: View {
             Spacer(minLength: 0)
         }
         .padding(8)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
@@ -1350,7 +1364,7 @@ private struct CuratedExtensionAttributeRow: View {
             } else {
                 Image(systemName: attribute.isReported ? "tag.fill" : "tag")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(attribute.isReported ? ForsettiColors.bluePrimary : .secondary)
+                    .foregroundStyle(attribute.isReported ? DashboardColors.bluePrimary : .secondary)
                     .frame(width: 16)
                     .padding(.top, 2)
             }
@@ -1368,7 +1382,7 @@ private struct CuratedExtensionAttributeRow: View {
             Spacer(minLength: 0)
         }
         .padding(9)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
@@ -1393,7 +1407,7 @@ private struct CuratedExtensionAttributeRow: View {
     private var binaryColor: Color {
         guard attribute.isReported else { return .secondary }
         guard let binaryValue else { return .orange }
-        return binaryValue ? ForsettiColors.greenPrimary : Color.gray.opacity(0.65)
+        return binaryValue ? DashboardColors.greenPrimary : Color.gray.opacity(0.65)
     }
 }
 
@@ -1433,13 +1447,13 @@ private struct ApplicationsFrame: View {
                             .font(.caption.weight(.semibold))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(ForsettiTheme.groupedSurface)
+                            .background(DashboardTheme.groupedSurface)
                             .clipShape(Capsule())
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.forsettiSecondary)
+                .buttonStyle(.dashboardSecondary)
                 .frame(maxWidth: .infinity, minHeight: FrameLayout.actionButtonHeight)
 
                 // Installed apps list — populated for any device with
@@ -1611,7 +1625,7 @@ private struct UserAccountsFrame: View {
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(10)
-                        .background(ForsettiTheme.groupedSurface)
+                        .background(DashboardTheme.groupedSurface)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .buttonStyle(.plain)
@@ -1655,8 +1669,8 @@ private struct UserAccountsFrame: View {
                     ? "gearshape.circle.fill"
                     : (user.isAdmin == true ? "star.circle.fill" : "person.circle"))
                     .foregroundStyle(isJSSManage
-                        ? ForsettiColors.bluePrimary
-                        : (user.isAdmin == true ? ForsettiColors.bluePrimary : .secondary))
+                        ? DashboardColors.bluePrimary
+                        : (user.isAdmin == true ? DashboardColors.bluePrimary : .secondary))
                     .frame(width: 18)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(user.fullName ?? user.username)
@@ -1667,14 +1681,14 @@ private struct UserAccountsFrame: View {
                 }
                 Spacer(minLength: 0)
                 if isJSSManage {
-                    chip("jssmanage", color: ForsettiColors.bluePrimary)
+                    chip("jssmanage", color: DashboardColors.bluePrimary)
                 } else if user.isAdmin == true {
-                    chip("Admin", color: ForsettiColors.bluePrimary)
+                    chip("Admin", color: DashboardColors.bluePrimary)
                 }
                 if let fileVault = user.fileVault2Enabled {
                     chip(
                         fileVault ? "FileVault On" : "FileVault Off",
-                        color: fileVault ? ForsettiColors.greenPrimary : Color.gray.opacity(0.75)
+                        color: fileVault ? DashboardColors.greenPrimary : Color.gray.opacity(0.75)
                     )
                 }
             }
@@ -1874,8 +1888,8 @@ private struct OtherAccountsSheet: View {
         .font(.caption2.weight(.semibold))
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
-        .background((isOn ? ForsettiColors.greenPrimary : Color.gray.opacity(0.75)).opacity(0.16))
-        .foregroundStyle(isOn ? ForsettiColors.greenPrimary : Color.gray.opacity(0.75))
+        .background((isOn ? DashboardColors.greenPrimary : Color.gray.opacity(0.75)).opacity(0.16))
+        .foregroundStyle(isOn ? DashboardColors.greenPrimary : Color.gray.opacity(0.75))
         .clipShape(Capsule())
     }
 }
@@ -2258,7 +2272,7 @@ struct DiagnosticsFrame: View {
 
     private func color(for severity: SupportDiagnosticSeverity) -> Color {
         switch severity {
-        case .info: return ForsettiColors.greenPrimary
+        case .info: return DashboardColors.greenPrimary
         case .warning: return .orange
         case .critical: return .red
         }
@@ -2334,7 +2348,7 @@ struct CommandHistoryFrame: View {
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
-                    .buttonStyle(.forsettiSecondary)
+                    .buttonStyle(.dashboardSecondary)
                     .disabled(isLoading)
                 }
             }
@@ -2354,8 +2368,8 @@ struct CommandHistoryFrame: View {
 
     private var bucketRow: some View {
         HStack(spacing: 10) {
-            bucketChip(label: "Pending", count: history.count(in: .pending), color: ForsettiColors.bluePrimary)
-            bucketChip(label: "Completed", count: history.count(in: .completed), color: ForsettiColors.greenPrimary)
+            bucketChip(label: "Pending", count: history.count(in: .pending), color: DashboardColors.bluePrimary)
+            bucketChip(label: "Completed", count: history.count(in: .completed), color: DashboardColors.greenPrimary)
             bucketChip(label: "Failed", count: history.count(in: .failed), color: .red)
             bucketChip(label: "NotNow", count: history.count(in: .notNow), color: .orange)
             Spacer(minLength: 0)
@@ -2430,8 +2444,8 @@ struct CommandHistoryFrame: View {
 
     private func color(for bucket: SupportMDMCommandRecord.Bucket) -> Color {
         switch bucket {
-        case .pending: return ForsettiColors.bluePrimary
-        case .completed: return ForsettiColors.greenPrimary
+        case .pending: return DashboardColors.bluePrimary
+        case .completed: return DashboardColors.greenPrimary
         case .failed: return .red
         case .notNow: return .orange
         case .other: return .secondary
@@ -2509,7 +2523,7 @@ private struct DetailDrillInCard: View {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: section.iconSystemName)
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(ForsettiColors.bluePrimary)
+                    .foregroundStyle(DashboardColors.bluePrimary)
                     .frame(width: 24, height: 24)
 
                 VStack(alignment: .leading, spacing: 5) {
@@ -2522,8 +2536,8 @@ private struct DetailDrillInCard: View {
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(ForsettiColors.bluePrimary.opacity(0.14))
-                            .foregroundStyle(ForsettiColors.bluePrimary)
+                            .background(DashboardColors.bluePrimary.opacity(0.14))
+                            .foregroundStyle(DashboardColors.bluePrimary)
                             .clipShape(Capsule())
                     }
 
@@ -2541,11 +2555,11 @@ private struct DetailDrillInCard: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, minHeight: 104, alignment: .topLeading)
-            .background(ForsettiTheme.groupedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button))
+            .background(DashboardTheme.groupedSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.button))
             .overlay(
-                RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button)
-                    .stroke(ForsettiTheme.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: DashboardTheme.Radius.button)
+                    .stroke(DashboardTheme.border, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -2593,11 +2607,11 @@ private struct DetailDrillInSheet: View {
                         }
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(ForsettiTheme.groupedSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button))
+                        .background(DashboardTheme.groupedSurface)
+                        .clipShape(RoundedRectangle(cornerRadius: DashboardTheme.Radius.button))
                         .overlay(
-                            RoundedRectangle(cornerRadius: ForsettiTheme.Radius.button)
-                                .stroke(ForsettiTheme.border, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: DashboardTheme.Radius.button)
+                                .stroke(DashboardTheme.border, lineWidth: 1)
                         )
                     }
 
@@ -2609,7 +2623,9 @@ private struct DetailDrillInSheet: View {
             }
         }
         .padding(20)
-        .frame(minWidth: 640, minHeight: 460)
+#if os(macOS)
+        .frame(minWidth: 640, idealWidth: 720, minHeight: 460, idealHeight: 560)
+#endif
     }
 }
 
@@ -2774,7 +2790,7 @@ private struct FrameActionFooter: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .background(ForsettiTheme.groupedSurface)
+            .background(DashboardTheme.groupedSurface)
         }
     }
 
@@ -2804,13 +2820,13 @@ private struct FrameActionFooter: View {
 
         if action == .eraseDevice {
             Button { onAction(action) } label: { label }
-                .buttonStyle(.forsettiDanger)
+                .buttonStyle(.dashboardDanger)
                 .frame(maxWidth: .infinity, minHeight: FrameLayout.actionButtonHeight)
                 .disabled(isPerformingAction || availability.isAvailable == false)
                 .help("\(action.subtitle)\n\(availability.helpText)")
         } else {
             Button { onAction(action) } label: { label }
-                .buttonStyle(.forsettiSecondary)
+                .buttonStyle(.dashboardSecondary)
                 .frame(maxWidth: .infinity, minHeight: FrameLayout.actionButtonHeight)
                 .disabled(isPerformingAction || availability.isAvailable == false)
                 .help("\(action.subtitle)\n\(availability.helpText)")

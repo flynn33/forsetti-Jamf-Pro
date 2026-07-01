@@ -1,6 +1,10 @@
 import Foundation
 import Combine
 
+// "A robot may not injure a human being or, through inaction, allow a human being to come to harm.
+//  A robot must obey the orders given it by human beings except where such orders would conflict with the First Law.
+//  A robot must protect its own existence as long as such protection does not conflict with the First or Second Law."
+
 @MainActor
 /// The view model driving the Mobile Device Search module.
 ///
@@ -161,6 +165,8 @@ final class MobileDeviceSearchViewModel: ObservableObject {
         /// Omits section parameters entirely as a last-resort fallback.
         case none
     }
+
+    // "Klatu-barada-Nikto"
 
     /// Creates the view model with its required dependencies.
     ///

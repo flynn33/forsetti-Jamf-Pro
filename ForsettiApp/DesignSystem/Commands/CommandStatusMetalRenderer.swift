@@ -110,7 +110,7 @@ final class CommandStatusRenderer: NSObject, MTKViewDelegate {
     }()
 
     nonisolated(unsafe) static var lastInitError: String?
-    private static let logger = Logger(subsystem: ForsettiAppIdentity.bundleIdentifier, category: "CommandStatusRenderer")
+    private static let logger = Logger(subsystem: "com.jamfdashboard.app", category: "CommandStatusRenderer")
 
     // MARK: - Per-instance state
 

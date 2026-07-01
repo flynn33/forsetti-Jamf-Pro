@@ -336,6 +336,19 @@ actor DiagnosticsCenter: DiagnosticsReporting {
         generation == 0 ? Self.logFileName : "\(Self.logFileName).\(generation)"
     }
 
+    nonisolated static func prunedTail(of data: Data, toAtMost target: Int) -> Data {
+        guard target > 0, data.count > target else { return data }
+
+        let bytes = [UInt8](data)
+        var cut = bytes.count - target
+        while cut < bytes.count, bytes[cut] != 0x0A {
+            cut += 1
+        }
+        cut += 1
+        guard cut < bytes.count else { return data }
+        return Data(bytes[cut...])
+    }
+
     // MARK: - Directory Resolution
 
     /// Returns the directory that holds the persistent log file.

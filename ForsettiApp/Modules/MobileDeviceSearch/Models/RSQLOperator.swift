@@ -1,5 +1,7 @@
 import Foundation
 
+// "Would you like to play a game?"
+
 /// Wildcard wrapping behavior for string operators.
 ///
 /// Substring matching in Jamf's RSQL uses literal `*` characters inside a

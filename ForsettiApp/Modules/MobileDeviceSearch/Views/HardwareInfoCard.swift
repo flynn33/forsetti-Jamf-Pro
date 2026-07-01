@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// Pulls storage capacity, battery level, model identifier, and OS version
 /// from a `MobileDeviceRecord`, looks up the marketing name + chip + RAM in
-/// `AppleDeviceModelCatalog`, and lays them out in a single `forsettiCardSurface`
+/// `AppleDeviceModelCatalog`, and lays them out in a single `dashboardCardSurface`
 /// with the large animated Metal storage gauge on the leading edge.
 ///
 /// Live RAM usage on iOS/iPadOS is not exposed by Apple's MDM protocol, so
@@ -56,7 +56,7 @@ struct HardwareInfoCard: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     // MARK: - Header (model + chip)

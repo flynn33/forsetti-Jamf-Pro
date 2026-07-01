@@ -18,6 +18,8 @@ struct PrestageSummary: Identifiable, Hashable, Sendable {
     let versionLock: Int?
 }
 
+// "Would you like to play a game?"
+
 /// Represents a single device that is currently assigned to a prestage enrollment profile.
 ///
 /// Each device is identified primarily by its serial number, which is normalized

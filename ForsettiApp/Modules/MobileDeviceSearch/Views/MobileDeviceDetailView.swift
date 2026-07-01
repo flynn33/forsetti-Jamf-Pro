@@ -1,4 +1,7 @@
 import SwiftUI
+import UniformTypeIdentifiers
+
+// "Klatu-barada-Nikto"
 
 /// Typed routing value for `MobileDeviceDetailView`.
 ///
@@ -30,6 +33,12 @@ struct MobileDeviceDetailView: View {
     /// Set when the per-device fetch fails; surfaces a non-fatal banner.
     @State private var refreshError: String?
 
+    /// Drives the `.fileExporter` Save panel (both platforms).
+    @State private var isExporting = false
+
+    /// Identifier fields that get an inline copy icon next to their value.
+    private let copyableFieldKeys: Set<String> = ["serialNumber", "username", "emailAddress", "ipAddress"]
+
     /// Resolves the most up-to-date record for the selected ID.
     private var record: MobileDeviceRecord? {
         viewModel.searchResults.first(where: { $0.id == recordID })
@@ -48,10 +57,35 @@ struct MobileDeviceDetailView: View {
             }
         }
         .navigationTitle(record?.deviceName ?? "Device")
-        .forsettiInlineNavigationTitle()
+        .dashboardInlineNavigationTitle()
         .task(id: recordID) {
             await refreshHardwareDetails()
         }
+        .toolbar {
+            ToolbarItemGroup(placement: .dashboardTopBarTrailing) {
+                if let record {
+                    // Share the Markdown as plain text so the share sheet's Copy (and
+                    // Messages/Mail/Teams) behave as normal text copy/paste. Saving the
+                    // `.md` file is handled separately by the Save button below.
+                    ShareLink(item: RecordMarkdown.document(for: [record])) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                } else {
+                    Button { } label: { Label("Share", systemImage: "square.and.arrow.up") }
+                        .disabled(true)
+                }
+                Button { isExporting = true } label: {
+                    Label("Save", systemImage: "square.and.arrow.down")
+                }
+                .disabled(record == nil)
+            }
+        }
+        .fileExporter(
+            isPresented: $isExporting,
+            document: TextFileDocument(text: RecordMarkdown.document(for: record.map { [$0] } ?? [])),
+            contentType: .dashboardMarkdown,
+            defaultFilename: record.map { RecordMarkdown.sanitizedFileName($0.deviceName) } ?? "Device"
+        ) { _ in isExporting = false }
     }
 
     @ViewBuilder
@@ -74,7 +108,7 @@ struct MobileDeviceDetailView: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .forsettiAppBackground()
+        .dashboardAppBackground()
     }
 
     @ViewBuilder
@@ -84,9 +118,12 @@ struct MobileDeviceDetailView: View {
                 .font(.title2.weight(.semibold))
             HStack(spacing: 12) {
                 if record.serialNumber.isEmpty == false {
-                    Text("Serial: \(record.serialNumber)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        Text("Serial: \(record.serialNumber)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        CopyButton(value: record.serialNumber, accessibilityLabel: "Copy serial number")
+                    }
                 }
                 if let udid = record.udid {
                     Text("UDID: \(udid)")
@@ -140,14 +177,18 @@ struct MobileDeviceDetailView: View {
 
             VStack(spacing: 0) {
                 ForEach(fields) { field in
+                    let fieldValue = record.value(for: field.key)
                     HStack(alignment: .top, spacing: 12) {
                         Text(field.displayName)
                             .frame(width: 180, alignment: .leading)
                             .foregroundStyle(.secondary)
                             .font(.callout)
-                        Text(record.value(for: field.key) ?? "—")
+                        Text(fieldValue ?? "—")
                             .font(.callout)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                        if let fieldValue, fieldValue.isEmpty == false, copyableFieldKeys.contains(field.key) {
+                            CopyButton(value: fieldValue, accessibilityLabel: "Copy \(field.displayName)")
+                        }
                     }
                     .padding(.vertical, 6)
                     Divider().opacity(0.3)
@@ -156,7 +197,7 @@ struct MobileDeviceDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 
     private func sectionTitle(_ section: MobileDeviceInventorySection) -> String {

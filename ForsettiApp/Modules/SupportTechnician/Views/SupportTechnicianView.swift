@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Layout constants shared across Support Technician view components.
 private enum SupportTechnicianLayout {
@@ -13,7 +14,7 @@ private enum SupportTechnicianLayout {
 /// alongside a detail pane showing device diagnostics, category frames, and management
 /// actions. Destructive actions require typing "confirm" in `SupportTypedConfirmationSheet`
 /// before execution. The whole module shares a Metal-rendered backdrop via
-/// `ForsettiMetalBackgroundView`.
+/// `DashboardMetalBackgroundView`.
 struct SupportTechnicianView: View {
     /// The view model that owns all published state and business logic for this screen.
     @StateObject private var viewModel: SupportTechnicianViewModel
@@ -58,7 +59,7 @@ struct SupportTechnicianView: View {
             // Module-wide Metal backdrop. Sits behind both columns so the
             // ticket entry, search, sidebar, and detail panes all share the
             // animated Metal identity.
-            ForsettiMetalBackgroundView()
+            DashboardMetalBackgroundView()
                 .ignoresSafeArea()
         )
         .onChange(of: viewModel.selectedResultID) { _, _ in
@@ -140,6 +141,17 @@ struct SupportTechnicianView: View {
                 }
             )
         }
+        // One-time credential popup — fires whenever an action returns a
+        // secret (local admin / LAPS password, jssmanage password,
+        // recovery-lock password, device-lock PIN, FileVault key). Shows the
+        // value with a copy-to-clipboard control. Cleared on dismiss so the
+        // secret displays exactly once per request.
+        .sheet(item: $viewModel.presentedCredential) { credential in
+            SupportCredentialPopupView(
+                credential: credential,
+                onDismiss: { viewModel.presentedCredential = nil }
+            )
+        }
     }
 
     // MARK: - Sidebar (search + ticket entry)
@@ -150,7 +162,7 @@ struct SupportTechnicianView: View {
             Section {
                 TextField("Ticket reference (optional)", text: $viewModel.ticketReference)
                     .textFieldStyle(.roundedBorder)
-                    .forsettiNoAutoCorrectionTextInput()
+                    .dashboardNoAutoCorrectionTextInput()
 
                 Button {
                     showSDPlusUnavailableAlert = true
@@ -158,7 +170,7 @@ struct SupportTechnicianView: View {
                     Label("SD+ Ticket", systemImage: "ticket")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.forsettiSecondary)
+                .buttonStyle(.dashboardSecondary)
                 .frame(maxWidth: .infinity, minHeight: SupportTechnicianLayout.controlButtonHeight)
                 .help("SD+ ticket creation is not available in this build.")
             } header: {
@@ -170,7 +182,7 @@ struct SupportTechnicianView: View {
                 HStack(spacing: 10) {
                     TextField("Username or serial number", text: $viewModel.query.strippingControlCharacters())
                         .textFieldStyle(.roundedBorder)
-                        .forsettiNoAutoCorrectionTextInput()
+                        .dashboardNoAutoCorrectionTextInput()
 
                     ScanIntoTextFieldButton(text: $viewModel.query.strippingControlCharacters())
                 }
@@ -196,7 +208,7 @@ struct SupportTechnicianView: View {
                     Label("Search", systemImage: "magnifyingglass")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.forsettiPrimary)
+                .buttonStyle(.dashboardPrimary)
                 .frame(maxWidth: .infinity, minHeight: SupportTechnicianLayout.controlButtonHeight)
                 .disabled(viewModel.isSearching)
             } header: {
@@ -224,6 +236,33 @@ struct SupportTechnicianView: View {
                 }
             }
 
+            // -- Server response --
+            // Non-secret summary of the most recent action/data request
+            // (title + detail). Secret values never land here — they go to
+            // the credential popup. Scrolls internally so long responses
+            // don't push the results list off-screen.
+            if let summary = viewModel.resultSummary {
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(summary.title)
+                            .font(.subheadline.weight(.semibold))
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        ScrollView {
+                            Text(summary.detail)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxHeight: 160)
+                    }
+                    .padding(.vertical, 2)
+                } header: {
+                    SupportSectionHeader(title: "Server Response")
+                }
+            }
+
             // -- Search results --
             Section {
                 if viewModel.searchResults.isEmpty {
@@ -247,7 +286,7 @@ struct SupportTechnicianView: View {
                 SupportSectionHeader(title: "Results")
             }
         }
-        .forsettiInsetGroupedListStyle()
+        .dashboardInsetGroupedListStyle()
         .scrollContentBackground(.hidden)
         .navigationTitle("Support Technician")
 #if os(macOS)
@@ -311,10 +350,15 @@ struct SupportTechnicianView: View {
                 allPoliciesError: viewModel.allPoliciesError,
                 onLoadAllPolicies: {
                     Task { await viewModel.loadAllPolicies() }
-                }
+                },
+                temporaryAdminController: viewModel.temporaryAdminController,
+                remoteSupportController: viewModel.remoteSupportController
             )
             .navigationTitle(selectedDetail.summary.displayName)
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
+            .sheet(isPresented: $viewModel.isRemoteSupportDiagnosticsPresented) {
+                DiagnosticsView(viewModel: viewModel.makeDiagnosticsViewModel())
+            }
         } else if viewModel.isLoadingDetail {
             ProgressView("Loading device detail...")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -354,14 +398,14 @@ private struct SupportSearchResultRow: View {
     let isSelected: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             HStack(spacing: 8) {
                 Image(systemName: result.assetType.iconSystemName)
                     .foregroundStyle(.tint)
                     .frame(width: 22)
 
                 Text(result.displayName)
-                    .font(ForsettiSearchResultTypography.headline())
+                    .font(DashboardSearchResultTypography.headline())
 
                 Spacer(minLength: 0)
 
@@ -370,37 +414,39 @@ private struct SupportSearchResultRow: View {
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(ForsettiTheme.groupedSurface)
+                    .background(DashboardTheme.groupedSurface)
                     .clipShape(Capsule())
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(ForsettiColors.greenPrimary)
+                        .foregroundStyle(DashboardColors.greenPrimary)
                 }
             }
 
             Text("Serial: \(result.serialNumber)")
-                .font(ForsettiSearchResultTypography.subheadline())
+                .font(DashboardSearchResultTypography.subheadline())
 
             if let username = result.username, username.isEmpty == false {
                 Text("User: \(username)")
-                    .font(ForsettiSearchResultTypography.caption())
+                    .font(DashboardSearchResultTypography.caption())
                     .foregroundStyle(.secondary)
             }
             if let model = result.model, model.isEmpty == false {
                 Text("Model: \(model)")
-                    .font(ForsettiSearchResultTypography.caption())
+                    .font(DashboardSearchResultTypography.caption())
                     .foregroundStyle(.secondary)
             }
             if let osVersion = result.osVersion, osVersion.isEmpty == false {
                 Text("OS: \(osVersion)")
-                    .font(ForsettiSearchResultTypography.caption())
+                    .font(DashboardSearchResultTypography.caption())
                     .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 6)
     }
 }
+
+// "Klatu-barada-Nikto"
 
 /// The redesigned device-detail view — a scrolling stack of category
 /// frames topped by a Metal command-lifecycle indicator. Replaces the
@@ -450,11 +496,21 @@ private struct SupportDeviceDetailView: View {
     let allPoliciesError: String?
     let onLoadAllPolicies: () -> Void
 
+    // Temporary Admin Elevation (Mac-only). Observed so the frame updates as the
+    // controller polls reported status.
+    @ObservedObject var temporaryAdminController: TemporaryAdminElevationController
+
+    /// Apple-native Remote Support (Mac-only). Observed so the frame updates as state changes.
+    @ObservedObject var remoteSupportController: SupportRemoteSupportController
+
     /// Tracks first-appear command-history auto-load so the user doesn't
     /// see an empty frame on initial device selection. SwiftUI re-runs
     /// `onAppear` on every view rebuild, so we gate the load with a
     /// per-device flag.
     @State private var lastHistoryLoadDeviceID: String?
+
+    /// Drives the `.fileExporter` Save panel (both platforms).
+    @State private var isExporting = false
 
     var body: some View {
         ScrollView {
@@ -524,6 +580,18 @@ private struct SupportDeviceDetailView: View {
                     )
                 }
 
+                // Temporary Admin Elevation — Mac-only. The frame is not
+                // rendered for mobile devices, so no mobile device ever shows
+                // an actionable elevation control.
+                if temporaryAdminController.shouldDisplayFrame {
+                    TemporaryAdminElevationFrame(controller: temporaryAdminController)
+                }
+
+                // Apple-native Remote Support — Mac-only; not rendered for mobile devices.
+                if remoteSupportController.shouldDisplayFrame {
+                    SupportRemoteSupportFrame(controller: remoteSupportController)
+                }
+
                 CommandHistoryFrame(
                     history: commandHistory,
                     isLoading: isLoadingCommandHistory,
@@ -539,7 +607,7 @@ private struct SupportDeviceDetailView: View {
                     Label("Reload Device Detail", systemImage: "arrow.clockwise")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.forsettiSecondary)
+                .buttonStyle(.dashboardSecondary)
                 .frame(maxWidth: .infinity, minHeight: SupportTechnicianLayout.controlButtonHeight)
                 .disabled(isLoadingDetail || isPerformingAction)
             }
@@ -571,6 +639,15 @@ private struct SupportDeviceDetailView: View {
             }
 
             ToolbarItemGroup(placement: .primaryAction) {
+                // Share the device record as plain Markdown text (so the share sheet's
+                // Copy pastes normally); Save writes the .md via the native exporter.
+                ShareLink(item: RecordMarkdown.document(for: [detail])) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+                Button { isExporting = true } label: {
+                    Label("Save", systemImage: "square.and.arrow.down")
+                }
+
                 ForEach(universalToolbarActions) { action in
                     let availability = action.availability(for: detail)
                     Button {
@@ -588,13 +665,26 @@ private struct SupportDeviceDetailView: View {
                 lastHistoryLoadDeviceID = detail.summary.id
                 onLoadCommandHistory()
             }
+            temporaryAdminController.configure(for: detail)
+            remoteSupportController.configure(for: detail)
         }
         .onChange(of: detail.summary.id) { _, newID in
             if lastHistoryLoadDeviceID != newID {
                 lastHistoryLoadDeviceID = newID
                 onLoadCommandHistory()
             }
+            temporaryAdminController.configure(for: detail)
+            remoteSupportController.configure(for: detail)
         }
+        .onDisappear {
+            temporaryAdminController.stop()
+        }
+        .fileExporter(
+            isPresented: $isExporting,
+            document: TextFileDocument(text: RecordMarkdown.document(for: [detail])),
+            contentType: .dashboardMarkdown,
+            defaultFilename: RecordMarkdown.sanitizedFileName(detail.summary.displayName)
+        ) { _ in isExporting = false }
         // Application Manager modal — kept as a sheet for cross-platform
         // reliability. NavigationLink and `.navigationDestination` are both
         // flaky inside `NavigationSplitView`'s detail column on macOS.
@@ -675,10 +765,10 @@ private struct SupportDeviceDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(12)
-        .background(ForsettiTheme.groupedSurface)
+        .background(DashboardTheme.groupedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 10).stroke(ForsettiTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10).stroke(DashboardTheme.border, lineWidth: 1)
         )
     }
 }
@@ -773,10 +863,10 @@ private struct PrimaryManagementActionButton: View {
     var body: some View {
         if action == .refreshInventory {
             button
-                .buttonStyle(.forsettiPrimary)
+                .buttonStyle(.dashboardPrimary)
         } else {
             button
-                .buttonStyle(.forsettiSecondary)
+                .buttonStyle(.dashboardSecondary)
         }
     }
 
@@ -817,7 +907,7 @@ private struct PrimaryLocalActionButton: View {
                 isBlocked: isDisabled && status != "Running"
             )
         }
-        .buttonStyle(.forsettiSecondary)
+        .buttonStyle(.dashboardSecondary)
         .frame(maxWidth: .infinity, minHeight: SupportTechnicianLayout.controlButtonHeight)
         .disabled(isDisabled)
         .help(helpText)
@@ -1041,7 +1131,7 @@ private struct ApplicationManagerView: View {
                     HStack(spacing: 10) {
                         TextField("Exact app name (e.g. Slack)", text: $installAppName)
                             .textFieldStyle(.roundedBorder)
-                            .forsettiNoAutoCorrectionTextInput()
+                            .dashboardNoAutoCorrectionTextInput()
 
                         Button {
                             let trimmed = installAppName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1051,7 +1141,7 @@ private struct ApplicationManagerView: View {
                             Label("Install", systemImage: "square.and.arrow.down")
                                 .labelStyle(.titleAndIcon)
                         }
-                        .buttonStyle(.forsettiPrimary)
+                        .buttonStyle(.dashboardPrimary)
                         .disabled(
                             installAppName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                 || isPerformingAppAction
@@ -1105,16 +1195,16 @@ private struct ApplicationManagerView: View {
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
-                    .buttonStyle(.forsettiSecondary)
+                    .buttonStyle(.dashboardSecondary)
                     .disabled(isLoadingInstalledApplications || isPerformingAppAction)
                 } header: {
                     SupportSectionHeader(title: "Installed Applications (\(installedApplications.count))")
                 }
             }
         }
-        .forsettiInsetGroupedListStyle()
+        .dashboardInsetGroupedListStyle()
         .navigationTitle("Application Manager")
-        .forsettiInlineNavigationTitle()
+        .dashboardInlineNavigationTitle()
         .onAppear {
             if assetType == .computer,
                hasAutoLoaded == false,
@@ -1195,9 +1285,9 @@ private struct ApplicationManagerView: View {
     ) -> Color {
         switch state {
         case .idle: return .secondary
-        case .queued: return ForsettiColors.bluePrimary
-        case .checkingIn: return ForsettiColors.bluePrimary
-        case .verified: return ForsettiColors.greenPrimary
+        case .queued: return DashboardColors.bluePrimary
+        case .checkingIn: return DashboardColors.bluePrimary
+        case .verified: return DashboardColors.greenPrimary
         case .timedOut: return .orange
         }
     }
@@ -1251,7 +1341,7 @@ private struct ApplicationManagerRow: View {
                 Label("Uninstall", systemImage: "arrow.down.circle")
                     .labelStyle(.titleAndIcon)
             }
-            .buttonStyle(.forsettiDanger)
+            .buttonStyle(.dashboardDanger)
             .disabled(isActionInFlight || isUninstallDisabled)
         }
         .padding(.vertical, 2)

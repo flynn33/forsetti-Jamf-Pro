@@ -12,7 +12,7 @@ struct DeploymentDemoMetalHeroView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            ForsettiMetalBackgroundView()
+            DashboardMetalBackgroundView()
                 .opacity(reduceMotion ? 0.18 : 0.34)
 
             if !reduceMotion {
@@ -20,11 +20,11 @@ struct DeploymentDemoMetalHeroView: View {
                     .opacity(0.62)
             }
 
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
                 DeploymentDemoRibbonView()
 
-                HStack(alignment: .top, spacing: ForsettiTheme.Spacing.section) {
-                    VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                HStack(alignment: .top, spacing: DashboardTheme.Spacing.section) {
+                    VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                         Text("Deployment Tracker Demo")
                             .font(.system(.title, design: .rounded).weight(.bold))
                         Text("COMING SOON interactive preview with deterministic Dummy data only, simulated Jamf Inventory Preload, read-only ABM review, SD+ preview, shipments, records, and guided scenarios.")
@@ -32,8 +32,8 @@ struct DeploymentDemoMetalHeroView: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Spacer(minLength: ForsettiTheme.Spacing.item)
-                    VStack(alignment: .trailing, spacing: ForsettiTheme.Spacing.compact) {
+                    Spacer(minLength: DashboardTheme.Spacing.item)
+                    VStack(alignment: .trailing, spacing: DashboardTheme.Spacing.compact) {
                         Button {
                             startGuidedDemo()
                         } label: {
@@ -48,7 +48,7 @@ struct DeploymentDemoMetalHeroView: View {
                     }
                 }
 
-                HStack(spacing: ForsettiTheme.Spacing.compact) {
+                HStack(spacing: DashboardTheme.Spacing.compact) {
                     metric("Devices", deviceCount, "macbook.and.iphone")
                     metric("Projects", projectCount, "folder")
                     metric("Preload Ready", readyForPreloadCount, "arrow.up.doc")
@@ -60,7 +60,7 @@ struct DeploymentDemoMetalHeroView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(ForsettiTheme.border, lineWidth: 1)
+                .stroke(DashboardTheme.border, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
     }
@@ -77,11 +77,11 @@ struct DeploymentDemoMetalHeroView: View {
             }
         } icon: {
             Image(systemName: icon)
-                .foregroundStyle(ForsettiTheme.accent)
+                .foregroundStyle(DashboardTheme.accent)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(ForsettiTheme.surface.opacity(0.78))
+        .background(DashboardTheme.surface.opacity(0.78))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
@@ -120,12 +120,12 @@ struct DeploymentDemoSignalFlowMetalView: View {
                 path.addLine(to: node)
             }
         }
-        context.stroke(path, with: .color(ForsettiTheme.accent.opacity(0.22)), lineWidth: 3)
+        context.stroke(path, with: .color(DashboardTheme.accent.opacity(0.22)), lineWidth: 3)
 
         for (index, node) in nodes.enumerated() {
             let pulse = reduceMotion ? 0.4 : 0.35 + 0.25 * sin(phase * 1.8 + Double(index))
             let rect = CGRect(x: node.x - 7, y: node.y - 7, width: 14, height: 14)
-            context.fill(Path(ellipseIn: rect), with: .color(ForsettiTheme.accent.opacity(pulse)))
+            context.fill(Path(ellipseIn: rect), with: .color(DashboardTheme.accent.opacity(pulse)))
             context.stroke(Path(ellipseIn: rect.insetBy(dx: -4, dy: -4)), with: .color(.white.opacity(0.22)), lineWidth: 1)
         }
 
@@ -142,7 +142,7 @@ struct DeploymentDemoScenarioProgressRailView: View {
     let isPaused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             HStack {
                 Text(isPaused ? "Guided Demo paused" : "Guided Demo progress")
                     .font(.caption.weight(.semibold))
@@ -150,13 +150,13 @@ struct DeploymentDemoScenarioProgressRailView: View {
                 Spacer()
                 Text("\(min(currentStepIndex + 1, scenario.steps.count))/\(scenario.steps.count)")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(ForsettiTheme.accent)
+                    .foregroundStyle(DashboardTheme.accent)
             }
 
             ForEach(Array(scenario.steps.enumerated()), id: \.element.id) { index, step in
-                HStack(alignment: .top, spacing: ForsettiTheme.Spacing.compact) {
+                HStack(alignment: .top, spacing: DashboardTheme.Spacing.compact) {
                     Image(systemName: index == currentStepIndex ? "largecircle.fill.circle" : "circle")
-                        .foregroundStyle(index == currentStepIndex ? ForsettiTheme.accent : .secondary)
+                        .foregroundStyle(index == currentStepIndex ? DashboardTheme.accent : .secondary)
                         .frame(width: 18)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(step.title)
@@ -181,9 +181,9 @@ struct DeploymentDemoWorkspaceAccentStripView: View {
     var isPaused: Bool
 
     var body: some View {
-        HStack(spacing: ForsettiTheme.Spacing.compact) {
+        HStack(spacing: DashboardTheme.Spacing.compact) {
             Image(systemName: workspace?.iconSystemName ?? "sparkles")
-                .foregroundStyle(ForsettiTheme.accent)
+                .foregroundStyle(DashboardTheme.accent)
             Text(workspace?.displayName ?? "Deployment Tracker Demo")
                 .font(.caption.weight(.semibold))
             if let scenario {
@@ -195,11 +195,11 @@ struct DeploymentDemoWorkspaceAccentStripView: View {
             Spacer()
             Text(isPaused ? "PAUSED" : "DUMMY DATA ONLY")
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(ForsettiTheme.accent)
+                .foregroundStyle(DashboardTheme.accent)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(ForsettiTheme.accent.opacity(0.08))
+        .background(DashboardTheme.accent.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .combine)
     }

@@ -198,6 +198,29 @@ final class SupportTechnicianViewModel: ObservableObject {
     /// The result of the most recently executed action, retained for command-state diagnostics.
     @Published private(set) var actionResult: SupportActionResult?
 
+    /// Drives the one-time credential popup. Set (non-nil) whenever an action
+    /// returns a non-empty `sensitiveValue` — a local admin / LAPS password,
+    /// jssmanage password, recovery-lock password, device-lock PIN, or
+    /// FileVault recovery key. The View presents a `.sheet(item:)` bound to
+    /// this and clears it on dismiss so the secret shows exactly once.
+    @Published var presentedCredential: SupportCredentialDisplay?
+
+    /// Drives presentation of the framework Diagnostics view from the Remote Support frame's
+    /// "View Diagnostics" control.
+    @Published var isRemoteSupportDiagnosticsPresented = false
+
+    /// The non-secret summary of the most recent server response, shown in the
+    /// sidebar's scrollable "Server Response" frame. Derived from
+    /// `actionResult`, so every reset of `actionResult` clears it for free.
+    /// Never carries the secret value — see `SupportActionResultPresentation`.
+    var resultSummary: SupportResultSummary? {
+        guard let actionResult else { return nil }
+        return SupportResultSummary(title: actionResult.title, detail: actionResult.detail)
+    }
+
+    /// The shared Jamf Pro API gateway (retained for building the diagnostics view model).
+    private let apiGateway: JamfAPIGateway
+
     /// The API service handling all Jamf Pro network interactions.
     private let apiService: SupportTechnicianAPIService
 
@@ -206,6 +229,22 @@ final class SupportTechnicianViewModel: ObservableObject {
 
     /// The module source identifier included in all diagnostics events.
     private let moduleSource = "module.support-technician"
+
+    /// Drives the Mac-only Temporary Admin Elevation frame. Ships disabled until
+    /// a Jamf administrator configures the dedicated request-group IDs; while
+    /// disabled it surfaces an actionable "not configured" message instead of any
+    /// control. Owned here so the frame can observe it, but all of its logic
+    /// lives in `TemporaryAdminElevationController`.
+    let temporaryAdminController: TemporaryAdminElevationController
+
+    /// Drives the Apple-native Remote Support frame for the selected Mac. Wraps the
+    /// `SupportRemoteSupportCoordinator` state machine and reaches Jamf through the existing
+    /// API service via injected closures. Owned here so the frame can observe it.
+    let remoteSupportController: SupportRemoteSupportController
+
+    // "A robot may not injure a human being or, through inaction, allow a human being to come to harm.
+    //  A robot must obey the orders given it by human beings except where such orders would conflict with the First Law.
+    //  A robot must protect its own existence as long as such protection does not conflict with the First or Second Law."
 
     /// Creates a new view model wired to the given API gateway and diagnostics reporter.
     ///
@@ -216,11 +255,75 @@ final class SupportTechnicianViewModel: ObservableObject {
         apiGateway: JamfAPIGateway,
         diagnosticsReporter: any DiagnosticsReporting
     ) {
-        self.apiService = SupportTechnicianAPIService(
+        let apiService = SupportTechnicianAPIService(
             apiGateway: apiGateway,
             diagnosticsReporter: diagnosticsReporter
         )
+        self.apiService = apiService
+        self.apiGateway = apiGateway
         self.diagnosticsReporter = diagnosticsReporter
+
+        // Temporary Admin Elevation wiring. The feature ships disabled by
+        // default; a Jamf administrator supplies the dedicated request-group IDs
+        // to enable it. Jamf writes go through the gateway-backed request-scope
+        // service, and inventory reloads reuse the existing Support Technician
+        // API service — no new networking, auth, or diagnostics stack.
+        let temporaryAdminConfiguration = TemporaryAdminElevationConfiguration.disabledDefault
+        let temporaryAdminService = TemporaryAdminElevationService(
+            configuration: temporaryAdminConfiguration,
+            requestScopeService: JamfComputerRequestScopeService(performer: apiGateway),
+            diagnostics: diagnosticsReporter,
+            inventoryReloader: apiService
+        )
+        self.temporaryAdminController = TemporaryAdminElevationController(
+            configuration: temporaryAdminConfiguration,
+            service: temporaryAdminService,
+            diagnostics: diagnosticsReporter
+        )
+
+        // Apple-native Remote Support wiring. The controller wraps the state-machine coordinator
+        // and reaches Jamf through the existing API service (focused enable/disable methods) and
+        // native URL opening — no new networking, auth, credential, or diagnostics stack.
+        self.remoteSupportController = SupportRemoteSupportController(
+            enableCommand: { try await apiService.enableRemoteManagement(managementID: $0) },
+            disableCommand: { try await apiService.disableRemoteManagement(managementID: $0) },
+            launchURL: { url in
+#if canImport(AppKit)
+                NSWorkspace.shared.open(url)
+#elseif canImport(UIKit)
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+#endif
+            },
+            copyToClipboard: { DashboardClipboard.copy($0) },
+            fetchCommandRecords: { try await apiService.fetchCommandHistory(for: $0).records },
+            probeReachability: { await SupportRemoteSupportReachabilityProbe().probe(host: $0.host) },
+            reportDiagnostics: { event in
+                let severity: DiagnosticSeverity
+                switch event.severity {
+                case .info:    severity = .info
+                case .warning: severity = .warning
+                case .error:   severity = .error
+                }
+                Task {
+                    await diagnosticsReporter.report(
+                        source: "module.support-technician",
+                        category: event.category,
+                        severity: severity,
+                        message: event.message,
+                        metadata: event.metadata
+                    )
+                }
+            }
+        )
+        // Assigned after all stored properties are initialized so the closure can capture self.
+        self.remoteSupportController.onViewDiagnostics = { [weak self] in
+            self?.isRemoteSupportDiagnosticsPresented = true
+        }
+    }
+
+    /// Builds a Diagnostics view model for the Remote Support frame's "View Diagnostics" control.
+    func makeDiagnosticsViewModel() -> DiagnosticsViewModel {
+        DiagnosticsViewModel(diagnosticsReporter: diagnosticsReporter, apiGateway: apiGateway)
     }
 
     /// The search result matching the currently selected ID, if any.
@@ -239,7 +342,7 @@ final class SupportTechnicianViewModel: ObservableObject {
             return []
         }
 
-        return resolvedActions(for: selectedDetail)
+        return Self.resolvedActions(for: selectedDetail)
     }
 
     // MARK: - Search
@@ -255,6 +358,7 @@ final class SupportTechnicianViewModel: ObservableObject {
         selectedDetail = nil
         installedApplications = []
         actionResult = nil
+        presentedCredential = nil
         statusMessage = nil
     }
 
@@ -847,6 +951,14 @@ final class SupportTechnicianViewModel: ObservableObject {
             errorMessage = nil
             statusMessage = result.detail
 
+            // Surface any returned secret (LAPS / jssmanage / recovery-lock
+            // password, device-lock PIN, FileVault key) in the one-time
+            // credential popup. The non-secret summary is derived separately
+            // via `resultSummary` for the sidebar frame. Without this the
+            // password was fetched and stored on `actionResult` but never
+            // shown anywhere.
+            presentedCredential = SupportActionResultPresentation.make(from: result).credential
+
             // Minimum dwell on `.sending` so the indicator's pulse
             // animation is visibly perceptible. Fast API responses
             // (200ms or less) would otherwise flash through
@@ -859,27 +971,6 @@ final class SupportTechnicianViewModel: ObservableObject {
             }
 
             commandLifecycle = .queued(action: action, queuedAt: Date())
-
-            // If the action returned a URL (e.g. Remote Management deep-links
-            // into Jamf Pro's web UI for Remote Assist), open it in the
-            // default browser so the technician lands on the right page.
-            if let openURL = result.openURL {
-                #if canImport(AppKit)
-                NSWorkspace.shared.open(openURL)
-                #elseif canImport(UIKit)
-                await UIApplication.shared.open(openURL)
-                #endif
-                await diagnosticsReporter.report(
-                    source: moduleSource,
-                    category: "management",
-                    severity: .info,
-                    message: "Opened Jamf Pro web UI for action.",
-                    metadata: [
-                        "action": action.rawValue,
-                        "url": openURL.absoluteString
-                    ]
-                )
-            }
 
             reportEvent(
                 severity: .warning,
@@ -1119,6 +1210,10 @@ final class SupportTechnicianViewModel: ObservableObject {
             errorMessage = nil
             statusMessage = result.detail
 
+            // Surface the newly-rotated password in the one-time credential
+            // popup (same treatment as `viewLAPSAccountPassword`).
+            presentedCredential = SupportActionResultPresentation.make(from: result).credential
+
             // Minimum dwells on `.sending` and `.queued` so fast API
             // responses (sub-200ms) don't flash invisibly through the
             // lifecycle phases. Same dwell budget as `performAction`.
@@ -1302,8 +1397,6 @@ final class SupportTechnicianViewModel: ObservableObject {
             return "Send Computer Log Out User Command"
         case .clearPasscode:
             return "Send Mobile Device Clear Passcode Command"
-        case .remoteManagement, .disableRemoteDesktop:
-            return "Send Computer Remote Desktop Command"
         case .eraseDevice:
             return "Send Computer Remote Wipe Command (or Send Mobile Device Remote Wipe Command)"
         case .viewFileVaultPersonalRecoveryKey:
@@ -1549,7 +1642,7 @@ final class SupportTechnicianViewModel: ObservableObject {
     /// Computers get additional credential-retrieval actions (FileVault, Recovery Lock,
     /// Device Lock PIN, LAPS). Actions requiring a management ID are removed when it
     /// is missing, and LAPS actions require a client management ID.
-    private func resolvedActions(for detail: SupportDeviceDetail) -> [SupportManagementAction] {
+    nonisolated static func resolvedActions(for detail: SupportDeviceDetail) -> [SupportManagementAction] {
         // Start with actions common to all device types
         var actions: [SupportManagementAction] = [
             .refreshInventory,
@@ -1566,8 +1659,6 @@ final class SupportTechnicianViewModel: ObservableObject {
         case .computer:
             actions.append(contentsOf: [
                 .logOutUser,
-                .remoteManagement,
-                .disableRemoteDesktop,
                 .scheduleOSUpdate,
                 .enableBluetooth,
                 .disableBluetooth,

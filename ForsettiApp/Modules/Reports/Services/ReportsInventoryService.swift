@@ -498,6 +498,7 @@ actor ReportsInventoryService {
                 management: management,
                 metrics: metrics,
                 identity: identity,
+                enrollmentDate: ReportsEnrollmentDate.normalize(ReportsJSON.string(from: raw, paths: ["general.lastEnrolledDate", "lastEnrolledDate"])),
                 extensionAttributes: ReportsJSON.string(from: raw, paths: ["extensionAttributes", "extensionAttributes[].values[]"]),
                 locationExtensionAttribute: ReportsJSON.extensionAttributeValue(named: Self.locationExtensionAttributeName, from: raw)
             )
@@ -569,6 +570,7 @@ actor ReportsInventoryService {
                 management: management,
                 metrics: metrics,
                 identity: identity,
+                enrollmentDate: ReportsEnrollmentDate.normalize(ReportsJSON.string(from: raw, paths: ["general.lastEnrolledDate", "lastEnrolledDate"])),
                 extensionAttributes: ReportsJSON.string(from: raw, paths: ["extensionAttributes", "extensionAttributes[].values[]"]),
                 locationExtensionAttribute: ReportsJSON.extensionAttributeValue(named: Self.locationExtensionAttributeName, from: raw)
             )
@@ -588,6 +590,7 @@ actor ReportsInventoryService {
         management: ReportDeviceManagement,
         metrics: ReportHardwareMetrics,
         identity: ReportDeviceIdentity,
+        enrollmentDate: String?,
         extensionAttributes: String?,
         locationExtensionAttribute: String?
     ) -> [String: String] {
@@ -610,6 +613,7 @@ actor ReportsInventoryService {
         set("modelNumber", modelNumber)
         set("osVersion", osVersion)
         set("osBuild", osBuild)
+        set("enrollmentDate", enrollmentDate)
         set("building", location.building)
         set("department", location.department)
         set("room", location.room)
@@ -676,6 +680,36 @@ actor ReportsInventoryService {
             )
             return [:]
         }
+    }
+}
+
+/// Normalizes a Jamf enrollment timestamp to a clean, sortable calendar date.
+///
+/// Jamf Pro returns `lastEnrolledDate` as ISO 8601 (e.g. `2024-05-12T14:30:00.000Z`).
+/// We surface the date portion (`YYYY-MM-DD`), which is unambiguous and sorts
+/// chronologically as plain text in the details table and exports. A value that
+/// doesn't match the ISO shape is passed through unchanged so no data is dropped.
+/// Internal (not private) so it can be unit-tested directly.
+enum ReportsEnrollmentDate {
+    // `nonisolated` so these pure helpers can be called from `ReportsInventoryService`'s
+    // actor-isolated context without a cross-actor hop, matching `ReportsJSON`.
+    nonisolated static func normalize(_ raw: String?) -> String? {
+        guard let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines),
+              trimmed.isEmpty == false else { return nil }
+        if let tIndex = trimmed.firstIndex(of: "T") {
+            let datePart = String(trimmed[..<tIndex])
+            if isISODate(datePart) { return datePart }
+        }
+        if isISODate(trimmed) { return trimmed }
+        return trimmed
+    }
+
+    /// True when `value` is a `YYYY-MM-DD` calendar date.
+    nonisolated static func isISODate(_ value: String) -> Bool {
+        let parts = value.split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.count == 3,
+              parts[0].count == 4, parts[1].count == 2, parts[2].count == 2 else { return false }
+        return parts.allSatisfy { $0.allSatisfy(\.isNumber) }
     }
 }
 

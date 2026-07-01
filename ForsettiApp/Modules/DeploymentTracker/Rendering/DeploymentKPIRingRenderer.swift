@@ -61,7 +61,7 @@ final class DeploymentKPIRingRenderer: NSObject, MTKViewDelegate {
     }()
 
     nonisolated(unsafe) static var lastInitError: String?
-    private static let logger = Logger(subsystem: ForsettiAppIdentity.bundleIdentifier, category: "DeploymentKPIRingRenderer")
+    private static let logger = Logger(subsystem: "com.jamfdashboard.app", category: "DeploymentKPIRingRenderer")
 
     private let stateLock = NSLock()
     private var fraction: Float

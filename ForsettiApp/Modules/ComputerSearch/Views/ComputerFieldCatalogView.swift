@@ -14,11 +14,19 @@ struct ComputerFieldCatalogView: View {
     /// A two-way binding to the set of currently selected field keys, shared with the parent view model.
     @Binding var selectedFieldKeys: Set<String>
 
+    /// The catalog to display: the built-in `ComputerField.catalog` plus any
+    /// tenant-published Extension Attribute fields. Supplied by the parent so EA
+    /// columns appear in the picker; defaults to the static catalog for previews
+    /// and any caller that hasn't hydrated EAs.
+    var availableFields: [ComputerField] = ComputerField.catalog
+
     /// A callback invoked when the user taps the "Save Profile" toolbar button.
     let onSaveProfileRequested: () -> Void
 
     /// The text entered into the search bar, used to filter the visible field list.
     @State private var filterText = ""
+
+    // "Would you like to play a game?"
 
     /// Returns the filtered list of fields based on the current search text.
     ///
@@ -26,11 +34,11 @@ struct ComputerFieldCatalogView: View {
     /// case-insensitively against their display name, API key, or description.
     private var visibleFields: [ComputerField] {
         guard filterText.isEmpty == false else {
-            return ComputerField.catalog
+            return availableFields
         }
 
         let query = filterText.localizedLowercase
-        return ComputerField.catalog.filter {
+        return availableFields.filter {
             $0.displayName.localizedLowercase.contains(query) ||
             $0.key.localizedLowercase.contains(query) ||
             $0.description.localizedLowercase.contains(query)
@@ -39,7 +47,7 @@ struct ComputerFieldCatalogView: View {
 
     /// The complete set of all field keys in the catalog, used for "Select All" logic.
     private var allCatalogFieldKeys: Set<String> {
-        Set(ComputerField.catalog.map(\.key))
+        Set(availableFields.map(\.key))
     }
 
     var body: some View {
@@ -65,11 +73,11 @@ struct ComputerFieldCatalogView: View {
                     }
                 }
             }
-            .forsettiInsetGroupedListStyle()
-            .tint(ForsettiColors.bluePrimary)
+            .dashboardInsetGroupedListStyle()
+            .tint(DashboardColors.bluePrimary)
             .searchable(text: $filterText, prompt: "Find field")
             .navigationTitle("Field Catalog")
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
             .toolbar {
                 // Apple HIG sheet dismiss: .confirmationAction. Save Profile
                 // stays in the bottom bar.
@@ -85,17 +93,17 @@ struct ComputerFieldCatalogView: View {
                 HStack(spacing: 12) {
                     Text("\(selectedFieldKeys.count) selected")
                         .font(.caption)
-                        .foregroundStyle(ForsettiColors.bluePrimary)
+                        .foregroundStyle(DashboardColors.bluePrimary)
                     Spacer()
                     Button("Save Profile") {
                         onSaveProfileRequested()
                     }
-                    .buttonStyle(.forsettiPrimary)
+                    .buttonStyle(.dashboardPrimary)
                     .disabled(selectedFieldKeys.isEmpty)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .forsettiBottomBarSurface()
+                .dashboardBottomBarSurface()
             }
         }
     }

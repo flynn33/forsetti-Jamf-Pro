@@ -1,5 +1,9 @@
 import Foundation
 
+// "A robot may not injure a human being or, through inaction, allow a human being to come to harm.
+//  A robot must obey the orders given it by human beings except where such orders would conflict with the First Law.
+//  A robot must protect its own existence as long as such protection does not conflict with the First or Second Law."
+
 /// A single computer record decoded from the Jamf Pro inventory API response.
 ///
 /// `ComputerRecord` handles the deeply nested and inconsistent JSON structures returned by
@@ -7,7 +11,7 @@ import Foundation
 /// through nested containers (`general`, `hardware`, `operatingSystem`, `userAndLocation`)
 /// and applies multiple fallback strategies to extract each property, making the decoder
 /// resilient to missing keys, type mismatches, and structural differences across API versions.
-struct ComputerRecord: Identifiable, Decodable, Sendable {
+nonisolated struct ComputerRecord: Identifiable, Decodable, Sendable {
     /// The Jamf Pro computer ID, decoded as either a string or integer.
     let id: String
 
@@ -50,24 +54,6 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
     /// The numeric building ID from User and Location, decoded as a string for display.
     let buildingID: String?
 
-    /// Processor label reported by Jamf, if present.
-    let processorType: String?
-
-    /// Total RAM in megabytes, decoded as a string for display and filtering.
-    let totalRamMegabytes: String?
-
-    /// Battery capacity percentage, decoded as a string for display and filtering.
-    let batteryCapacityPercent: String?
-
-    /// Apple Silicon status, decoded as a string for display and filtering.
-    let appleSilicon: String?
-
-    /// Extension attribute values keyed by stable synthetic and display keys.
-    let extensionAttributes: [String: String]
-
-    /// Dynamic inventory values extracted through `ComputerField.responsePaths`.
-    let decodedFieldValues: [String: String]
-
     /// The PreStage enrollment status (e.g. "Enrolled", "Not Enrolled"), normalized from various API representations.
     let prestageEnrollmentStatus: String?
 
@@ -76,6 +62,12 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
 
     /// The numeric ID of the PreStage enrollment profile, decoded as a string.
     let prestageEnrollmentProfileID: String?
+
+    /// A dictionary of all extracted field values keyed by their `ComputerField.key`.
+    /// Populated by the view model's dynamic parsing pass so result rows, the detail
+    /// view, and client-side advanced filters can resolve any selected catalog field —
+    /// not just the fixed first-class properties above.
+    let fieldValues: [String: String]
 
     /// A formatted display string combining the prestage status, profile name, and profile ID.
     ///
@@ -98,7 +90,6 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
         case userAndLocation
         case computerName
         case serialNumber
-        case extensionAttributes
         case prestageEnrollmentStatus
         case prestageEnrollmentProfile
         case prestageEnrollmentProfileName
@@ -125,10 +116,6 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
         case serialNumber
         case model
         case modelIdentifier
-        case processorType
-        case totalRamMegabytes
-        case batteryCapacityPercent
-        case appleSilicon
     }
 
     /// Coding keys for fields nested under the `operatingSystem` JSON container.
@@ -175,15 +162,10 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
         assetTag: String? = nil,
         departmentID: String? = nil,
         buildingID: String? = nil,
-        processorType: String? = nil,
-        totalRamMegabytes: String? = nil,
-        batteryCapacityPercent: String? = nil,
-        appleSilicon: String? = nil,
-        extensionAttributes: [String: String] = [:],
-        decodedFieldValues: [String: String] = [:],
         prestageEnrollmentStatus: String? = nil,
         prestageEnrollmentProfileName: String? = nil,
-        prestageEnrollmentProfileID: String? = nil
+        prestageEnrollmentProfileID: String? = nil,
+        fieldValues: [String: String] = [:]
     ) {
         self.id = id
         self.computerName = computerName
@@ -199,15 +181,10 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
         self.assetTag = assetTag
         self.departmentID = departmentID
         self.buildingID = buildingID
-        self.processorType = processorType
-        self.totalRamMegabytes = totalRamMegabytes
-        self.batteryCapacityPercent = batteryCapacityPercent
-        self.appleSilicon = appleSilicon
-        self.extensionAttributes = extensionAttributes
-        self.decodedFieldValues = decodedFieldValues
         self.prestageEnrollmentStatus = prestageEnrollmentStatus
         self.prestageEnrollmentProfileName = prestageEnrollmentProfileName
         self.prestageEnrollmentProfileID = prestageEnrollmentProfileID
+        self.fieldValues = fieldValues
     }
 
     /// Decodes a `ComputerRecord` from Jamf Pro API JSON, handling multiple structural formats.
@@ -216,7 +193,6 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
     /// and falls back to flat top-level keys (v1 format). PreStage enrollment data is extracted
     /// from multiple possible locations in the JSON hierarchy and normalized into consistent values.
     init(from decoder: Decoder) throws {
-        let rawPayload = try? ComputerInventoryJSONValue(from: decoder)
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         // Try decoding ID as string first, then integer, falling back to a generated UUID
@@ -246,18 +222,10 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
                 "Unknown"
             model = try hardware.decodeIfPresent(String.self, forKey: .model)
             modelIdentifier = try hardware.decodeIfPresent(String.self, forKey: .modelIdentifier)
-            processorType = try hardware.decodeIfPresent(String.self, forKey: .processorType)
-            totalRamMegabytes = Self.decodeLossyString(from: hardware, key: .totalRamMegabytes)
-            batteryCapacityPercent = Self.decodeLossyString(from: hardware, key: .batteryCapacityPercent)
-            appleSilicon = Self.decodeLossyString(from: hardware, key: .appleSilicon)
         } else {
             serialNumber = try container.decodeIfPresent(String.self, forKey: .serialNumber) ?? "Unknown"
             model = nil
             modelIdentifier = nil
-            processorType = nil
-            totalRamMegabytes = nil
-            batteryCapacityPercent = nil
-            appleSilicon = nil
         }
 
         // OS version and build from the operatingSystem nested container
@@ -335,131 +303,12 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
         prestageEnrollmentProfileName = Self.normalizePrestageComponent(decodedPrestageName)
         prestageEnrollmentProfileID = Self.normalizePrestageComponent(decodedPrestageID)
 
-        extensionAttributes = Self.decodeExtensionAttributes(from: container)
-        var extractedValues = rawPayload.map(Self.extractCatalogValues(from:)) ?? [:]
-        for (key, value) in extensionAttributes {
-            extractedValues[key] = value
-        }
-        decodedFieldValues = extractedValues
         udid = try container.decodeIfPresent(String.self, forKey: .udid)
-    }
 
-    var fieldValues: [String: String] {
-        var values = decodedFieldValues
-        func insert(_ key: String, _ value: String?) {
-            guard let value = Self.normalizePrestageComponent(value) else { return }
-            values[key] = value
-        }
-
-        insert("id", id)
-        insert("general.name", computerName)
-        insert("computerName", computerName)
-        insert("hardware.serialNumber", serialNumber)
-        insert("serialNumber", serialNumber)
-        insert("udid", udid)
-        insert("hardware.model", model)
-        insert("hardware.modelIdentifier", modelIdentifier)
-        insert("operatingSystem.version", osVersion)
-        insert("operatingSystem.build", osBuild)
-        insert("general.lastIpAddress", lastIpAddress)
-        insert("userAndLocation.username", username)
-        insert("userAndLocation.email", email)
-        insert("general.assetTag", assetTag)
-        insert("userAndLocation.departmentId", departmentID)
-        insert("userAndLocation.buildingId", buildingID)
-        insert("hardware.processorType", processorType)
-        insert("hardware.totalRamMegabytes", totalRamMegabytes)
-        insert("hardware.batteryCapacityPercent", batteryCapacityPercent)
-        insert("hardware.appleSilicon", appleSilicon)
-        insert("prestageEnrollmentStatus", prestageEnrollmentStatus)
-        insert("prestageEnrollmentProfile", prestageDisplayValue)
-        extensionAttributes.forEach { values[$0.key] = $0.value }
-        return values
-    }
-
-    func value(for fieldKey: String) -> String? {
-        fieldValues[fieldKey]
-    }
-
-    var totalRamMegabytesInt: Int? {
-        intValue(for: "hardware.totalRamMegabytes")
-    }
-
-    var batteryCapacityPercentInt: Int? {
-        intValue(for: "hardware.batteryCapacityPercent")
-    }
-
-    var storageTotalMegabytes: Int? {
-        intValue(for: "hardware.capacityMb")
-            ?? intValue(for: "hardware.storageCapacityMegabytes")
-            ?? intValue(for: "storage.disks[].partitions[].sizeMegabytes")
-            ?? intValue(for: "storage.disks[].sizeMegabytes")
-    }
-
-    var storageAvailableMegabytes: Int? {
-        intValue(for: "hardware.availableSpaceMb")
-            ?? intValue(for: "hardware.bootDriveAvailableSpaceMegabytes")
-            ?? intValue(for: "storage.disks[].partitions[].availableMegabytes")
-    }
-
-    var usedSpacePercentage: Int? {
-        intValue(for: "hardware.usedSpacePercentage")
-    }
-
-    var storageUsedFraction: Double? {
-        if let usedSpacePercentage {
-            return min(1.0, max(0.0, Double(usedSpacePercentage) / 100.0))
-        }
-        guard let total = storageTotalMegabytes, total > 0,
-              let available = storageAvailableMegabytes else {
-            return nil
-        }
-        let used = max(0, total - available)
-        return min(1.0, max(0.0, Double(used) / Double(total)))
-    }
-
-    func merging(_ other: ComputerRecord) -> ComputerRecord {
-        var mergedValues = decodedFieldValues
-        for (key, value) in other.decodedFieldValues where value.isEmpty == false {
-            mergedValues[key] = value
-        }
-
-        var mergedAttributes = extensionAttributes
-        for (key, value) in other.extensionAttributes where value.isEmpty == false {
-            mergedAttributes[key] = value
-        }
-
-        let resolvedID: String = {
-            if other.id.isEmpty { return id }
-            if UUID(uuidString: other.id) != nil { return id }
-            return other.id
-        }()
-
-        return ComputerRecord(
-            id: resolvedID,
-            computerName: other.computerName == "Unknown Computer" ? computerName : other.computerName,
-            serialNumber: other.serialNumber == "Unknown" ? serialNumber : other.serialNumber,
-            udid: other.udid ?? udid,
-            model: other.model ?? model,
-            modelIdentifier: other.modelIdentifier ?? modelIdentifier,
-            osVersion: other.osVersion ?? osVersion,
-            osBuild: other.osBuild ?? osBuild,
-            lastIpAddress: other.lastIpAddress ?? lastIpAddress,
-            username: other.username ?? username,
-            email: other.email ?? email,
-            assetTag: other.assetTag ?? assetTag,
-            departmentID: other.departmentID ?? departmentID,
-            buildingID: other.buildingID ?? buildingID,
-            processorType: other.processorType ?? processorType,
-            totalRamMegabytes: other.totalRamMegabytes ?? totalRamMegabytes,
-            batteryCapacityPercent: other.batteryCapacityPercent ?? batteryCapacityPercent,
-            appleSilicon: other.appleSilicon ?? appleSilicon,
-            extensionAttributes: mergedAttributes,
-            decodedFieldValues: mergedValues,
-            prestageEnrollmentStatus: other.prestageEnrollmentStatus ?? prestageEnrollmentStatus,
-            prestageEnrollmentProfileName: other.prestageEnrollmentProfileName ?? prestageEnrollmentProfileName,
-            prestageEnrollmentProfileID: other.prestageEnrollmentProfileID ?? prestageEnrollmentProfileID
-        )
+        // Dynamic field values are populated by the view model's dictionary-parsing
+        // enrichment pass (it knows which catalog fields were requested); the pure
+        // Decodable path starts empty and relies on `value(for:)`'s first-class fallback.
+        fieldValues = [:]
     }
 
     /// Returns a copy of this record with updated prestage enrollment information.
@@ -492,16 +341,207 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
             assetTag: assetTag,
             departmentID: departmentID,
             buildingID: buildingID,
-            processorType: processorType,
-            totalRamMegabytes: totalRamMegabytes,
-            batteryCapacityPercent: batteryCapacityPercent,
-            appleSilicon: appleSilicon,
-            extensionAttributes: extensionAttributes,
-            decodedFieldValues: decodedFieldValues,
             prestageEnrollmentStatus: Self.normalizePrestageStatus(status) ?? prestageEnrollmentStatus,
             prestageEnrollmentProfileName: Self.normalizePrestageComponent(profileName) ?? prestageEnrollmentProfileName,
-            prestageEnrollmentProfileID: Self.normalizePrestageComponent(profileID) ?? prestageEnrollmentProfileID
+            prestageEnrollmentProfileID: Self.normalizePrestageComponent(profileID) ?? prestageEnrollmentProfileID,
+            fieldValues: fieldValues
         )
+    }
+
+    /// Returns a copy of this record with `extracted` merged into `fieldValues`
+    /// (incoming non-empty values win). Used by the view model to attach the
+    /// dynamically-parsed catalog values after the typed decode.
+    func withFieldValues(_ extracted: [String: String]) -> ComputerRecord {
+        var merged = fieldValues
+        for (key, value) in extracted where value.isEmpty == false {
+            merged[key] = value
+        }
+
+        return ComputerRecord(
+            id: id,
+            computerName: computerName,
+            serialNumber: serialNumber,
+            udid: udid,
+            model: model,
+            modelIdentifier: modelIdentifier,
+            osVersion: osVersion,
+            osBuild: osBuild,
+            lastIpAddress: lastIpAddress,
+            username: username,
+            email: email,
+            assetTag: assetTag,
+            departmentID: departmentID,
+            buildingID: buildingID,
+            prestageEnrollmentStatus: prestageEnrollmentStatus,
+            prestageEnrollmentProfileName: prestageEnrollmentProfileName,
+            prestageEnrollmentProfileID: prestageEnrollmentProfileID,
+            fieldValues: merged
+        )
+    }
+
+    /// Returns a copy of `self` with the other record's non-empty values merged in.
+    /// `other` wins on fields where it has a value; `self` wins where `other` is
+    /// empty/missing. Used by the detail-view hardware refresh so a follow-up fetch
+    /// that returns less data than the original search row can't discard already-known
+    /// fields. Identity (id, name, serial) prefers `other` only when genuinely
+    /// populated and not the synthetic UUID / "Unknown" fallback.
+    func merging(_ other: ComputerRecord) -> ComputerRecord {
+        var merged = fieldValues
+        for (key, value) in other.fieldValues where value.isEmpty == false {
+            merged[key] = value
+        }
+
+        let resolvedComputerName: String = {
+            if other.computerName != "Unknown Computer", other.computerName.isEmpty == false {
+                return other.computerName
+            }
+            return computerName
+        }()
+
+        let resolvedSerial: String = {
+            if other.serialNumber != "Unknown", other.serialNumber.isEmpty == false {
+                return other.serialNumber
+            }
+            return serialNumber
+        }()
+
+        // `parseRecord` falls back to UUID().uuidString when the response carries no
+        // top-level id. Without this guard `merging` would swap a valid Jamf id for a
+        // synthetic UUID, breaking the detail route's `first(where:)` lookup.
+        let resolvedID: String = {
+            if other.id.isEmpty { return id }
+            if UUID(uuidString: other.id) != nil { return id }
+            return other.id
+        }()
+
+        return ComputerRecord(
+            id: resolvedID,
+            computerName: resolvedComputerName,
+            serialNumber: resolvedSerial,
+            udid: other.udid ?? udid,
+            model: other.model ?? model,
+            modelIdentifier: other.modelIdentifier ?? modelIdentifier,
+            osVersion: other.osVersion ?? osVersion,
+            osBuild: other.osBuild ?? osBuild,
+            lastIpAddress: other.lastIpAddress ?? lastIpAddress,
+            username: other.username ?? username,
+            email: other.email ?? email,
+            assetTag: other.assetTag ?? assetTag,
+            departmentID: other.departmentID ?? departmentID,
+            buildingID: other.buildingID ?? buildingID,
+            prestageEnrollmentStatus: other.prestageEnrollmentStatus ?? prestageEnrollmentStatus,
+            prestageEnrollmentProfileName: other.prestageEnrollmentProfileName ?? prestageEnrollmentProfileName,
+            prestageEnrollmentProfileID: other.prestageEnrollmentProfileID ?? prestageEnrollmentProfileID,
+            fieldValues: merged
+        )
+    }
+
+    // MARK: - Value Lookup
+
+    /// Looks up the display value for a given field key, checking the dynamic
+    /// `fieldValues` dictionary first and falling back to first-class properties
+    /// for core fields. The `prestageEnrollmentProfile` key composes its display
+    /// string on the fly.
+    func value(for fieldKey: String) -> String? {
+        if let mappedValue = fieldValues[fieldKey],
+           mappedValue.isEmpty == false
+        {
+            return mappedValue
+        }
+
+        switch fieldKey {
+        case "id":
+            return id
+        case "general.name", "computerName":
+            return computerName
+        case "hardware.serialNumber", "serialNumber":
+            return serialNumber
+        case "udid":
+            return udid
+        case "hardware.model", "model":
+            return model
+        case "hardware.modelIdentifier", "modelIdentifier":
+            return modelIdentifier
+        case "operatingSystem.version", "osVersion":
+            return osVersion
+        case "operatingSystem.build", "osBuild":
+            return osBuild
+        case "general.lastIpAddress", "lastIpAddress":
+            return lastIpAddress
+        case "userAndLocation.username", "username":
+            return username
+        case "userAndLocation.email", "email":
+            return email
+        case "general.assetTag", "assetTag":
+            return assetTag
+        case "prestageEnrollmentProfile":
+            return prestageDisplayValue
+        default:
+            return nil
+        }
+    }
+
+    /// Parses the value of a field key into an `Int`, tolerating decimal strings
+    /// ("12345.0") and comma-joined array values ("994662, 500000" → first element).
+    func intValue(for fieldKey: String) -> Int? {
+        guard let raw = value(for: fieldKey) else {
+            return nil
+        }
+
+        let firstComponent = raw
+            .split(separator: ",")
+            .first
+            .map(String.init) ?? raw
+        let trimmed = firstComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else {
+            return nil
+        }
+
+        let normalized = trimmed.split(separator: ".").first.map(String.init) ?? trimmed
+        return Int(normalized)
+    }
+
+    // MARK: - Hardware accessors
+    //
+    // Typed convenience accessors backing the hardware visualization card. Each parses
+    // the corresponding `fieldValues` string (populated when the HARDWARE / STORAGE
+    // sections are requested) and returns nil when missing, so the card renders "—".
+
+    /// Total internal storage capacity in megabytes, or nil if not in inventory.
+    var totalStorageMb: Int? { intValue(for: "storage.totalSizeMegabytes") }
+
+    /// Boot-drive free space in megabytes, or nil if not in inventory.
+    var bootDriveAvailableMb: Int? { intValue(for: "storage.bootDriveAvailableSpaceMegabytes") }
+
+    /// Boot-volume used percentage 0-100, derived from the partition's reported
+    /// `percentUsed` when present, otherwise computed from total and free space.
+    var storageUsedPercentage: Int? {
+        if let reported = intValue(for: "storage.percentUsed"), (0...100).contains(reported) {
+            return reported
+        }
+        guard let total = totalStorageMb, total > 0, let free = bootDriveAvailableMb else {
+            return nil
+        }
+        let used = max(0, total - free)
+        return Int((Double(used) / Double(total) * 100).rounded())
+    }
+
+    /// Installed RAM in megabytes, or nil if not present.
+    var totalRamMb: Int? { intValue(for: "hardware.totalRamMegabytes") }
+
+    /// CPU core count, or nil if not present.
+    var coreCount: Int? { intValue(for: "hardware.coreCount") }
+
+    /// Battery capacity percentage 0-100 for portable Macs, or nil for desktops /
+    /// when not reported.
+    var batteryCapacityPercent: Int? { intValue(for: "hardware.batteryCapacityPercent") }
+
+    /// Reported processor type string (e.g. "Apple M2 Pro"), or nil.
+    var processorType: String? {
+        guard let value = value(for: "hardware.processorType"), value.isEmpty == false else {
+            return nil
+        }
+        return value
     }
 
     /// Assembles a human-readable display string from the prestage status, profile name, and profile ID.
@@ -546,162 +586,6 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
         return profileDisplay
     }
 
-    private func intValue(for fieldKey: String) -> Int? {
-        guard let value = fieldValues[fieldKey]?.trimmingCharacters(in: .whitespacesAndNewlines),
-              value.isEmpty == false else {
-            return nil
-        }
-        return Int(value) ?? Double(value).map { Int($0.rounded()) }
-    }
-
-    private enum ComputerInventoryJSONValue: Decodable, Sendable {
-        case object([String: ComputerInventoryJSONValue])
-        case array([ComputerInventoryJSONValue])
-        case string(String)
-        case number(String)
-        case bool(Bool)
-        case null
-
-        init(from decoder: Decoder) throws {
-            if let container = try? decoder.container(keyedBy: DynamicCodingKey.self) {
-                var values: [String: ComputerInventoryJSONValue] = [:]
-                for key in container.allKeys {
-                    values[key.stringValue] = try container.decode(ComputerInventoryJSONValue.self, forKey: key)
-                }
-                self = .object(values)
-                return
-            }
-
-            if var array = try? decoder.unkeyedContainer() {
-                var values: [ComputerInventoryJSONValue] = []
-                while array.isAtEnd == false {
-                    values.append(try array.decode(ComputerInventoryJSONValue.self))
-                }
-                self = .array(values)
-                return
-            }
-
-            let single = try decoder.singleValueContainer()
-            if single.decodeNil() {
-                self = .null
-            } else if let value = try? single.decode(Bool.self) {
-                self = .bool(value)
-            } else if let value = try? single.decode(Int.self) {
-                self = .number(String(value))
-            } else if let value = try? single.decode(Double.self) {
-                self = .number(String(value))
-            } else if let value = try? single.decode(String.self) {
-                self = .string(value)
-            } else {
-                self = .null
-            }
-        }
-    }
-
-    private struct DynamicCodingKey: CodingKey {
-        let stringValue: String
-        let intValue: Int?
-
-        init?(stringValue: String) {
-            self.stringValue = stringValue
-            intValue = nil
-        }
-
-        init?(intValue: Int) {
-            stringValue = String(intValue)
-            self.intValue = intValue
-        }
-    }
-
-    nonisolated private static func extractCatalogValues(from payload: ComputerInventoryJSONValue) -> [String: String] {
-        var values: [String: String] = [:]
-        for field in ComputerField.catalog {
-            for responsePath in field.responsePaths {
-                let extracted = extractValues(atPath: responsePath, from: payload)
-                    .compactMap(displayString)
-                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { $0.isEmpty == false }
-                if extracted.isEmpty == false {
-                    values[field.key] = orderedUnique(extracted).joined(separator: ", ")
-                    break
-                }
-            }
-        }
-        return values
-    }
-
-    nonisolated private static func orderedUnique(_ values: [String]) -> [String] {
-        var seen = Set<String>()
-        var unique: [String] = []
-        for value in values where seen.insert(value).inserted {
-            unique.append(value)
-        }
-        return unique
-    }
-
-    nonisolated private static func extractValues(
-        atPath path: String,
-        from payload: ComputerInventoryJSONValue
-    ) -> [ComputerInventoryJSONValue] {
-        let components = path.split(separator: ".").map(String.init)
-        return components.reduce([payload]) { currentValues, component in
-            let expectsArray = component.hasSuffix("[]")
-            let key = expectsArray ? String(component.dropLast(2)) : component
-            var nextValues: [ComputerInventoryJSONValue] = []
-
-            for value in currentValues {
-                switch value {
-                case .object(let object):
-                    guard let child = object[key] else { continue }
-                    append(child, expectsArray: expectsArray, to: &nextValues)
-                case .array(let array):
-                    for element in array {
-                        if case .object(let object) = element,
-                           let child = object[key] {
-                            append(child, expectsArray: expectsArray, to: &nextValues)
-                        } else if expectsArray == false {
-                            nextValues.append(element)
-                        }
-                    }
-                default:
-                    continue
-                }
-            }
-
-            return nextValues
-        }
-    }
-
-    nonisolated private static func append(
-        _ value: ComputerInventoryJSONValue,
-        expectsArray: Bool,
-        to values: inout [ComputerInventoryJSONValue]
-    ) {
-        if expectsArray, case .array(let array) = value {
-            values.append(contentsOf: array)
-        } else {
-            values.append(value)
-        }
-    }
-
-    nonisolated private static func displayString(from value: ComputerInventoryJSONValue) -> String? {
-        switch value {
-        case .string(let string):
-            return string
-        case .number(let number):
-            return number
-        case .bool(let bool):
-            return bool ? "true" : "false"
-        case .array(let array):
-            let nested = array.compactMap(displayString)
-            return nested.isEmpty ? nil : nested.joined(separator: ", ")
-        case .object:
-            return nil
-        case .null:
-            return nil
-        }
-    }
-
     /// Attempts to decode a value as a `String` first, then as an `Int` (converting to string).
     ///
     /// This handles Jamf Pro API inconsistencies where numeric IDs sometimes arrive as
@@ -722,103 +606,6 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
         }
 
         return nil
-    }
-
-    private struct ExtensionAttributePayload: Decodable {
-        let id: String?
-        let definitionId: String?
-        let name: String?
-        let values: [String]
-
-        private enum CodingKeys: String, CodingKey {
-            case id
-            case definitionId
-            case name
-            case value
-            case values
-        }
-
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            id = Self.decodeStringOrInt(from: container, key: .id)
-            definitionId = Self.decodeStringOrInt(from: container, key: .definitionId)
-            name = try? container.decode(String.self, forKey: .name)
-            if let rawValues = try? container.decode([String].self, forKey: .values) {
-                values = rawValues
-            } else if let rawValue = Self.decodeLossyString(from: container, key: .value) {
-                values = [rawValue]
-            } else {
-                values = []
-            }
-        }
-
-        private static func decodeStringOrInt<K: CodingKey>(
-            from container: KeyedDecodingContainer<K>,
-            key: K
-        ) -> String? {
-            if let stringValue = try? container.decode(String.self, forKey: key) {
-                let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? nil : trimmed
-            }
-
-            if let intValue = try? container.decode(Int.self, forKey: key) {
-                return String(intValue)
-            }
-
-            return nil
-        }
-
-        private static func decodeLossyString<K: CodingKey>(
-            from container: KeyedDecodingContainer<K>,
-            key: K
-        ) -> String? {
-            if let stringValue = try? container.decode(String.self, forKey: key) {
-                let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? nil : trimmed
-            }
-
-            if let intValue = try? container.decode(Int.self, forKey: key) {
-                return String(intValue)
-            }
-
-            if let doubleValue = try? container.decode(Double.self, forKey: key) {
-                return String(doubleValue)
-            }
-
-            if let boolValue = try? container.decode(Bool.self, forKey: key) {
-                return boolValue ? "true" : "false"
-            }
-
-            return nil
-        }
-    }
-
-    private static func decodeExtensionAttributes(from container: KeyedDecodingContainer<CodingKeys>) -> [String: String] {
-        guard let payloads = try? container.decode([ExtensionAttributePayload].self, forKey: .extensionAttributes) else {
-            return [:]
-        }
-
-        var values: [String: String] = [:]
-        var aggregateValues: [String] = []
-        for payload in payloads {
-            let displayValue = payload.values
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                .filter { $0.isEmpty == false }
-                .joined(separator: ", ")
-            guard displayValue.isEmpty == false else { continue }
-            aggregateValues.append(displayValue)
-
-            if let id = normalizePrestageComponent(payload.definitionId ?? payload.id) {
-                values["ea_\(id)"] = displayValue
-            }
-            if let name = normalizePrestageComponent(payload.name) {
-                values["extensionAttributes.\(name)"] = displayValue
-            }
-        }
-        if aggregateValues.isEmpty == false {
-            values["extensionAttributes[].values[]"] = aggregateValues.joined(separator: ", ")
-        }
-        return values
     }
 
     /// Attempts to decode a value as String, Int, Double, or Bool, coercing everything to a string.
@@ -894,6 +681,8 @@ struct ComputerRecord: Identifiable, Decodable, Sendable {
         }
     }
 }
+
+// "Klatu-barada-Nikto"
 
 /// The top-level response wrapper for computer inventory search API calls.
 ///

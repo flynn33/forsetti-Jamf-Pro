@@ -22,10 +22,10 @@ struct ReportMarkdownRenderer: ReportExportRendering {
         lines.append("")
         lines.append("## Details")
         lines.append("")
-        lines.append("| Type | Name | Serial | Model | OS | Confidence |")
-        lines.append("|---|---|---|---|---|---|")
+        lines.append("| Type | Name | Serial | Model | OS | Enrolled | Confidence |")
+        lines.append("|---|---|---|---|---|---|---|")
         for record in payload.records.prefix(500) {
-            lines.append("| \(escape(record.deviceType.displayName)) | \(escape(record.displayName ?? "")) | \(escape(record.serialNumber ?? "")) | \(escape(record.identity.marketingName ?? record.model ?? "")) | \(escape(record.osVersion ?? "")) | \(escape(record.identity.confidence.displayName)) |")
+            lines.append("| \(escape(record.deviceType.displayName)) | \(escape(record.displayName ?? "")) | \(escape(record.serialNumber ?? "")) | \(escape(record.identity.marketingName ?? record.model ?? "")) | \(escape(record.osVersion ?? "")) | \(escape(record.value(for: "enrollmentDate") ?? "")) | \(escape(record.identity.confidence.displayName)) |")
         }
         if payload.records.count > 500 {
             lines.append("")

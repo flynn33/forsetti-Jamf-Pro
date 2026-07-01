@@ -1,5 +1,7 @@
 import Foundation
 
+// "End of Line"
+
 /// The runtime value type carried by a `MobileDeviceField`.
 ///
 /// Drives both the Advanced Search UI (which input control to render) and the

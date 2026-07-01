@@ -26,6 +26,8 @@ struct FieldCatalogView: View {
     /// The current text in the search bar, used to filter the visible field list.
     @State private var filterText = ""
 
+    // "Klatu-barada-Nikto"
+
     /// The subset of catalog fields matching the current search filter.
     /// Returns the full catalog when the filter is empty. Matches against
     /// the field's display name, programmatic key, and description using
@@ -72,11 +74,11 @@ struct FieldCatalogView: View {
                     }
                 }
             }
-            .forsettiInsetGroupedListStyle()
-            .tint(ForsettiColors.bluePrimary)
+            .dashboardInsetGroupedListStyle()
+            .tint(DashboardColors.bluePrimary)
             .searchable(text: $filterText, prompt: "Find field")
             .navigationTitle("Field Catalog")
-            .forsettiInlineNavigationTitle()
+            .dashboardInlineNavigationTitle()
             .toolbar {
                 // Apple HIG sheet dismiss: .confirmationAction. Save Profile
                 // stays in the bottom bar.
@@ -92,17 +94,17 @@ struct FieldCatalogView: View {
                 HStack(spacing: 12) {
                     Text("\(selectedFieldKeys.count) selected")
                         .font(.caption)
-                        .foregroundStyle(ForsettiColors.bluePrimary)
+                        .foregroundStyle(DashboardColors.bluePrimary)
                     Spacer()
                     Button("Save Profile") {
                         onSaveProfileRequested()
                     }
-                    .buttonStyle(.forsettiPrimary)
+                    .buttonStyle(.dashboardPrimary)
                     .disabled(selectedFieldKeys.isEmpty)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .forsettiBottomBarSurface()
+                .dashboardBottomBarSurface()
             }
         }
     }

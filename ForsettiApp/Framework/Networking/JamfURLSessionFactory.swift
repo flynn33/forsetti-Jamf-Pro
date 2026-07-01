@@ -1,5 +1,7 @@
 import Foundation
 
+// "End of Line"
+
 /// Builds a pre-configured `URLSession` for Jamf Pro API traffic.
 ///
 /// `URLSession.shared` has no request timeout, no resource timeout, no

@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.feature.computer-search",
+  "displayName": "Computer Search",
+  "moduleVersion": {
+    "major": 3,
+    "minor": 32,
+    "patch": 1,
+    "prerelease": null
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 4,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "networking",
+    "storage",
+    "diagnostics",
+    "api",
+    "file_export"
+  ],
+  "iapProductID": null,
+  "entryPoint": "ForsettiComputerSearchModule",
+  "defaultModuleRole": null,
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "computer-search-api",
+        "kind": "api",
+        "access": "execute",
+        "required": true,
+        "description": "Computer inventory API access."
+      },
+      {
+        "requirementID": "computer-search-network",
+        "kind": "networking",
+        "access": "read",
+        "required": true,
+        "description": "Network transport for search."
+      },
+      {
+        "requirementID": "computer-search-profiles",
+        "kind": "storage",
+        "access": "read_write",
+        "required": true,
+        "description": "Saved search/profile persistence."
+      },
+      {
+        "requirementID": "computer-search-diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": true,
+        "description": "Search diagnostics."
+      },
+      {
+        "requirementID": "computer-search-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": false,
+        "description": "User-initiated record export/share."
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "forsetti-computer-search"
+      ],
+      "requiredDefaultRoles": []
+    }
+  }
+}

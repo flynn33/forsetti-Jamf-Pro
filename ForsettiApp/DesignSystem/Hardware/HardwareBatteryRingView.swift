@@ -1,5 +1,7 @@
 import SwiftUI
 
+// "End of Line"
+
 /// Pure-SwiftUI battery indicator that pairs with the storage gauge in the
 /// hardware card. Renders a circular progress ring plus a centered percentage
 /// label. Color shifts from green (>50%) to yellow (21-50%) to red (≤20%) so

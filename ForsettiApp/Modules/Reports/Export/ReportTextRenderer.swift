@@ -25,7 +25,7 @@ struct ReportTextRenderer: ReportExportRendering {
         lines.append("")
         lines.append("Details")
         for record in payload.records.prefix(500) {
-            lines.append("- \(record.deviceType.displayName) | \(record.displayName ?? "Unnamed") | \(record.serialNumber ?? "No serial") | \(record.identity.marketingName ?? record.model ?? "Unknown model") | \(record.identity.confidence.displayName)")
+            lines.append("- \(record.deviceType.displayName) | \(record.displayName ?? "Unnamed") | \(record.serialNumber ?? "No serial") | \(record.identity.marketingName ?? record.model ?? "Unknown model") | enrolled \(record.value(for: "enrollmentDate") ?? "n/a") | \(record.identity.confidence.displayName)")
         }
         if payload.records.count > 500 {
             lines.append("- Details truncated to first 500 records.")

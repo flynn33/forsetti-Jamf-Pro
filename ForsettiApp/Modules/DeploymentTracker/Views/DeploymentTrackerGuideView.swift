@@ -681,7 +681,7 @@ struct DeploymentTrackerGuideView: View {
         // stored in the view model so workspace links and modal links stay in
         // sync.
         NavigationSplitView {
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.item) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.item) {
                 DeploymentDemoRibbonView()
                 HStack {
                     Label("Deployment Tracker Demo Guide", systemImage: "questionmark.circle")
@@ -730,23 +730,23 @@ struct DeploymentTrackerGuideView: View {
                 }
                 .listStyle(.sidebar)
             }
-            .padding(ForsettiTheme.Spacing.section)
+            .padding(DashboardTheme.Spacing.section)
             .navigationSplitViewColumnWidth(min: 260, ideal: 320, max: 380)
         } detail: {
             ScrollView {
                 if let topic = viewModel.selectedGuideTopic {
                     GuideTopicDetailView(topic: topic, viewModel: viewModel)
-                        .padding(ForsettiTheme.Spacing.section)
+                        .padding(DashboardTheme.Spacing.section)
                 } else {
                     ContentUnavailableView(
                         "No Guide Topic",
                         systemImage: "questionmark.circle",
                         description: Text("Select a topic or clear the search.")
                     )
-                    .padding(ForsettiTheme.Spacing.section)
+                    .padding(DashboardTheme.Spacing.section)
                 }
             }
-            .background(ForsettiTheme.groupedSurface)
+            .background(DashboardTheme.groupedSurface)
         }
     }
 }
@@ -759,9 +759,9 @@ private struct GuideTopicDetailView: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.section) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.section) {
             DeploymentDemoRibbonView()
-            VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+            VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                 Label(topic.title, systemImage: "book")
                     .font(.system(.title2, design: .rounded).weight(.bold))
                 Text(topic.summary)
@@ -784,14 +784,14 @@ private struct GuideTopicDetailView: View {
             }
 
             GuideSection(title: "Steps", systemImage: "list.number") {
-                VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                     ForEach(Array(topic.steps.enumerated()), id: \.offset) { index, step in
-                        HStack(alignment: .top, spacing: ForsettiTheme.Spacing.compact) {
+                        HStack(alignment: .top, spacing: DashboardTheme.Spacing.compact) {
                             Text("\(index + 1)")
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.white)
                                 .frame(width: 22, height: 22)
-                                .background(Circle().fill(ForsettiTheme.accent))
+                                .background(Circle().fill(DashboardTheme.accent))
                             Text(step)
                                 .font(.callout)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -809,7 +809,7 @@ private struct GuideTopicDetailView: View {
 
             if topic.details.isEmpty == false {
                 GuideSection(title: "Details", systemImage: "info.circle") {
-                    VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+                    VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
                         ForEach(topic.details, id: \.self) { detail in
                             Label(detail, systemImage: "circle.fill")
                                 .font(.callout)
@@ -838,14 +838,14 @@ private struct GuideSection<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForsettiTheme.Spacing.compact) {
+        VStack(alignment: .leading, spacing: DashboardTheme.Spacing.compact) {
             Label(title, systemImage: systemImage)
                 .font(.headline)
             content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .forsettiCardSurface()
+        .dashboardCardSurface()
     }
 }
 
@@ -857,17 +857,22 @@ private struct FlowButtonRow: View {
     @ObservedObject var viewModel: DeploymentTrackerViewModel
 
     var body: some View {
-        HStack(spacing: ForsettiTheme.Spacing.compact) {
-            ForEach(topicIds, id: \.self) { topicId in
-                if let topic = DeploymentTrackerGuideContent.topic(id: topicId) {
-                    Button {
-                        viewModel.selectGuideTopic(topic.id)
-                    } label: {
-                        Label(topic.title, systemImage: "arrow.right.circle")
+        // Related-topic buttons scroll horizontally so 2-3 long-titled topics never
+        // overflow the iPhone / iPad-portrait detail column.
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: DashboardTheme.Spacing.compact) {
+                ForEach(topicIds, id: \.self) { topicId in
+                    if let topic = DeploymentTrackerGuideContent.topic(id: topicId) {
+                        Button {
+                            viewModel.selectGuideTopic(topic.id)
+                        } label: {
+                            Label(topic.title, systemImage: "arrow.right.circle")
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.bordered)
                 }
             }
+            .padding(.vertical, 2)
         }
     }
 }

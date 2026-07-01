@@ -1,6 +1,8 @@
 import XCTest
 @testable import Forsetti
 
+// "End of Line"
+
 /// Exercises the `AsyncSemaphore` actor and — critically — the
 /// gateway's `withPermit` pattern that sits on top of it.
 ///
