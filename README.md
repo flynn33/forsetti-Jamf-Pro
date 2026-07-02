@@ -55,4 +55,7 @@ Forsetti stores app-managed support files under the app container using these re
 
 ## License
 
-Current license terms require owner approval before public distribution. See `LICENSE` and `LICENSE_REVIEW_REQUIRED.md`.
+Forsetti is proprietary software. It is currently in Alpha and is free to try
+during Alpha and Beta only for internal evaluation. Every other use requires a
+separate written enterprise license from Raven Forge Software. Pricing is TBD.
+See `LICENSE` and `LICENSE_REVIEW_REQUIRED.md`.

@@ -40,6 +40,10 @@ flowchart TD
 - Destructive device workflows keep typed confirmation and privilege checks.
 - Signing identities and final bundle identifiers must be reviewed by the owner before distribution.
 
+## License
+
+Forsetti is proprietary software owned by James Daley, DBA Raven Forge Software. It is currently in Alpha and is free to try during Alpha and Beta only for internal evaluation. Every other use requires a separate written enterprise license. Pricing is TBD.
+
 ## Diagnostics
 
 Diagnostics use `com.ravenforge.forsetti.diagnostics`, export JSON and Markdown reports, and write local files with the `forsetti-diagnostics` prefix.
