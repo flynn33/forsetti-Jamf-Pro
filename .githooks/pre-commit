@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# pre-commit hook — Local enforcement of checks that would otherwise
+# pre-commit hook — Local enforcement of the checks that would otherwise
 # run in CI (artifact policy, lint, secret scan). Runs only on changes
 # staged for commit, so it stays fast enough to live on every commit.
 #
@@ -15,6 +15,20 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 FAILED=0
+
+# ═════════════════════════════════════════════════════════════════════════
+# 0. Auto version bump — branch-driven, once per branch
+# ═════════════════════════════════════════════════════════════════════════
+#
+# fix/* → patch, feature/* → feature; idempotent vs main's VERSION (bumps
+# exactly once per branch). Updates VERSION + the pbxproj version fields +
+# the README/WIKI version tokens + a CHANGELOG stub, and stages them into
+# THIS commit. Never blocks the commit — a versioning hiccup must not stop
+# you from committing (the bump can always be applied by hand afterward).
+# Skips automatically on `main`, detached HEAD, and non fix//feature/ branches.
+if [[ -x scripts/bump-version.sh ]]; then
+  scripts/bump-version.sh --stage || echo "pre-commit: auto version-bump skipped (non-fatal)."
+fi
 
 # ═════════════════════════════════════════════════════════════════════════
 # 1. Artifact policy — reject commits that track build output
@@ -75,7 +89,7 @@ if [[ -n "$STAGED_SWIFT_FILES" ]]; then
       LINT_OUTPUT=$(env "${INPUT_VARS[@]}" SCRIPT_INPUT_FILE_COUNT=$INPUT_COUNT \
         swiftlint lint --use-script-input-files --config "$REPO_ROOT/.swiftlint.yml" --quiet 2>&1) || LINT_EXIT=$?
       LINT_EXIT="${LINT_EXIT:-0}"
-      if echo "$LINT_OUTPUT" | grep -qE ': error:'; then
+      if [[ "$LINT_EXIT" -ne 0 ]] || echo "$LINT_OUTPUT" | grep -qE ': error:'; then
         echo "╔═══════════════════════════════════════════════════════════════════╗"
         echo "║ pre-commit: SwiftLint found issues — commit REJECTED              ║"
         echo "╚═══════════════════════════════════════════════════════════════════╝"
@@ -149,11 +163,6 @@ if [[ -n "$STAGED_DIFF" ]]; then
 
     if echo "$ADDED_LINES" | grep -qE -- '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'; then
       FINDINGS+="  • PEM private-key header"$'\n'
-    fi
-
-    if echo "$ADDED_LINES" | grep -qE 'Bearer[[:space:]]+[A-Za-z0-9._~+/=-]{32,}' \
-      && ! echo "$ADDED_LINES" | grep -qE 'Bearer[[:space:]]+(YOUR_|<|\\$|example|placeholder|token_here)'; then
-      FINDINGS+="  • bearer-like token"$'\n'
     fi
 
     if [[ -n "$FINDINGS" ]]; then

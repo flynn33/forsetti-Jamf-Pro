@@ -1,59 +1,7 @@
-# Forsetti Wiki
+# Forsetti Jamf Dashboard Notes
 
-## Overview
+This repository is organized as a Forsetti consumer application.
 
-Forsetti is a modular SwiftUI app for Jamf Pro administration. It provides credential management, API gateway behavior, diagnostics, reporting, inventory search, support technician workflows, prestage workflows, and deployment tracking in one retail application.
+The app target owns the Jamf Dashboard experience and links the public Forsetti products. The Forsetti framework source remains an external package/reference, not copied application source.
 
-## System Shape
-
-```mermaid
-flowchart TD
-    App["Forsetti App"]
-    Runtime["Forsetti Runtime"]
-    UI["forsetti.retail.ui"]
-    Jamf["forsetti.service.jamf"]
-    Diagnostics["forsetti.service.diagnostics"]
-    Scanner["forsetti.service.scanner"]
-    Features["Feature service modules"]
-
-    App --> Runtime
-    Runtime --> UI
-    Runtime --> Jamf
-    Runtime --> Diagnostics
-    Runtime --> Scanner
-    Runtime --> Features
-```
-
-## Source Layout
-
-- `ForsettiApp/App`: app entry point, identity, runtime bootstrap.
-- `ForsettiApp/DesignSystem`: retail-safe theme, colors, typography, Metal background, and controls.
-- `ForsettiApp/Framework`: shared credentials, networking, diagnostics, scanning, and package management.
-- `ForsettiApp/Modules`: app-owned feature workflows.
-- `ForsettiApp/Resources/ForsettiManifests`: bundled Forsetti module manifests.
-- `ForsettiTests`: unit and integration tests.
-
-## Security Model
-
-- Credentials are stored through Keychain-backed services.
-- Token refresh and retry behavior remain inside the Jamf service layer.
-- Destructive device workflows keep typed confirmation and privilege checks.
-- Signing identities and final bundle identifiers must be reviewed by the owner before distribution.
-
-## License
-
-Forsetti is proprietary software owned by James Daley, DBA Raven Forge Software. It is currently in Alpha and is free to try during Alpha and Beta only for internal evaluation. Every other use requires a separate written enterprise license. Pricing is TBD.
-
-## Diagnostics
-
-Diagnostics use `com.ravenforge.forsetti.diagnostics`, export JSON and Markdown reports, and write local files with the `forsetti-diagnostics` prefix.
-
-## Validation
-
-Run:
-
-```bash
-./scripts/verify-no-customer-residue.sh .
-xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO clean build
-xcodebuild -project Forsetti.xcodeproj -scheme Forsetti -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO test
-```
+Feature views remain user-facing Jamf Dashboard UI and are reached through the dedicated UI module route catalog. Feature and platform responsibilities are represented by Forsetti service modules and app-owned service adapters.

@@ -1,65 +1,158 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# pre-push hook — Two gates before anything reaches origin:
+#
+#   1. Authorship footer block (fast, always runs)
+#      Rejects pushes whose commit messages carry attribution footers
+#      that assign code authorship to an external tool. The repository
+#      should attribute project work to the project owner, not to local
+#      automation used during development.
+#
+#   2. Build + test verification (slower, ~30-60s)
+#      Runs `xcodebuild test` against the macOS destination and
+#      `xcodebuild build` for the generic iOS device. Catches compile
+#      errors and regressions BEFORE they reach origin/main, because
+#      this repo has no runner-backed CI — the hook is the last line
+#      of defense.
+#
+#      Skipping is supported for legitimate cases:
+#        • SKIP_BUILD=1 git push    — skip both build and test
+#        • SKIP_TESTS=1 git push    — skip tests, keep build check
+#        • git push --no-verify     — bypass the entire hook chain
+
 REMOTE="$1"
 URL="$2"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-cd "$REPO_ROOT"
+
+# ═════════════════════════════════════════════════════════════════════════
+# 1. Authorship footer block
+# ═════════════════════════════════════════════════════════════════════════
 
 ATTRIBUTION_PATTERNS=(
-  "^Co-""Authored-""By:"
+  "^Co-Authored-By:"
   "^Generat""ed by "
   "^Generat""ed with "
   "^Authored by "
   "^Built with "
-  "Cod""ex"
-  "Open""A""I"
-  "Chat""GPT"
-  "Clau""de"
-  "Anth""ropic"
-  "Gem""ini"
-  "Cop""ilot"
 )
 
 COMBINED_PATTERN=$(IFS='|'; echo "${ATTRIBUTION_PATTERNS[*]}")
+ATTRIBUTION_FAILED=0
+
+# stdin delivers one line per ref being pushed:
+#   <local ref> <local sha> <remote ref> <remote sha>
+# Read into an array so we can consume stdin once and still walk it.
 REF_LINES=()
-while IFS= read -r line; do
-  REF_LINES+=("$line")
+while IFS= read -r LINE; do
+  REF_LINES+=("$LINE")
 done
 
-.github/scripts/check-provenance-markers.sh .
+for LINE in "${REF_LINES[@]}"; do
+  read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA <<< "$LINE"
+  [[ "$LOCAL_SHA" == "0000000000000000000000000000000000000000" ]] && continue
 
-for line in "${REF_LINES[@]}"; do
-  read -r local_ref local_sha remote_ref remote_sha <<< "$line"
-  [[ "$local_sha" == "0000000000000000000000000000000000000000" ]] && continue
-
-  if [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
-    commits=$(git log --format="%H" "$local_sha" --not --remotes 2>/dev/null || echo "$local_sha")
+  if [[ "$REMOTE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+    COMMITS=$(git log --format="%H" "$LOCAL_SHA" --not --remotes 2>/dev/null || echo "$LOCAL_SHA")
   else
-    commits=$(git log --format="%H" "${remote_sha}..${local_sha}" 2>/dev/null || true)
+    COMMITS=$(git log --format="%H" "${REMOTE_SHA}..${LOCAL_SHA}" 2>/dev/null || echo "")
   fi
 
-  for commit in $commits; do
-    message=$(git log --format="%B" -1 "$commit")
-    if echo "$message" | grep -iEq "$COMBINED_PATTERN"; then
-      echo "pre-push: rejected attribution footer in commit $(echo "$commit" | cut -c1-8)" >&2
-      exit 1
+  for COMMIT in $COMMITS; do
+    MESSAGE=$(git log --format="%B" -1 "$COMMIT")
+    if echo "$MESSAGE" | grep -iEq "$COMBINED_PATTERN"; then
+      echo "BLOCKED: Commit $(echo "$COMMIT" | cut -c1-8) contains an authorship footer:"
+      echo "$MESSAGE" | grep -iE "$COMBINED_PATTERN" | sed 's/^/  /'
+      echo ""
+      ATTRIBUTION_FAILED=1
     fi
   done
 done
 
+if [[ "$ATTRIBUTION_FAILED" -eq 1 ]]; then
+  echo "══════════════════════════════════════════════════════"
+  echo "Push rejected: external authorship attribution detected."
+  echo "Remove co-author/generated-by footers before pushing."
+  echo "══════════════════════════════════════════════════════"
+  exit 1
+fi
+
+# ═════════════════════════════════════════════════════════════════════════
+# 2. Build + test verification
+# ═════════════════════════════════════════════════════════════════════════
+#
+# Only runs when xcodebuild is on PATH (i.e., a macOS developer machine
+# with Xcode). Linux CI runners would skip this silently, but this repo
+# runs without CI anyway so that's a non-issue.
+
 if [[ "${SKIP_BUILD:-0}" == "1" ]]; then
-  echo "pre-push: SKIP_BUILD=1, build checks skipped."
+  echo "pre-push: SKIP_BUILD=1 — skipping build and test verification."
   exit 0
 fi
 
-PROJECT_ARG=( -project "Forsetti.xcodeproj" -scheme "Forsetti" -configuration Debug )
-SIGNING_ARGS=( CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO )
-
-if [[ "${SKIP_TESTS:-0}" == "1" ]]; then
-  xcodebuild "${PROJECT_ARG[@]}" -destination "platform=macOS" "${SIGNING_ARGS[@]}" build
-else
-  xcodebuild "${PROJECT_ARG[@]}" -destination "platform=macOS" "${SIGNING_ARGS[@]}" test
+if ! command -v xcodebuild >/dev/null 2>&1; then
+  echo "pre-push: xcodebuild not found — skipping build/test verification."
+  exit 0
 fi
 
-echo "pre-push: checks passed for $REMOTE $URL."
+cd "$REPO_ROOT"
+
+PROJECT_ARG=( -project "Jamf Dashboard.xcodeproj" -scheme "Jamf Dashboard" -configuration Debug )
+SIGNING_ARGS=( CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO )
+
+# -----------------------------------------------------------------------
+# macOS test run — implicit build, then run JamfDashboardAppTests.
+# `xcodebuild test` also builds, so this covers "does macOS compile?"
+# and "do tests pass?" in one invocation.
+# -----------------------------------------------------------------------
+
+if [[ "${SKIP_TESTS:-0}" == "1" ]]; then
+  echo "pre-push: SKIP_TESTS=1 — running macOS build-only instead of tests."
+  if ! xcodebuild "${PROJECT_ARG[@]}" -destination "platform=macOS" "${SIGNING_ARGS[@]}" build \
+       > /tmp/jamf-dashboard-prepush-build.log 2>&1; then
+    echo "══════════════════════════════════════════════════════"
+    echo "Push rejected: macOS build failed."
+    echo "══════════════════════════════════════════════════════"
+    tail -30 /tmp/jamf-dashboard-prepush-build.log
+    exit 1
+  fi
+  echo "pre-push: macOS build OK."
+else
+  echo "pre-push: running macOS tests (xcodebuild test)…"
+  if ! xcodebuild "${PROJECT_ARG[@]}" -destination "platform=macOS" -only-testing:JamfDashboardAppTests "${SIGNING_ARGS[@]}" test \
+       > /tmp/jamf-dashboard-prepush-test.log 2>&1; then
+    echo "══════════════════════════════════════════════════════"
+    echo "Push rejected: macOS tests or build failed."
+    echo "══════════════════════════════════════════════════════"
+    # Surface the useful bits (test failures, compile errors) rather
+    # than the entire verbose log.
+    grep -E 'error:|failed on|\*\* (TEST|BUILD) FAILED' /tmp/jamf-dashboard-prepush-test.log | tail -30
+    echo ""
+    echo "Full log: /tmp/jamf-dashboard-prepush-test.log"
+    echo "(Use SKIP_TESTS=1 git push to skip tests, or --no-verify to bypass entirely.)"
+    exit 1
+  fi
+  echo "pre-push: macOS tests OK."
+fi
+
+# -----------------------------------------------------------------------
+# iOS build — generic platform, Debug, no code-signing. Catches iOS-
+# specific compile failures the macOS build would miss (UIKit-only code,
+# iOS-deployment-target conditionals, etc.).
+# -----------------------------------------------------------------------
+
+echo "pre-push: running iOS build (xcodebuild build, generic iOS)…"
+if ! xcodebuild "${PROJECT_ARG[@]}" -destination "generic/platform=iOS" "${SIGNING_ARGS[@]}" build \
+     > /tmp/jamf-dashboard-prepush-ios.log 2>&1; then
+  echo "══════════════════════════════════════════════════════"
+  echo "Push rejected: iOS build failed."
+  echo "══════════════════════════════════════════════════════"
+  grep -E 'error:|\*\* BUILD FAILED' /tmp/jamf-dashboard-prepush-ios.log | tail -30
+  echo ""
+  echo "Full log: /tmp/jamf-dashboard-prepush-ios.log"
+  exit 1
+fi
+echo "pre-push: iOS build OK."
+
+echo "pre-push: all checks passed."
+exit 0

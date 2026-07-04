@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfdashboard.feature.mobile-device-search",
+  "displayName": "Mobile Device Search Feature Service",
+  "moduleVersion": {
+    "major": 3,
+    "minor": 32,
+    "patch": 1,
+    "prerelease": null
+  },
+  "moduleType": "service",
+  "supportedPlatforms": ["iOS", "macOS"],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": ["networking", "storage", "diagnostics", "api", "file_export"],
+  "iapProductID": null,
+  "entryPoint": "MobileDeviceSearchServiceModule",
+  "defaultModuleRole": null,
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "mobile-device-search.networking",
+        "kind": "networking",
+        "access": "read_write",
+        "required": true
+      },
+      {
+        "requirementID": "mobile-device-search.storage",
+        "kind": "storage",
+        "access": "read_write",
+        "required": false
+      },
+      {
+        "requirementID": "mobile-device-search.diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": false
+      },
+      {
+        "requirementID": "mobile-device-search.api",
+        "kind": "api",
+        "access": "consume",
+        "required": true
+      },
+      {
+        "requirementID": "mobile-device-search.file-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": false
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": ["mobile-device-search"],
+      "requiredDefaultRoles": []
+    }
+  }
+}
