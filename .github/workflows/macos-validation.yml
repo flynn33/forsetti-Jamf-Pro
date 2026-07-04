@@ -33,13 +33,13 @@ jobs:
         run: bash scripts/verify-no-customer-references.sh .
 
       - name: Resolve project
-        run: xcodebuild -list -project Forsetti.xcodeproj
+        run: xcodebuild -list -project 'Forsetti Jamf Pro.xcodeproj'
 
       - name: Test
         run: >
           xcodebuild
-          -project Forsetti.xcodeproj
-          -scheme Forsetti
+          -project 'Forsetti Jamf Pro.xcodeproj'
+          -scheme 'Forsetti Jamf Pro'
           -destination 'platform=macOS'
           CODE_SIGNING_ALLOWED=NO
           test

@@ -1,8 +1,0 @@
-{
-  "package_id": "com.forsetti.jamfpro.feature.permissions-matrix",
-  "module_type": "permissions-matrix",
-  "package_version": "1.0.0",
-  "module_display_name": "Permissions Helper",
-  "module_subtitle": "Look up Jamf Pro privileges required for Forsetti actions and API endpoints.",
-  "icon_system_name": "checklist.checked"
-}

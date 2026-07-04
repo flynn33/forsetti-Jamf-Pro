@@ -1,8 +1,0 @@
-{
-  "package_id": "com.forsetti.jamfpro.feature.computer-search",
-  "module_type": "computer-search",
-  "package_version": "1.0.0",
-  "module_display_name": "Computer Search",
-  "module_subtitle": "Search computer inventory and create reusable field-based profiles.",
-  "icon_system_name": "desktopcomputer"
-}

@@ -1,8 +1,0 @@
-{
-  "package_id": "com.forsetti.jamfpro.feature.prestage-director",
-  "module_type": "prestage-director",
-  "package_version": "1.0.0",
-  "module_display_name": "Prestage Director",
-  "module_subtitle": "View prestages and move or remove assigned devices.",
-  "icon_system_name": "arrow.left.arrow.right.square"
-}

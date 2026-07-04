@@ -1,0 +1,12 @@
+import SwiftUI
+
+@MainActor
+enum JamfDashboardViewInjectionRegistry {
+    static func makeRegistry(appServices: ForsettiJamfProAppServices) -> ForsettiViewInjectionRegistry {
+        let registry = ForsettiViewInjectionRegistry()
+        registry.register(viewID: "jamf-dashboard-root") {
+            JamfDashboardRootView(appServices: appServices)
+        }
+        return registry
+    }
+}

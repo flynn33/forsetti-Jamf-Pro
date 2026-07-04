@@ -1,8 +1,0 @@
-{
-  "package_id": "com.forsetti.jamfpro.feature.reports",
-  "module_type": "reports",
-  "package_version": "1.0.0",
-  "module_display_name": "Reports",
-  "module_subtitle": "Create visual fleet reports from Jamf Pro inventory.",
-  "icon_system_name": "chart.pie.fill"
-}

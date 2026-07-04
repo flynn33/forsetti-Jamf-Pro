@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.service.diagnostics",
+  "displayName": "Diagnostics Service",
+  "moduleVersion": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": "A1"
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "diagnostics",
+    "telemetry",
+    "file_export",
+    "storage"
+  ],
+  "iapProductID": null,
+  "entryPoint": "DiagnosticsServiceModule",
+  "defaultModuleRole": "diagnostics",
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "diagnostics-service.diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": true
+      },
+      {
+        "requirementID": "diagnostics-service.telemetry",
+        "kind": "telemetry",
+        "access": "emit",
+        "required": false
+      },
+      {
+        "requirementID": "diagnostics-service.file-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": true
+      },
+      {
+        "requirementID": "diagnostics-service.storage",
+        "kind": "storage",
+        "access": "read_write",
+        "required": false
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "diagnostics-service"
+      ],
+      "requiredDefaultRoles": []
+    }
+  },
+  "appVersion": "A1.0.0"
+}

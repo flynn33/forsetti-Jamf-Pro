@@ -1,99 +1,11 @@
-Forsetti Alpha/Beta Evaluation License
+Jamf Dashboard License Notice
 
-Copyright (c) 2026 James Daley, DBA Raven Forge Software.
-All rights reserved.
+Copyright (c) 2026 Jim Daley. All rights reserved.
 
-This software, including source code, binaries, documentation, assets, and related
-materials, is proprietary to James Daley, DBA Raven Forge Software.
+This sanitized copy removes organization-specific licensing language from the
+source project. No open-source license is granted by this placeholder notice.
+Use, redistribution, sublicensing, or commercial distribution require separate
+written permission from the copyright holder.
 
-1. Project Status
-
-Forsetti is currently in Alpha. While Forsetti remains in Alpha or Beta, Raven
-Forge Software permits limited free evaluation under this license.
-
-2. Alpha/Beta Evaluation Permission
-
-During the Alpha and Beta periods only, you may download, install, build, run,
-and internally evaluate Forsetti free of charge for testing, review, feedback,
-and compatibility assessment.
-
-This permission is limited, revocable, non-exclusive, non-transferable, and
-non-sublicensable. It does not grant ownership of Forsetti or any intellectual
-property rights in Forsetti.
-
-3. Enterprise License Required For All Other Use
-
-Every use outside the Alpha/Beta evaluation permission requires a separate
-written enterprise license from Raven Forge Software.
-
-Enterprise-license use includes, without limitation:
-
-- production use;
-- commercial use;
-- use to provide services to third parties;
-- use in managed-service-provider, consultant, contractor, or client-support
-  workflows;
-- redistribution, resale, sublicensing, hosting, or making Forsetti available to
-  others;
-- continued use after Alpha or Beta access ends;
-- modification, integration, or deployment beyond internal evaluation; and
-- any use not expressly permitted by Section 2.
-
-Enterprise license pricing is TBD.
-
-4. Restrictions
-
-Except as expressly permitted by Section 2 or by a separate written enterprise
-license, you may not:
-
-- copy, modify, merge, publish, distribute, sublicense, sell, lease, or transfer
-  Forsetti;
-- remove, alter, or obscure copyright, license, trademark, or proprietary
-  notices;
-- use Forsetti in production or business-critical operations;
-- use Forsetti to process customer, client, regulated, or sensitive production
-  data;
-- reverse engineer, decompile, or attempt to derive non-public components of
-  Forsetti, except where applicable law expressly prohibits this restriction;
-  or
-- use Forsetti in violation of applicable law or third-party platform terms.
-
-5. Feedback
-
-If you provide feedback, suggestions, issue reports, or improvement ideas, you
-grant Raven Forge Software a perpetual, worldwide, royalty-free right to use
-that feedback to improve Forsetti and related products without obligation to
-you.
-
-6. No Warranty
-
-Forsetti is provided "AS IS" and "AS AVAILABLE" during Alpha and Beta. To the
-maximum extent permitted by law, Raven Forge Software disclaims all warranties,
-whether express, implied, statutory, or otherwise, including warranties of
-merchantability, fitness for a particular purpose, title, and non-infringement.
-
-Alpha and Beta software may contain defects, incomplete features, security
-issues, data-loss risks, breaking changes, and unavailable or discontinued
-functionality. You are responsible for evaluating whether Forsetti is suitable
-for your environment.
-
-7. Limitation of Liability
-
-To the maximum extent permitted by law, Raven Forge Software will not be liable
-for any indirect, incidental, special, consequential, exemplary, or punitive
-damages, or for lost profits, lost revenue, lost data, business interruption,
-loss of goodwill, or procurement of substitute goods or services, arising from
-or related to Forsetti or this license.
-
-8. Termination
-
-Your Alpha/Beta evaluation permission terminates automatically if you violate
-this license or when Raven Forge Software ends the Alpha/Beta evaluation period
-for Forsetti. Upon termination, you must stop using Forsetti and delete all
-copies in your possession or control unless you have a separate written
-enterprise license.
-
-9. Reservation of Rights
-
-All rights not expressly granted in this license are reserved by James Daley,
-DBA Raven Forge Software.
+Third-party components, libraries, frameworks, and assets remain subject to
+their own license terms.

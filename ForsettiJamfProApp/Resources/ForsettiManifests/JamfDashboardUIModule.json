@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.ui.workspace",
+  "displayName": "Forsetti Jamf Pro UI",
+  "moduleVersion": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": "A1"
+  },
+  "moduleType": "ui",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "routing_overlay",
+    "ui_theme_mask",
+    "toolbar_items",
+    "view_injection",
+    "file_export",
+    "telemetry"
+  ],
+  "iapProductID": null,
+  "entryPoint": "JamfDashboardUIModule",
+  "defaultModuleRole": "ui",
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "jamf-dashboard-ui.file-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": true
+      },
+      {
+        "requirementID": "jamf-dashboard-ui.telemetry",
+        "kind": "telemetry",
+        "access": "emit",
+        "required": false
+      }
+    ],
+    "ui": {
+      "controlSchemeID": null,
+      "layoutID": null,
+      "themeIDs": [
+        "forsetti-obsidian-data-stream"
+      ],
+      "viewIDs": [
+        "jamf-dashboard-root"
+      ],
+      "slotIDs": [
+        "module.workspace"
+      ],
+      "toolbarItemIDs": [
+        "jamf-dashboard-home"
+      ],
+      "routeIDs": [
+        "jamf-dashboard-home"
+      ],
+      "pointerIDs": [
+        "jamf-dashboard-home"
+      ]
+    },
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "jamf-dashboard-ui"
+      ],
+      "requiredDefaultRoles": []
+    }
+  },
+  "appVersion": "A1.0.0"
+}
