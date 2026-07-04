@@ -413,7 +413,7 @@ private let copyableFieldKeys: Set<String> = ["serialNumber", "username", "email
   still grabbed the file; **3.27.2** (`fix/share-copy-as-text`) settled on Share = Markdown text +
   a cross-platform `.fileExporter` Save, so Copy pastes normally. All via `scripts/bump-version.sh`
   with CHANGELOG/README prose by hand.
-- **No AI attribution of any kind** in code, comments, files, commit messages, or PRs.
+- **No tool-origin attribution of any kind** in code, comments, files, commit messages, or PRs.
 - Prefer Apple-native APIs; all new code is modular and well-commented in the style of the
   surrounding framework/module files.
 

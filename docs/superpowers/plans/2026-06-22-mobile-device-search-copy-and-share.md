@@ -15,7 +15,7 @@
 ## ⚠️ Standing constraints (override default skill behavior)
 
 - **DO NOT COMMIT.** The writing-plans/TDD default ends each task with a `git commit`. For this work, **replace every commit with a non-committing checkpoint** (run the build/tests, leave changes in the working tree). No `git add`/`git commit`/`git push` at any point unless the user later says otherwise.
-- **No AI attribution** anywhere in code, comments, or files.
+- **No tool attribution** anywhere in code, comments, or files.
 - **Apple-native first**, modular, well-commented in the style of the surrounding files. The only intentional platform split is `#if os(macOS)` around the Save affordance.
 - New files auto-include in the target (synchronized groups); no `.pbxproj` edits.
 
@@ -861,4 +861,4 @@ Results view:
 - **Spec coverage:** copy icons (detail, 4 fields) → Tasks 4/7; markdown (heading + table, escaping, multi-record) → Task 2; share everywhere via `ShareLink` → Tasks 7/8; macOS Save via `.fileExporter` → Tasks 3/7/8; selection mode (circles, suppress nav, Select All, Cancel, exit on new search) → Tasks 5/8; framework reusability via `ShareableRecord` → Task 1/6; no copy icons in results → Task 8 (row unchanged otherwise). All covered.
 - **Placeholder scan:** none — every code/test/command step is concrete.
 - **Type consistency:** `ShareField(label:value:)`, `ShareableRecord.shareTitle/shareFields`, `RecordMarkdown.document(for:)`/`temporaryFile(for:fileName:)`, `TextFileDocument(text:)`, `UTType.dashboardMarkdown`, `CopyButton(value:accessibilityLabel:)`, `SelectionCircle(isSelected:)`, and the view helpers (`selectedRecords`, `allSelected`, `regenerateExport`, `exitSelection`) are used identically across tasks.
-- **Constraint check:** no commit steps anywhere; the only platform split is `#if os(macOS)`; no AI attribution.
+- **Constraint check:** no commit steps anywhere; the only platform split is `#if os(macOS)`; no tool attribution.
