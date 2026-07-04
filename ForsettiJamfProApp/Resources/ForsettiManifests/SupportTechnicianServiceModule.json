@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.feature.support-technician",
+  "displayName": "Support Technician Feature Service",
+  "moduleVersion": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": "A1"
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "networking",
+    "secure_storage",
+    "diagnostics",
+    "api",
+    "security",
+    "file_export"
+  ],
+  "iapProductID": null,
+  "entryPoint": "SupportTechnicianServiceModule",
+  "defaultModuleRole": null,
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "support-technician.networking",
+        "kind": "networking",
+        "access": "read_write",
+        "required": true
+      },
+      {
+        "requirementID": "support-technician.secure-storage",
+        "kind": "secure_storage",
+        "access": "read_write",
+        "required": true
+      },
+      {
+        "requirementID": "support-technician.diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": false
+      },
+      {
+        "requirementID": "support-technician.api",
+        "kind": "api",
+        "access": "consume",
+        "required": true
+      },
+      {
+        "requirementID": "support-technician.security",
+        "kind": "security",
+        "access": "consume",
+        "required": true
+      },
+      {
+        "requirementID": "support-technician.file-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": false
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "support-technician"
+      ],
+      "requiredDefaultRoles": []
+    }
+  },
+  "appVersion": "A1.0.0"
+}

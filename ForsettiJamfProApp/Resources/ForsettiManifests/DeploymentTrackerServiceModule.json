@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.feature.deployment-tracker",
+  "displayName": "Deployment Tracker Feature Service",
+  "moduleVersion": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": "A1"
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "storage",
+    "diagnostics",
+    "file_export",
+    "telemetry"
+  ],
+  "iapProductID": null,
+  "entryPoint": "DeploymentTrackerServiceModule",
+  "defaultModuleRole": null,
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "deployment-tracker.storage",
+        "kind": "storage",
+        "access": "read_write",
+        "required": false
+      },
+      {
+        "requirementID": "deployment-tracker.diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": false
+      },
+      {
+        "requirementID": "deployment-tracker.file-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": false
+      },
+      {
+        "requirementID": "deployment-tracker.telemetry",
+        "kind": "telemetry",
+        "access": "emit",
+        "required": false
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "deployment-tracker"
+      ],
+      "requiredDefaultRoles": []
+    }
+  },
+  "appVersion": "A1.0.0"
+}

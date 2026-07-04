@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.feature.reports",
+  "displayName": "Reports Feature Service",
+  "moduleVersion": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": "A1"
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "networking",
+    "storage",
+    "diagnostics",
+    "api",
+    "file_export"
+  ],
+  "iapProductID": null,
+  "entryPoint": "ReportsServiceModule",
+  "defaultModuleRole": null,
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "reports.networking",
+        "kind": "networking",
+        "access": "read_write",
+        "required": true
+      },
+      {
+        "requirementID": "reports.storage",
+        "kind": "storage",
+        "access": "read_write",
+        "required": false
+      },
+      {
+        "requirementID": "reports.diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": false
+      },
+      {
+        "requirementID": "reports.api",
+        "kind": "api",
+        "access": "consume",
+        "required": true
+      },
+      {
+        "requirementID": "reports.file-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": false
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "reports"
+      ],
+      "requiredDefaultRoles": []
+    }
+  },
+  "appVersion": "A1.0.0"
+}

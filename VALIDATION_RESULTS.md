@@ -1,213 +1,30 @@
 # Validation Results
 
-## Environment
-
-- Repository: `/Users/jimdaley/github/forsetti-jamf-pro`
-- Forsetti framework package: `/Users/jimdaley/github/Forsetti-Framework-Mac-iOS-main`
-- `xcode-select -p`: `/Library/Developer/CommandLineTools`
-- Xcode used for tests: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`
-- Xcode version: `Xcode 26.6`, build `17F113`
-- Xcode project package user-state was cleaned before validation. Xcode may recreate ignored `xcuserdata` when the project is opened.
-- UI/UX rebuild source: local Obsidian Operations Cockpit handoff package.
-
-## Commands
-
-### Manifest Static Validation
-
-Command:
-
-```bash
-python3 scripts/validate-forsetti-manifests.py --manifests JamfDashboardApp/Resources/ForsettiManifests --expect-one-ui-module com.forsetti.jamfdashboard.ui
-```
-
-Result: passed.
-
-Output:
-
-```text
-Validated 11 Forsetti manifests.
-```
-
-### App Guardrails
-
-Command:
-
-```bash
-./scripts/verify-forsetti-jamf-pro-guardrails.sh
-```
-
-Result: passed.
-
-Output:
-
-```text
-Validated 11 Forsetti manifests.
-Verified registry coverage for 11 entry points.
-Forsetti Jamf Pro guardrails passed.
-```
-
-### Project File Lint
-
-Command:
-
-```bash
-plutil -lint 'Jamf Dashboard.xcodeproj/project.pbxproj'
-```
-
-Result: passed.
-
-Output:
-
-```text
-Jamf Dashboard.xcodeproj/project.pbxproj: OK
-```
-
-### Xcode Scheme and Package Resolution
-
-Command:
-
-```bash
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -list -project 'Jamf Dashboard.xcodeproj'
-```
-
-Result: passed.
-
-Key output:
-
-```text
-Resolved source packages:
-  ForsettiFramework: /Users/jimdaley/GitHub/Forsetti-Framework-Mac-iOS-main @ local
-
-Schemes:
-  ForsettiCore
-  ForsettiHostTemplate
-  ForsettiPlatform
-  Jamf Dashboard
-  JamfDashboardAppTests
-```
-
-### Xcode GUI Open
-
-Command:
-
-```bash
-open -a /Applications/Xcode.app 'Jamf Dashboard.xcodeproj'
-osascript -e 'tell application "Xcode" to get name of windows'
-```
-
-Result: passed.
-
-Output:
-
-```text
-Jamf Dashboard — JamfDashboardModuleRegistry.swift, App Shortcuts Preview
-```
-
-### Project Version and Build Settings
-
-Command:
-
-```bash
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project 'Jamf Dashboard.xcodeproj' -scheme 'Jamf Dashboard' -showBuildSettings
-```
-
-Result: passed.
-
-Key output:
-
-```text
-CURRENT_PROJECT_VERSION = 3.32.1
-MARKETING_VERSION = 3.32.1
-PRODUCT_BUNDLE_IDENTIFIER = com.forsetti.jamfdashboard
-SWIFT_VERSION = 5.0
-```
-
-### macOS Debug App Build
-
-Command:
-
-```bash
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project 'Jamf Dashboard.xcodeproj' -scheme 'Jamf Dashboard' -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath /tmp/Forsetti-Jamf-Pro-DerivedData-uiux-build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=- build
-```
-
-Result: passed.
-
-Key output:
-
-```text
-** BUILD SUCCEEDED **
-```
-
-### iOS Simulator Debug App Build
-
-Command:
-
-```bash
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project 'Jamf Dashboard.xcodeproj' -scheme 'Jamf Dashboard' -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/Forsetti-Jamf-Pro-DerivedData-uiux-ios CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=- build
-```
-
-Result: passed.
-
-Key output:
-
-```text
-** BUILD SUCCEEDED **
-```
-
-### macOS XCTest Suite
-
-Command:
-
-```bash
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test -project 'Jamf Dashboard.xcodeproj' -scheme 'JamfDashboardAppTests' -destination 'platform=macOS,arch=arm64' -derivedDataPath /tmp/Forsetti-Jamf-Pro-DerivedData-uiux-tests CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=-
-```
-
-Result: passed.
-
-Key output:
-
-```text
-Test Suite 'JamfDashboardAppTests.xctest' passed
-Executed 494 tests, with 0 failures (0 unexpected)
-** TEST SUCCEEDED **
-```
-
-Notes:
-
-- A first test attempt without signing overrides failed before execution because the local keychain does not contain the configured `Mac Development` certificate for team `2Y25RTLZET`.
-- The successful app build and test commands disable signing for local validation only. No final/release app build was performed.
-- Xcode emitted a non-blocking AppIntents metadata warning because the app target has no AppIntents framework dependency.
-
-### Focused Regression Rerun
-
-Command:
-
-```bash
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test -project 'Jamf Dashboard.xcodeproj' -scheme 'JamfDashboardAppTests' -destination 'platform=macOS' -only-testing:JamfDashboardAppTests/TemporaryAdminElevationArchitectureTests CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=-
-```
-
-Result: passed.
-
-Key output:
-
-```text
-Test Suite 'TemporaryAdminElevationArchitectureTests' passed
-Executed 5 tests, with 0 failures (0 unexpected)
-** TEST SUCCEEDED **
-```
-
-### SwiftLint
-
-Command:
-
-```bash
-swiftlint lint --strict --config .swiftlint.yml
-```
-
-Result: unavailable in this environment.
-
-Output:
-
-```text
-zsh:1: command not found: swiftlint
-```
+## Completed
+
+- `xcodebuild -list` resolves project `Forsetti Jamf Pro` with targets `ForsettiJamfProApp` and `ForsettiJamfProTests`.
+- The legacy `Jamf Dashboard.xcodeproj` path is present as a compatibility link to the updated `Forsetti Jamf Pro.xcodeproj`; `xcodebuild -list` resolves the same updated targets and schemes through both paths.
+- `plutil -lint` passes for `Forsetti Jamf Pro.xcodeproj/project.pbxproj`.
+- `plutil -lint` passes when addressed through the compatibility `Jamf Dashboard.xcodeproj/project.pbxproj` path.
+- `scripts/validate-forsetti-manifests.py` validates 11 module manifests with the single UI module `com.forsetti.jamfpro.ui.workspace`.
+- `scripts/validate_remediated_project.py --project-root . --expected-version A1.0.0` passes.
+- `scripts/verify-forsetti-jamf-pro-guardrails.sh` passes.
+- macOS app build passes for scheme `Forsetti Jamf Pro` with code signing disabled for local validation.
+- macOS app build also passes when invoked through the compatibility `Jamf Dashboard.xcodeproj` path.
+- iOS Simulator app build passes for scheme `Forsetti Jamf Pro` with code signing disabled for local validation.
+- macOS XCTest run passes for scheme `ForsettiJamfProTests`: 494 tests, 0 failures.
+- Local Debug launch verification passes through `script/build_and_run.sh --verify`; the app opens from `/Users/jimdaley/GitHub/Forsetti-Jamf-Pro/build/DerivedData/Build/Products/Debug/Forsetti Jamf Pro.app`.
+- Visual QA capture completed at `/tmp/forsetti-uiqa-final.png`; the dashboard surface shows consistent metric-card sizing, bounded status text, separated table and platform panels, and no visible frame collisions in the captured state.
+- Final app-owned log stream check returned no `com.forsetti.jamfpro` runtime errors after launch.
+- `git diff --check` passes.
+- Built app `Info.plist` lint passes.
+
+## Not Run
+
+- SwiftLint strict check: `swiftlint` is not installed in the current shell environment.
+
+## Notes
+
+- Xcode emits a non-blocking App Intents metadata warning during local builds because the project does not link AppIntents.framework.
+- macOS emits transient App Intents/linkd connection messages during test and local launch runs; these are system service messages and did not block build, test, launch, or app-owned runtime logging.
+- No archive, notarization, or signed release app build was performed.

@@ -6,17 +6,17 @@ from pathlib import Path
 
 
 REQUIRED_PRODUCTION_MODULE_IDS = {
-    "com.forsetti.jamfdashboard.service.diagnostics",
-    "com.forsetti.jamfdashboard.service.jamf",
-    "com.forsetti.jamfdashboard.service.scanner",
-    "com.forsetti.jamfdashboard.feature.computer-search",
-    "com.forsetti.jamfdashboard.feature.mobile-device-search",
-    "com.forsetti.jamfdashboard.feature.support-technician",
-    "com.forsetti.jamfdashboard.feature.prestage-director",
-    "com.forsetti.jamfdashboard.feature.reports",
-    "com.forsetti.jamfdashboard.feature.deployment-tracker",
-    "com.forsetti.jamfdashboard.feature.permissions-matrix",
-    "com.forsetti.jamfdashboard.ui",
+    "com.forsetti.jamfpro.service.diagnostics",
+    "com.forsetti.jamfpro.service.jamf",
+    "com.forsetti.jamfpro.service.scanner",
+    "com.forsetti.jamfpro.feature.computer-search",
+    "com.forsetti.jamfpro.feature.mobile-device-search",
+    "com.forsetti.jamfpro.feature.support-technician",
+    "com.forsetti.jamfpro.feature.prestage-director",
+    "com.forsetti.jamfpro.feature.reports",
+    "com.forsetti.jamfpro.feature.deployment-tracker",
+    "com.forsetti.jamfpro.feature.permissions-matrix",
+    "com.forsetti.jamfpro.ui.workspace",
 }
 
 IO_CAPABILITY = {
@@ -152,15 +152,15 @@ def validate_manifests(manifests: list[dict], expected_ui_module: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate Jamf Dashboard Forsetti manifests.")
+    parser = argparse.ArgumentParser(description="Validate Forsetti Jamf Pro Forsetti manifests.")
     parser.add_argument(
         "--manifests",
-        default="JamfDashboardApp/Resources/ForsettiManifests",
+        default="ForsettiJamfProApp/Resources/ForsettiManifests",
         help="Directory containing Forsetti manifest JSON files.",
     )
     parser.add_argument(
         "--expect-one-ui-module",
-        default="com.forsetti.jamfdashboard.ui",
+        default="com.forsetti.jamfpro.ui.workspace",
         help="Expected single Pattern B UI module ID.",
     )
     args = parser.parse_args()

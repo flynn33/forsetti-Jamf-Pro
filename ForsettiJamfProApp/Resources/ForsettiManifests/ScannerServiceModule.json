@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.service.scanner",
+  "displayName": "Scanner Service",
+  "moduleVersion": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": "A1"
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "storage",
+    "diagnostics"
+  ],
+  "iapProductID": null,
+  "entryPoint": "ScannerServiceModule",
+  "defaultModuleRole": null,
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "scanner-service.storage",
+        "kind": "storage",
+        "access": "read_write",
+        "required": false
+      },
+      {
+        "requirementID": "scanner-service.diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": false
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "scanner-service"
+      ],
+      "requiredDefaultRoles": []
+    }
+  },
+  "appVersion": "A1.0.0"
+}

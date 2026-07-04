@@ -21,7 +21,7 @@ set -euo pipefail
 #
 # What it updates (targeted token replacements — narratives are preserved):
 #   • VERSION
-#   • Jamf Dashboard.xcodeproj/project.pbxproj  (every MARKETING_VERSION and
+#   • Forsetti Jamf Pro.xcodeproj/project.pbxproj  (every MARKETING_VERSION and
 #     CURRENT_PROJECT_VERSION field)
 #   • README.md   (only the leading `Current release: \`vX.Y.Z\`` token)
 #   • WIKI.md     (only the CURRENT_PROJECT_VERSION / MARKETING_VERSION lines)
@@ -85,7 +85,7 @@ case "$KIND" in
   feature) NEW="${MAJOR}.$((FEATURE + 1)).0" ;;
 esac
 
-PBX="Jamf Dashboard.xcodeproj/project.pbxproj"
+PBX="Forsetti Jamf Pro.xcodeproj/project.pbxproj"
 CHANGELOG="CHANGELOG.md"
 
 if [[ "$MODE" == "dry-run" ]]; then

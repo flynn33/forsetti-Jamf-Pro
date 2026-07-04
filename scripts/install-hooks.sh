@@ -25,7 +25,7 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [[ -z "$REPO_ROOT" ]]; then
-  echo "install-hooks.sh: not inside a git repository. Run from within the Jamf Dashboard checkout." >&2
+  echo "install-hooks.sh: not inside a git repository. Run from within the Forsetti Jamf Pro checkout." >&2
   exit 1
 fi
 cd "$REPO_ROOT"

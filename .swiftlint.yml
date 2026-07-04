@@ -1,4 +1,4 @@
-# SwiftLint configuration for the Jamf Dashboard project.
+# SwiftLint configuration for the Forsetti Jamf Pro project.
 #
 # Philosophy: flag genuine correctness/readability issues, not style
 # preferences. The codebase has verbose doc comments by design, long

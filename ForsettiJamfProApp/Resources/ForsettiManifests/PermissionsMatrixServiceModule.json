@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.1",
+  "manifestTemplateVersion": "1.1",
+  "moduleID": "com.forsetti.jamfpro.feature.permissions-matrix",
+  "displayName": "Permissions Helper Feature Service",
+  "moduleVersion": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": "A1"
+  },
+  "moduleType": "service",
+  "supportedPlatforms": [
+    "iOS",
+    "macOS"
+  ],
+  "minForsettiVersion": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0,
+    "prerelease": null
+  },
+  "maxForsettiVersion": null,
+  "capabilitiesRequested": [
+    "storage",
+    "diagnostics",
+    "file_export"
+  ],
+  "iapProductID": null,
+  "entryPoint": "PermissionsMatrixServiceModule",
+  "defaultModuleRole": null,
+  "runtimeRequirements": {
+    "io": [
+      {
+        "requirementID": "permissions-matrix.storage",
+        "kind": "storage",
+        "access": "read_write",
+        "required": false
+      },
+      {
+        "requirementID": "permissions-matrix.diagnostics",
+        "kind": "diagnostics",
+        "access": "emit",
+        "required": false
+      },
+      {
+        "requirementID": "permissions-matrix.file-export",
+        "kind": "file_export",
+        "access": "write",
+        "required": false
+      }
+    ],
+    "ui": null,
+    "dataIsolation": {
+      "mode": "private_to_module",
+      "ownedStoreIDs": [
+        "permissions-matrix"
+      ],
+      "requiredDefaultRoles": []
+    }
+  },
+  "appVersion": "A1.0.0"
+}

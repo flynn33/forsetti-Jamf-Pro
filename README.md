@@ -1,6 +1,6 @@
-# Forsetti Jamf Dashboard
+# Forsetti Forsetti Jamf Pro
 
-Forsetti Jamf Dashboard is a macOS and iOS Jamf Pro operations app built as a Forsetti Pattern B consumer application.
+Forsetti Forsetti Jamf Pro is a macOS and iOS Jamf Pro operations app built as a Forsetti Pattern B consumer application.
 
 The app consumes the public Forsetti package products:
 
@@ -10,29 +10,29 @@ The app consumes the public Forsetti package products:
 
 The production runtime activates service modules plus one dedicated UI module:
 
-- `com.forsetti.jamfdashboard.service.diagnostics`
-- `com.forsetti.jamfdashboard.service.jamf`
-- `com.forsetti.jamfdashboard.service.scanner`
-- `com.forsetti.jamfdashboard.feature.computer-search`
-- `com.forsetti.jamfdashboard.feature.mobile-device-search`
-- `com.forsetti.jamfdashboard.feature.support-technician`
-- `com.forsetti.jamfdashboard.feature.prestage-director`
-- `com.forsetti.jamfdashboard.feature.reports`
-- `com.forsetti.jamfdashboard.feature.deployment-tracker`
-- `com.forsetti.jamfdashboard.feature.permissions-matrix`
-- `com.forsetti.jamfdashboard.ui`
+- `com.forsetti.jamfpro.service.diagnostics`
+- `com.forsetti.jamfpro.service.jamf`
+- `com.forsetti.jamfpro.service.scanner`
+- `com.forsetti.jamfpro.feature.computer-search`
+- `com.forsetti.jamfpro.feature.mobile-device-search`
+- `com.forsetti.jamfpro.feature.support-technician`
+- `com.forsetti.jamfpro.feature.prestage-director`
+- `com.forsetti.jamfpro.feature.reports`
+- `com.forsetti.jamfpro.feature.deployment-tracker`
+- `com.forsetti.jamfpro.feature.permissions-matrix`
+- `com.forsetti.jamfpro.ui`
 
-Only `com.forsetti.jamfdashboard.ui` owns application SwiftUI screens. Service modules own Jamf API/authentication, diagnostics, scanner support, and feature/domain responsibilities.
+Only `com.forsetti.jamfpro.ui` owns application SwiftUI screens. Service modules own Jamf API/authentication, diagnostics, scanner support, and feature/domain responsibilities.
 
 ## Validation
 
 Run:
 
 ```bash
-python3 scripts/validate-forsetti-manifests.py --manifests JamfDashboardApp/Resources/ForsettiManifests --expect-one-ui-module com.forsetti.jamfdashboard.ui
+python3 scripts/validate-forsetti-manifests.py --manifests ForsettiJamfProApp/Resources/ForsettiManifests --expect-one-ui-module com.forsetti.jamfpro.ui
 ./scripts/verify-forsetti-jamf-pro-guardrails.sh
 swiftlint lint --strict --config .swiftlint.yml
-xcodebuild -project 'Jamf Dashboard.xcodeproj' -scheme 'Jamf Dashboard' -destination 'platform=macOS' build
-xcodebuild -project 'Jamf Dashboard.xcodeproj' -scheme 'Jamf Dashboard' -destination 'generic/platform=iOS Simulator' build
-xcodebuild test -project 'Jamf Dashboard.xcodeproj' -scheme 'JamfDashboardAppTests' -destination 'platform=macOS'
+xcodebuild -project 'Forsetti Jamf Pro.xcodeproj' -scheme 'Forsetti Jamf Pro' -destination 'platform=macOS' build
+xcodebuild -project 'Forsetti Jamf Pro.xcodeproj' -scheme 'Forsetti Jamf Pro' -destination 'generic/platform=iOS Simulator' build
+xcodebuild test -project 'Forsetti Jamf Pro.xcodeproj' -scheme 'ForsettiJamfProTests' -destination 'platform=macOS'
 ```
