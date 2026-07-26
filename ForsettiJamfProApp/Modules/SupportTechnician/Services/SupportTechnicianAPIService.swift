@@ -3119,8 +3119,6 @@ actor SupportTechnicianAPIService {
     /// Privileges: "View MDM command information in Jamf Pro API" +
     /// "Send Declarative Management Command".
     ///
-    /// Source: Der Flounder, 2025-05-14 —
-    /// https://derflounder.wordpress.com/2025/05/14/forcing-a-ddm-sync-on-a-jamf-pro-managed-device-via-the-jamf-pro-api/
     private func sendDDMSync(managementID: String) async throws {
         let endpoint = "api/v1/ddm/\(managementID)/sync"
 
