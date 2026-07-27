@@ -22,13 +22,6 @@ jobs:
         with:
           path: forsetti-Jamf-Pro
 
-      - name: Checkout Forsetti framework
-        uses: actions/checkout@v4
-        with:
-          repository: flynn33/Forsetti-Framework
-          ref: main
-          path: Forsetti-Framework-Mac-iOS-main
-
       - name: Sanitation scan
         run: bash scripts/verify-no-customer-references.sh .
 

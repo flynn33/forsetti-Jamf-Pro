@@ -1,16 +1,19 @@
 # Deployment Tracker preservation boundary
 
-Deployment Tracker was detached from Forsetti Jamf Pro on 2026-07-26 and is preserved here as the source snapshot for a future standalone application.
+Deployment Tracker was detached from Forsetti Jamf Pro on 2026-07-27 and is preserved here as the source snapshot for a future standalone application.
 
 ## Status
 
-- Provenance commit: `e0dbcebe2cae13ecaffa2bbcee34aa013656a414`
+- Source-snapshot commit: `e0dbcebe2cae13ecaffa2bbcee34aa013656a414`
+- Host-detachment commit: `94187432e650cd18054339caa28f932c40a6debb`
 - This directory is intentionally outside the filesystem-synchronized `ForsettiJamfProApp` and `ForsettiJamfProTests` target roots.
 - Nothing here is compiled, bundled, registered, or exposed by the current Forsetti Jamf Pro app.
 - This snapshot is not yet a runnable standalone application.
 - The preserved installed experience was demo-only, used deterministic in-memory data, and did not perform live Jamf actions.
 
 Do not add this directory to the existing Forsetti Jamf Pro target. Create a separate project or Swift package when standalone application work begins.
+
+The preserved snapshot is proprietary and covered by the repository's root [`LICENSE`](../../LICENSE) and [`NOTICE`](../../NOTICE). Its source may be inspected and evaluated only within those terms. Moving the snapshot to a future standalone repository does not grant permission to publish, distribute, sublicense, or commercially use it.
 
 ## Preserved contents
 

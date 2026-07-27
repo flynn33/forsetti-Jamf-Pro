@@ -1,5 +1,7 @@
 # Source Inventory
 
+> Historical source-baseline record captured before the Forsetti Jamf Pro remediation and the later Deployment Tracker extraction. Current project guidance is indexed in [`../docs/README.md`](../docs/README.md).
+
 Required package label: Jamf Dashboard v3.34.0
 
 Authorized source override: the user confirmed the sanitized local source package as the source of truth. That source reports `VERSION` value `3.32.1`; this inventory records it under the package-required filename so the remediation trail stays complete.
@@ -21,4 +23,8 @@ Authorized source override: the user confirmed the sanitized local source packag
 
 ## Carry-Forward Scope
 
-The remediation keeps the product behavior from the authorized source while changing identity, runtime ownership, manifests, and validation posture to the Forsetti Jamf Pro A1.0.0 target contract.
+The A1.0.0 remediation kept the product behavior from the authorized source while changing identity, runtime ownership, manifests, and validation posture to the Forsetti Jamf Pro target contract.
+
+## Post-Inventory Change
+
+On 2026-07-27, Deployment Tracker was removed from the Forsetti Jamf Pro host and preserved as a non-runnable source snapshot under [`../Standalone/DeploymentTracker`](../Standalone/DeploymentTracker/README.md). Its inclusion in the observed product surface above remains accurate for this historical inventory.
