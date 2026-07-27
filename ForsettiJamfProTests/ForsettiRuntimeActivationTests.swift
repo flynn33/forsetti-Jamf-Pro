@@ -5,11 +5,12 @@ import XCTest
 final class ForsettiRuntimeActivationTests: XCTestCase {
     func test_manifestsDecodeThroughAppOwnedLoader() throws {
         let manifests = try loadManifests()
-        XCTAssertEqual(manifests.count, 11)
+        XCTAssertEqual(manifests.count, 10)
         XCTAssertEqual(
             manifests.filter { $0.moduleType == .ui }.map(\.moduleID),
             [JamfDashboardModuleIDs.ui]
         )
+        XCTAssertFalse(manifests.contains { $0.moduleID == "com.forsetti.jamfpro.feature.deployment-tracker" })
     }
 
     func test_registryCoversEveryManifestEntryPoint() throws {
@@ -51,6 +52,9 @@ final class ForsettiRuntimeActivationTests: XCTestCase {
             Set(manifests.map(\.moduleID))
         )
         XCTAssertEqual(JamfDashboardModuleIDs.productionActivationOrder.last, JamfDashboardModuleIDs.ui)
+        XCTAssertFalse(
+            JamfDashboardModuleIDs.productionModuleIDs.contains("com.forsetti.jamfpro.feature.deployment-tracker")
+        )
     }
 
     private func loadManifests() throws -> [ModuleManifest] {

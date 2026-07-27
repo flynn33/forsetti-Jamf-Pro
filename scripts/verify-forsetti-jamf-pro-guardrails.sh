@@ -17,6 +17,37 @@ for symbol in SemVer ModuleManifest ModuleDescriptor ManifestLoader Capability M
   fi
 done
 
+for removed_path in \
+  "ForsettiJamfProApp/Modules/DeploymentTracker" \
+  "ForsettiJamfProApp/ForsettiModules/UI/Features/DeploymentTracker" \
+  "ForsettiJamfProApp/ForsettiModules/Services/DeploymentTrackerServiceModule.swift" \
+  "ForsettiJamfProApp/Resources/ForsettiManifests/DeploymentTrackerServiceModule.json"; do
+  [[ ! -e "$removed_path" ]] || fail "Deployment Tracker remains in the host target: $removed_path"
+done
+
+for preserved_path in \
+  "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Models/DeploymentTrackerCoreModels.swift" \
+  "Standalone/DeploymentTracker/Sources/DeploymentTracker/UI/DeploymentTrackerRootView.swift" \
+  "Standalone/DeploymentTracker/Tests/DeploymentTrackerDemoSafetyTests.swift"; do
+  [[ -f "$preserved_path" ]] || fail "preserved Deployment Tracker source is missing: $preserved_path"
+done
+
+if ! (
+  cd Standalone/DeploymentTracker
+  shasum -a 256 -c SOURCE_MANIFEST.sha256 >/dev/null
+); then
+  fail "preserved Deployment Tracker source does not match SOURCE_MANIFEST.sha256"
+fi
+
+if rg -n 'deploymentTracker|DeploymentTrackerServiceModule|com\.forsetti\.jamfpro\.feature\.deployment-tracker' \
+  ForsettiJamfProApp/ForsettiModules/JamfDashboardModuleIDs.swift \
+  ForsettiJamfProApp/ForsettiModules/JamfDashboardModuleRegistry.swift \
+  ForsettiJamfProApp/ForsettiModules/UI/JamfDashboardRoute.swift \
+  ForsettiJamfProApp/Resources/ForsettiManifests \
+  scripts/validate-forsetti-manifests.py; then
+  fail "Deployment Tracker remains attached to the Forsetti host runtime"
+fi
+
 if rg -n 'DashboardFeatureWorkspace|FeatureWorkspaceContext|DashboardFeatureCatalog|FeaturePackage|ModulePackage|ModulePackageTemplates' ForsettiJamfProApp ForsettiJamfProTests scripts README.md WIKI.md --glob '!**/Resources/**' --glob '!scripts/verify-forsetti-jamf-pro-guardrails.sh'; then
   fail "legacy dashboard module/package runtime symbols remain"
 fi

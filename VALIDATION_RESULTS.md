@@ -6,14 +6,15 @@
 - The legacy `Jamf Dashboard.xcodeproj` path is present as a compatibility link to the updated `Forsetti Jamf Pro.xcodeproj`; `xcodebuild -list` resolves the same updated targets and schemes through both paths.
 - `plutil -lint` passes for `Forsetti Jamf Pro.xcodeproj/project.pbxproj`.
 - `plutil -lint` passes when addressed through the compatibility `Jamf Dashboard.xcodeproj/project.pbxproj` path.
-- `scripts/validate-forsetti-manifests.py` validates 11 module manifests with the single UI module `com.forsetti.jamfpro.ui.workspace`.
+- `scripts/validate-forsetti-manifests.py` validates 10 module manifests with the single UI module `com.forsetti.jamfpro.ui.workspace`.
 - `scripts/validate_remediated_project.py --project-root . --expected-version A1.0.0` passes.
 - `scripts/verify-forsetti-jamf-pro-guardrails.sh` passes.
 - macOS app build passes for scheme `Forsetti Jamf Pro` with code signing disabled for local validation.
 - macOS app build also passes when invoked through the compatibility `Jamf Dashboard.xcodeproj` path.
 - iOS Simulator app build passes for scheme `Forsetti Jamf Pro` with code signing disabled for local validation.
-- macOS XCTest run passes for scheme `ForsettiJamfProTests`: 494 tests, 0 failures.
+- macOS XCTest run passes for scheme `ForsettiJamfProTests`: 475 tests, 0 failures.
 - Local Debug launch verification passes through `script/build_and_run.sh --verify`; the app opens from `/Users/jimdaley/GitHub/Forsetti-Jamf-Pro/build/DerivedData/Build/Products/Debug/Forsetti Jamf Pro.app`.
+- Separate macOS and iOS Simulator build-product audits confirm that no Deployment Tracker source path, runtime identifier, UI string, or service manifest is compiled or bundled; each app contains exactly the 10 remaining Forsetti manifests.
 - Visual QA capture completed at `/tmp/forsetti-uiqa-final.png`; the dashboard surface shows consistent metric-card sizing, bounded status text, separated table and platform panels, and no visible frame collisions in the captured state.
 - Final app-owned log stream check returned no `com.forsetti.jamfpro` runtime errors after launch.
 - `git diff --check` passes.

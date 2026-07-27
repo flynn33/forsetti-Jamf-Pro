@@ -18,18 +18,21 @@ The production runtime activates service modules plus one dedicated UI module:
 - `com.forsetti.jamfpro.feature.support-technician`
 - `com.forsetti.jamfpro.feature.prestage-director`
 - `com.forsetti.jamfpro.feature.reports`
-- `com.forsetti.jamfpro.feature.deployment-tracker`
 - `com.forsetti.jamfpro.feature.permissions-matrix`
-- `com.forsetti.jamfpro.ui`
+- `com.forsetti.jamfpro.ui.workspace`
 
-Only `com.forsetti.jamfpro.ui` owns application SwiftUI screens. Service modules own Jamf API/authentication, diagnostics, scanner support, and feature/domain responsibilities.
+Only `com.forsetti.jamfpro.ui.workspace` owns application SwiftUI screens. Service modules own Jamf API/authentication, diagnostics, scanner support, and feature/domain responsibilities.
+
+## Preserved standalone work
+
+Deployment Tracker is no longer compiled, bundled, registered, or shown by Forsetti Jamf Pro. Its source, UI, tests, legacy Forsetti integration contract, and permissions metadata are intentionally preserved under [`Standalone/DeploymentTracker`](Standalone/DeploymentTracker/README.md) as the starting point for a separate application.
 
 ## Validation
 
 Run:
 
 ```bash
-python3 scripts/validate-forsetti-manifests.py --manifests ForsettiJamfProApp/Resources/ForsettiManifests --expect-one-ui-module com.forsetti.jamfpro.ui
+python3 scripts/validate-forsetti-manifests.py --manifests ForsettiJamfProApp/Resources/ForsettiManifests --expect-one-ui-module com.forsetti.jamfpro.ui.workspace
 ./scripts/verify-forsetti-jamf-pro-guardrails.sh
 swiftlint lint --strict --config .swiftlint.yml
 xcodebuild -project 'Forsetti Jamf Pro.xcodeproj' -scheme 'Forsetti Jamf Pro' -destination 'platform=macOS' build

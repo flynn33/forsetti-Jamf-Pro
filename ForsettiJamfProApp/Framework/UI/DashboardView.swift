@@ -514,7 +514,6 @@ struct DashboardView: View {
         if route.moduleID.contains("prestage") { return "Enrollment" }
         if route.moduleID.contains("reports") { return "Reports" }
         if route.moduleID.contains("permissions") { return "Security" }
-        if route.moduleID.contains("deployment") { return "Workflow" }
         if route.moduleID.contains("support") { return "Technician" }
         return nil
     }

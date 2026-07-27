@@ -9,7 +9,6 @@ enum JamfDashboardModuleIDs {
     static let supportTechnician = "com.forsetti.jamfpro.feature.support-technician"
     static let prestageDirector = "com.forsetti.jamfpro.feature.prestage-director"
     static let reports = "com.forsetti.jamfpro.feature.reports"
-    static let deploymentTracker = "com.forsetti.jamfpro.feature.deployment-tracker"
     static let permissionsMatrix = "com.forsetti.jamfpro.feature.permissions-matrix"
     static let ui = "com.forsetti.jamfpro.ui.workspace"
 
@@ -22,7 +21,6 @@ enum JamfDashboardModuleIDs {
         supportTechnician,
         prestageDirector,
         reports,
-        deploymentTracker,
         permissionsMatrix,
         ui
     ]
@@ -38,7 +36,6 @@ enum JamfDashboardModuleIDs {
         supportTechnicianDefinition,
         prestageDirectorDefinition,
         reportsDefinition,
-        deploymentTrackerDefinition,
         permissionsMatrixDefinition,
         uiDefinition
     ]
@@ -195,23 +192,6 @@ enum JamfDashboardModuleIDs {
         entryPoint: ReportsServiceModule.Constants.entryPoint,
         capabilitiesRequested: [.networking, .storage, .diagnostics, .api, .fileExport],
         runtimeRequirements: featureServiceRequirements(ownedStoreID: "reports")
-    )
-
-    static let deploymentTrackerDefinition = JamfDashboardModuleDefinition(
-        moduleID: deploymentTracker,
-        displayName: "Deployment Tracker Feature Service",
-        moduleType: .service,
-        entryPoint: DeploymentTrackerServiceModule.Constants.entryPoint,
-        capabilitiesRequested: [.storage, .diagnostics, .fileExport, .telemetry],
-        runtimeRequirements: serviceRequirements(
-            ownedStoreID: "deployment-tracker",
-            io: [
-                io("deployment-tracker.storage", .storage, .readWrite, required: false),
-                io("deployment-tracker.diagnostics", .diagnostics, .emit, required: false),
-                io("deployment-tracker.file-export", .fileExport, .write, required: false),
-                io("deployment-tracker.telemetry", .telemetry, .emit, required: false)
-            ]
-        )
     )
 
     static let permissionsMatrixDefinition = JamfDashboardModuleDefinition(

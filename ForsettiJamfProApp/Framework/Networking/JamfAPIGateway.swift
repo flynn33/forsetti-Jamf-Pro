@@ -20,10 +20,9 @@ enum HTTPMethod: String, Sendable {
 
 /// A single `multipart/form-data` part for authenticated Jamf API uploads.
 ///
-/// Deployment Tracker uses this framework type when generating Jamf Inventory
-/// Preload CSV uploads. Keeping it in the shared gateway avoids module-local
-/// upload logic and gives every caller the same authentication, retry, and
-/// diagnostic behavior as normal JSON requests.
+/// Keeping multipart encoding in the shared gateway avoids caller-local upload
+/// logic and gives every upload the same authentication, retry, and diagnostic
+/// behavior as normal JSON requests.
 struct JamfMultipartFormPart: Equatable, Sendable {
     let name: String
     let filename: String?
