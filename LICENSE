@@ -1,11 +1,157 @@
-Jamf Dashboard License Notice
+FORSETTI JAMF PRO
+PROPRIETARY SOURCE INSPECTION AND EVALUATION LICENSE
+Version 1.0 — July 27, 2026
 
-Copyright (c) 2026 Jim Daley. All rights reserved.
+Copyright © 2026 Jim Daley. All rights reserved.
 
-This sanitized copy removes organization-specific licensing language from the
-source project. No open-source license is granted by this placeholder notice.
-Use, redistribution, sublicensing, or commercial distribution require separate
-written permission from the copyright holder.
+IMPORTANT: READ THIS LICENSE CAREFULLY. BY DOWNLOADING, CLONING, COMPILING,
+INSTALLING, OR USING ANY PART OF THE SOFTWARE, YOU ACCEPT THESE TERMS. IF YOU
+DO NOT ACCEPT THEM, DO NOT DOWNLOAD, COMPILE, INSTALL, OR USE THE SOFTWARE.
+
+1. Definitions
+
+"Licensor" means Jim Daley.
+
+"Software" means the Forsetti Jamf Pro source code, object code, application,
+documentation, resources, and other materials distributed with this license.
+
+"You" means the individual exercising the limited permissions granted by this
+license. This evaluation license is not granted to organizations or other legal
+entities. They must obtain separate written permission from the Licensor.
+
+"Evaluation Use" means personal, non-production inspection, compilation, and
+testing solely to determine whether to purchase the Software. Evaluation Use
+does not include operational, production, managed-service, consulting,
+commercial, or revenue-generating use.
+
+"Evaluation Period" means 30 consecutive calendar days beginning when You first
+execute any build of the Software. Reinstalling, rebuilding, modifying, copying,
+changing devices, resetting data or clocks, or using a different version does
+not restart or extend the Evaluation Period.
+
+"App Store Version" means an authorized copy of Forsetti Jamf Pro obtained
+through the Apple App Store.
+
+2. Ownership and Reservation of Rights
+
+The Software is proprietary and is licensed, not sold. The Licensor retains all
+right, title, and interest in the Software, including all copyright and other
+intellectual-property rights. No open-source license is granted. All rights not
+expressly granted by this license are reserved.
+
+Making the source code visible in a public GitHub repository does not place the
+Software in the public domain and does not grant permission to use, copy,
+modify, or distribute it except as expressly stated here. Rights necessarily
+granted through GitHub's Terms of Service to view or fork public repository
+content through GitHub remain subject to those terms.
+
+3. Limited Inspection and Evaluation License
+
+Subject to this license, the Licensor grants You a limited, personal,
+revocable, non-exclusive, non-transferable, and non-sublicensable license to:
+
+a. view and inspect the source code;
+
+b. clone or download the repository for Evaluation Use;
+
+c. make local modifications solely for Evaluation Use; and
+
+d. compile, install, and run the Software during the Evaluation Period solely
+   for Evaluation Use.
+
+This license does not authorize distribution of Your modifications or any
+compiled build.
+
+4. Restrictions
+
+Except as expressly permitted by Section 3 or with the Licensor's prior written
+permission, You may not:
+
+a. use the Software after the Evaluation Period except by using a validly
+   purchased App Store Version;
+
+b. use the Software for production, operational, organizational, consulting,
+   managed-service, commercial, or revenue-generating purposes;
+
+c. copy, publish, distribute, transmit, sublicense, sell, rent, lease, host,
+   provide as a service, or otherwise make the Software or any derivative work
+   available to another person or entity;
+
+d. incorporate any part of the Software into another product, service,
+   codebase, dataset, or derivative work;
+
+e. remove or alter copyright, license, trademark, or proprietary notices;
+
+f. bypass, disable, avoid, interfere with, or misrepresent any evaluation,
+   purchase, entitlement, time-limit, or license-enforcement mechanism; or
+
+g. represent that the Licensor endorses Your modification, fork, product, or
+   service.
+
+5. End of the Evaluation Period and Purchase
+
+When the Evaluation Period ends, You must stop executing all evaluation and
+source-built versions of the Software and delete compiled evaluation copies.
+You may retain source code only for non-executable inspection as allowed by
+Section 3.
+
+Continued application use after the Evaluation Period requires a valid purchase
+of the App Store Version. An App Store purchase authorizes use of the App Store
+Version under the end-user license that accompanies that transaction. It does
+not grant a license to distribute source code, publish modifications, or
+continue using a source-built or modified version after the Evaluation Period.
+Any exception must be granted by the Licensor in a separate signed writing.
+
+6. Technical Enforcement
+
+The Software may include technical measures that record the Evaluation Period,
+verify a purchase or entitlement, and limit use after the Evaluation Period.
+The absence, failure, or removal of a technical measure does not extend the
+Evaluation Period or grant additional rights.
+
+7. Contributions and Feedback
+
+The Licensor is not obligated to accept external contributions. Do not submit
+source code or documentation for inclusion unless the Licensor has expressly
+authorized the submission in writing. Any separate contribution arrangement
+must be documented in writing.
+
+8. Termination
+
+This license terminates automatically if You breach any term. Upon termination,
+You must stop all use of the Software and delete all copies under Your control,
+except for copies that GitHub necessarily retains as part of its service.
+Sections concerning ownership, restrictions, disclaimers, limitation of
+liability, and general terms survive termination.
+
+9. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND
+NON-INFRINGEMENT. YOU ASSUME ALL RISK ARISING FROM INSPECTION, COMPILATION,
+INSTALLATION, OR USE OF THE SOFTWARE.
+
+10. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE LICENSOR WILL NOT BE LIABLE FOR ANY
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, CONSEQUENTIAL, OR PUNITIVE DAMAGES,
+OR FOR LOSS OF DATA, PROFITS, REVENUE, BUSINESS, OR GOODWILL, ARISING FROM OR
+RELATED TO THE SOFTWARE OR THIS LICENSE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+11. Third-Party Materials
 
 Third-party components, libraries, frameworks, and assets remain subject to
-their own license terms.
+their own license terms. This license does not grant rights that the Licensor
+does not possess.
+
+12. General Terms
+
+This license is the complete agreement for the inspection and evaluation rights
+granted here and may be modified only by a written agreement signed by the
+Licensor. A failure to enforce a term is not a waiver. If any provision is held
+unenforceable, the remaining provisions remain in effect.
+
+Apple and App Store are trademarks of Apple Inc. The Licensor is not affiliated
+with or endorsed by Apple Inc.

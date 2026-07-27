@@ -1,5 +1,9 @@
 # Remediation Report
 
+## Report Timeline
+
+The A1.0.0 remediation baseline was completed on 2026-07-04. The post-baseline Deployment Tracker extraction recorded below was completed on 2026-07-27.
+
 ## Scope
 
 - Target project: `Forsetti Jamf Pro.xcodeproj`
@@ -19,7 +23,6 @@
 - Updated manifests to `appVersion` `A1.0.0`, module version `1.0.0-A1`, and the required `com.forsetti.jamfpro.*` module ID matrix.
 - Added explicit Obsidian Data Stream contract components in the design system while retaining the rebuilt glass/rail/metric/command-center UI surface.
 - Completed a UI consistency QA pass across the command center, search modules, PreStage Director, reports visualizations, and support technician frames. The pass standardizes same-type card heights, raises the inspector breakpoint to preserve main content width, adds adaptive row stacking, bounds long text, and wraps dense tables in horizontal scroll containers.
-- Detached Deployment Tracker from the host runtime, navigation, build inputs, resources, and Permissions Helper catalog while preserving its complete source and extraction contracts under `Standalone/DeploymentTracker`.
 - Updated architecture and runtime tests to validate app-owned runtime behavior.
 
 ## Module Matrix
@@ -36,6 +39,10 @@
 | `com.forsetti.jamfpro.feature.reports` | `ReportsServiceModule` | service |
 | `com.forsetti.jamfpro.feature.permissions-matrix` | `PermissionsMatrixServiceModule` | service |
 | `com.forsetti.jamfpro.ui.workspace` | `JamfDashboardUIModule` | ui |
+
+## Post-Baseline Update — 2026-07-27
+
+Deployment Tracker was detached from the host runtime, navigation, build inputs, resources, and Permissions Helper catalog. Its unchanged source, tests, legacy service adapter and manifest, and extracted permissions contract are preserved under [`Standalone/DeploymentTracker`](Standalone/DeploymentTracker/README.md) as a non-runnable source snapshot for a future standalone application.
 
 ## Validation Status
 

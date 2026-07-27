@@ -1,5 +1,7 @@
 # Validation Results
 
+These results describe the current Deployment Tracker extraction branch as validated on 2026-07-27. The underlying A1.0.0 remediation baseline was completed on 2026-07-04.
+
 ## Completed
 
 - `xcodebuild -list` resolves project `Forsetti Jamf Pro` with targets `ForsettiJamfProApp` and `ForsettiJamfProTests`.
@@ -13,7 +15,7 @@
 - macOS app build also passes when invoked through the compatibility `Jamf Dashboard.xcodeproj` path.
 - iOS Simulator app build passes for scheme `Forsetti Jamf Pro` with code signing disabled for local validation.
 - macOS XCTest run passes for scheme `ForsettiJamfProTests`: 475 tests, 0 failures.
-- Local Debug launch verification passes through `script/build_and_run.sh --verify`; the app opens from `/Users/jimdaley/GitHub/Forsetti-Jamf-Pro/build/DerivedData/Build/Products/Debug/Forsetti Jamf Pro.app`.
+- Local Debug launch verification passes through `script/build_and_run.sh --verify`; the app opens from `build/DerivedData/Build/Products/Debug/Forsetti Jamf Pro.app`.
 - Separate macOS and iOS Simulator build-product audits confirm that no Deployment Tracker source path, runtime identifier, UI string, or service manifest is compiled or bundled; each app contains exactly the 10 remaining Forsetti manifests.
 - Visual QA capture completed at `/tmp/forsetti-uiqa-final.png`; the dashboard surface shows consistent metric-card sizing, bounded status text, separated table and platform panels, and no visible frame collisions in the captured state.
 - Final app-owned log stream check returned no `com.forsetti.jamfpro` runtime errors after launch.
