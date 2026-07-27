@@ -29,11 +29,12 @@ final class PermissionsMatrixTests: XCTestCase {
 
     func test_coverageCountsMatchVerifiedBaseline() async throws {
         let document = try await loadDocument()
-        XCTAssertEqual(document.actions.count, 87, "Action count")
+        XCTAssertEqual(document.actions.count, 76, "Action count")
         XCTAssertEqual(document.privileges.count, 263, "Privilege count")
         XCTAssertEqual(document.endpointCatalog.modernJamfProAPI.count, 458, "Modern endpoint count")
         XCTAssertEqual(document.endpointCatalog.classicAPI.count, 106, "Classic endpoint count")
         XCTAssertEqual(document.endpointCatalog.mdmCommandTypeOverlays.count, 19, "MDM overlay count")
+        XCTAssertFalse(document.actions.contains { $0.module == "DeploymentTracker" })
     }
 
     func test_requiredCommandsArePresent() async throws {

@@ -6,7 +6,6 @@ enum JamfDashboardRoute: String, CaseIterable, Hashable, Identifiable {
     case supportTechnician
     case prestageDirector
     case reports
-    case deploymentTracker
     case permissionsMatrix
 
     var id: String { rawValue }
@@ -23,8 +22,6 @@ enum JamfDashboardRoute: String, CaseIterable, Hashable, Identifiable {
             return JamfDashboardModuleIDs.prestageDirector
         case .reports:
             return JamfDashboardModuleIDs.reports
-        case .deploymentTracker:
-            return JamfDashboardModuleIDs.deploymentTracker
         case .permissionsMatrix:
             return JamfDashboardModuleIDs.permissionsMatrix
         }
@@ -42,8 +39,6 @@ enum JamfDashboardRoute: String, CaseIterable, Hashable, Identifiable {
             return "PreStage Director"
         case .reports:
             return "Reports"
-        case .deploymentTracker:
-            return "Deployment Tracker Demo"
         case .permissionsMatrix:
             return "Permissions Helper"
         }
@@ -61,8 +56,6 @@ enum JamfDashboardRoute: String, CaseIterable, Hashable, Identifiable {
             return "View prestages and move or remove assigned devices."
         case .reports:
             return "Create visual fleet reports from Jamf Pro inventory."
-        case .deploymentTracker:
-            return "Interactive preview with dummy data only. No live Jamf actions."
         case .permissionsMatrix:
             return "Look up Jamf Pro privileges required for app actions and API endpoints."
         }
@@ -80,8 +73,6 @@ enum JamfDashboardRoute: String, CaseIterable, Hashable, Identifiable {
             return "arrow.left.arrow.right.square"
         case .reports:
             return "chart.pie.fill"
-        case .deploymentTracker:
-            return "sparkles.rectangle.stack"
         case .permissionsMatrix:
             return "checklist.checked"
         }
@@ -128,15 +119,6 @@ enum JamfDashboardRoute: String, CaseIterable, Hashable, Identifiable {
                 diagnosticsReporter: context.diagnosticsReporter
             )
             return AnyView(ReportsView(viewModel: viewModel))
-        case .deploymentTracker:
-            let viewModel = DeploymentTrackerViewModel(
-                apiGateway: context.apiGateway,
-                credentialsStore: context.credentialsStore,
-                diagnosticsReporter: context.diagnosticsReporter,
-                runtimeMode: .demo,
-                demoConfiguration: .installedDemo
-            )
-            return AnyView(DeploymentTrackerRootView(viewModel: viewModel))
         case .permissionsMatrix:
             let loader = PermissionsMatrixResourceLoader(
                 bundle: .main,

@@ -29,9 +29,6 @@ enum JamfDashboardModuleRegistry {
         try registry.register(entryPoint: ReportsServiceModule.Constants.entryPoint) {
             ReportsServiceModule()
         }
-        try registry.register(entryPoint: DeploymentTrackerServiceModule.Constants.entryPoint) {
-            DeploymentTrackerServiceModule()
-        }
         try registry.register(entryPoint: PermissionsMatrixServiceModule.Constants.entryPoint) {
             PermissionsMatrixServiceModule()
         }

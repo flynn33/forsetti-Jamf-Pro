@@ -14,7 +14,6 @@ REQUIRED_PRODUCTION_MODULE_IDS = {
     "com.forsetti.jamfpro.feature.support-technician",
     "com.forsetti.jamfpro.feature.prestage-director",
     "com.forsetti.jamfpro.feature.reports",
-    "com.forsetti.jamfpro.feature.deployment-tracker",
     "com.forsetti.jamfpro.feature.permissions-matrix",
     "com.forsetti.jamfpro.ui.workspace",
 }

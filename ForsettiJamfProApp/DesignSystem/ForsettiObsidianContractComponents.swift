@@ -98,23 +98,21 @@ struct MetricTile: View {
 }
 
 struct ModuleCard: View {
-    let moduleID: String?
     let title: String
     let subtitle: String
     let systemImage: String
     let status: ForsettiSemanticStatus
 
     init(
-        moduleID: String,
+        moduleID _: String,
         title: String,
         subtitle: String,
         iconSystemName: String
     ) {
-        self.moduleID = moduleID
         self.title = title
         self.subtitle = subtitle
         self.systemImage = iconSystemName
-        self.status = moduleID.contains("deployment-tracker") ? .workflow : .ready
+        self.status = .ready
     }
 
     init(
@@ -123,7 +121,6 @@ struct ModuleCard: View {
         systemImage: String,
         status: ForsettiSemanticStatus = .ready
     ) {
-        self.moduleID = nil
         self.title = title
         self.subtitle = subtitle
         self.systemImage = systemImage

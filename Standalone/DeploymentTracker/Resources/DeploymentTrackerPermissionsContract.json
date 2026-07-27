@@ -1,0 +1,367 @@
+{
+  "schema_version": "1.0",
+  "artifact": "Deployment Tracker permissions contract preserved for standalone extraction",
+  "preserved_from": {
+    "repository": "Forsetti-Jamf-Pro",
+    "commit": "e0dbcebe2cae13ecaffa2bbcee34aa013656a414",
+    "resource": "ForsettiJamfProApp/Modules/PermissionsMatrix/Resources/jamf_dashboard_permissions_matrix.v4.module_resource.json",
+    "generated_at_utc": "2026-05-30T11:04:04Z"
+  },
+  "module_id": "com.forsetti.jamfpro.feature.deployment-tracker",
+  "jamf_dashboard_actions": [
+    {
+      "command_id": "deployment_tracker.local_validate_preload",
+      "display_name": "Validate Selected Inventory Preload Rows Locally",
+      "module": "DeploymentTracker",
+      "category": "Inventory Preload",
+      "action_type": "local",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [],
+      "required_privilege_requirements": [],
+      "local_only": true,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadService.swift"
+      ],
+      "ui_tags": [],
+      "notes": [
+        "Displays upload privileges as advisory but no Jamf call is made."
+      ]
+    },
+    {
+      "command_id": "deployment_tracker.render_preload_csv",
+      "display_name": "Render Inventory Preload CSV Locally",
+      "module": "DeploymentTracker",
+      "category": "Inventory Preload",
+      "action_type": "local",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [],
+      "required_privilege_requirements": [],
+      "local_only": true,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadService.swift"
+      ],
+      "ui_tags": [],
+      "notes": []
+    },
+    {
+      "command_id": "deployment_tracker.lookup_preload_records",
+      "display_name": "Lookup Inventory Preload Records",
+      "module": "DeploymentTracker",
+      "category": "Inventory Preload",
+      "action_type": "read",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/v2/inventory-preload/records",
+          "api_surface": "modern"
+        }
+      ],
+      "required_privilege_requirements": [
+        {
+          "mode": "all_of",
+          "privileges": [
+            "Read Inventory Preload Records"
+          ],
+          "confidence": "official_doc",
+          "source": "jamf_docs"
+        }
+      ],
+      "local_only": false,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadService.swift"
+      ],
+      "ui_tags": [],
+      "notes": []
+    },
+    {
+      "command_id": "deployment_tracker.batch_lookup_preload_records",
+      "display_name": "Batch Lookup Inventory Preload Records",
+      "module": "DeploymentTracker",
+      "category": "Inventory Preload",
+      "action_type": "read",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/v2/inventory-preload/records",
+          "api_surface": "modern"
+        }
+      ],
+      "required_privilege_requirements": [
+        {
+          "mode": "all_of",
+          "privileges": [
+            "Read Inventory Preload Records"
+          ],
+          "confidence": "official_doc",
+          "source": "jamf_docs"
+        }
+      ],
+      "local_only": false,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadService.swift"
+      ],
+      "ui_tags": [],
+      "notes": [
+        "Must use complete pagination and RSQL-safe filters."
+      ]
+    },
+    {
+      "command_id": "deployment_tracker.download_preload_template",
+      "display_name": "Download Inventory Preload CSV Template",
+      "module": "DeploymentTracker",
+      "category": "Inventory Preload",
+      "action_type": "read",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/v2/inventory-preload/csv-template",
+          "api_surface": "modern"
+        }
+      ],
+      "required_privilege_requirements": [
+        {
+          "mode": "all_of",
+          "privileges": [
+            "Read Inventory Preload Records"
+          ],
+          "confidence": "official_doc",
+          "source": "jamf_docs"
+        }
+      ],
+      "local_only": false,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadModels.swift"
+      ],
+      "ui_tags": [],
+      "notes": []
+    },
+    {
+      "command_id": "deployment_tracker.validate_preload_csv_with_jamf",
+      "display_name": "Validate Inventory Preload CSV with Jamf",
+      "module": "DeploymentTracker",
+      "category": "Inventory Preload",
+      "action_type": "create",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/api/v2/inventory-preload/csv-validate",
+          "api_surface": "modern"
+        }
+      ],
+      "required_privilege_requirements": [
+        {
+          "mode": "all_of",
+          "privileges": [
+            "Create Inventory Preload Records"
+          ],
+          "confidence": "official_doc",
+          "source": "jamf_docs"
+        }
+      ],
+      "local_only": false,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadService.swift"
+      ],
+      "ui_tags": [],
+      "notes": []
+    },
+    {
+      "command_id": "deployment_tracker.upload_preload_csv",
+      "display_name": "Send Inventory Preload to Jamf",
+      "module": "DeploymentTracker",
+      "category": "Inventory Preload",
+      "action_type": "create_update",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/api/v2/inventory-preload/csv",
+          "api_surface": "modern"
+        }
+      ],
+      "required_privilege_requirements": [
+        {
+          "mode": "all_of",
+          "privileges": [
+            "Create Inventory Preload Records",
+            "Update Inventory Preload Records",
+            "Create User",
+            "Update User"
+          ],
+          "confidence": "official_doc",
+          "source": "jamf_docs"
+        }
+      ],
+      "local_only": false,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadService.swift"
+      ],
+      "ui_tags": [],
+      "notes": []
+    },
+    {
+      "command_id": "deployment_tracker.reconcile_preload_submission",
+      "display_name": "Reconcile Inventory Preload Submission",
+      "module": "DeploymentTracker",
+      "category": "Inventory Preload",
+      "action_type": "read",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/v2/inventory-preload/records",
+          "api_surface": "modern"
+        }
+      ],
+      "required_privilege_requirements": [
+        {
+          "mode": "all_of",
+          "privileges": [
+            "Read Inventory Preload Records"
+          ],
+          "confidence": "official_doc",
+          "source": "jamf_docs"
+        }
+      ],
+      "local_only": false,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadService.swift"
+      ],
+      "ui_tags": [],
+      "notes": []
+    },
+    {
+      "command_id": "deployment_tracker.sdplus_export",
+      "display_name": "Generate SD+ Export",
+      "module": "DeploymentTracker",
+      "category": "SD+ Export",
+      "action_type": "local",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [],
+      "required_privilege_requirements": [],
+      "local_only": true,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain"
+      ],
+      "ui_tags": [],
+      "notes": [
+        "No Jamf API privilege unless a future SD+ integration is added."
+      ]
+    },
+    {
+      "command_id": "deployment_tracker.workbench_search_filter",
+      "display_name": "Search / Filter Deployment Tracker Workbench",
+      "module": "DeploymentTracker",
+      "category": "Workbench",
+      "action_type": "local",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [],
+      "required_privilege_requirements": [],
+      "local_only": true,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain"
+      ],
+      "ui_tags": [],
+      "notes": []
+    },
+    {
+      "command_id": "deployment_tracker.save_workbench_layout",
+      "display_name": "Save Deployment Tracker Workbench Layout",
+      "module": "DeploymentTracker",
+      "category": "Workbench",
+      "action_type": "local",
+      "asset_scope": "mixed",
+      "implementation_ids": [],
+      "endpoints": [],
+      "required_privilege_requirements": [],
+      "local_only": true,
+      "destructive": false,
+      "deprecated_or_legacy": false,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain"
+      ],
+      "ui_tags": [],
+      "notes": []
+    }
+  ],
+  "current_source_observed_endpoints_v4": [
+    {
+      "path": "/api/v2/inventory-preload/csv",
+      "occurrences": 1,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadModels.swift"
+      ],
+      "lines": [
+        10
+      ],
+      "notes": []
+    },
+    {
+      "path": "/api/v2/inventory-preload/csv-template",
+      "occurrences": 1,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadModels.swift"
+      ],
+      "lines": [
+        11
+      ],
+      "notes": []
+    },
+    {
+      "path": "/api/v2/inventory-preload/csv-validate",
+      "occurrences": 1,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadModels.swift"
+      ],
+      "lines": [
+        12
+      ],
+      "notes": []
+    },
+    {
+      "path": "/api/v2/inventory-preload/records",
+      "occurrences": 1,
+      "source_files": [
+        "Standalone/DeploymentTracker/Sources/DeploymentTracker/Domain/Integrations/Jamf/JamfInventoryPreloadModels.swift"
+      ],
+      "lines": [
+        9
+      ],
+      "notes": []
+    }
+  ]
+}

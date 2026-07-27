@@ -15,6 +15,7 @@ excluded:
   - Carthage
   - Pods
   - .github
+  - Standalone
 
 # Rule set.
 disabled_rules:

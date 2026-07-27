@@ -18,6 +18,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Deployment Tracker moved out of Forsetti Jamf Pro.** The feature is no longer compiled, bundled, registered, activated, or displayed by the host app. Its domain source, SwiftUI surface, tests, legacy Forsetti service contract, and Permissions Helper metadata are preserved under `Standalone/DeploymentTracker` for development as a separate application.
+
 ---
 
 ## [3.32.1] — 2026-06-24

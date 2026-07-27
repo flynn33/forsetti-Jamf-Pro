@@ -19,6 +19,7 @@
 - Updated manifests to `appVersion` `A1.0.0`, module version `1.0.0-A1`, and the required `com.forsetti.jamfpro.*` module ID matrix.
 - Added explicit Obsidian Data Stream contract components in the design system while retaining the rebuilt glass/rail/metric/command-center UI surface.
 - Completed a UI consistency QA pass across the command center, search modules, PreStage Director, reports visualizations, and support technician frames. The pass standardizes same-type card heights, raises the inspector breakpoint to preserve main content width, adds adaptive row stacking, bounds long text, and wraps dense tables in horizontal scroll containers.
+- Detached Deployment Tracker from the host runtime, navigation, build inputs, resources, and Permissions Helper catalog while preserving its complete source and extraction contracts under `Standalone/DeploymentTracker`.
 - Updated architecture and runtime tests to validate app-owned runtime behavior.
 
 ## Module Matrix
@@ -33,7 +34,6 @@
 | `com.forsetti.jamfpro.feature.support-technician` | `SupportTechnicianServiceModule` | service |
 | `com.forsetti.jamfpro.feature.prestage-director` | `PrestageDirectorServiceModule` | service |
 | `com.forsetti.jamfpro.feature.reports` | `ReportsServiceModule` | service |
-| `com.forsetti.jamfpro.feature.deployment-tracker` | `DeploymentTrackerServiceModule` | service |
 | `com.forsetti.jamfpro.feature.permissions-matrix` | `PermissionsMatrixServiceModule` | service |
 | `com.forsetti.jamfpro.ui.workspace` | `JamfDashboardUIModule` | ui |
 
@@ -45,13 +45,13 @@ Validation is complete for the requested local remediation scope. Completed chec
 - Xcode project list also resolves through the compatibility project path.
 - Project plist lint passes.
 - Project plist lint also passes through the compatibility project path.
-- Manifest validation passes for 11 manifests and exactly one UI module.
+- Manifest validation passes for 10 manifests and exactly one UI module.
 - Remediation package validator passes for expected version `A1.0.0`.
 - Local guardrail validator passes.
 - macOS app build passes with local code signing disabled.
 - macOS app build passes when invoked through the compatibility project path.
 - iOS Simulator app build passes with local code signing disabled.
-- macOS XCTest run passes: 494 tests, 0 failures.
+- macOS XCTest run passes: 475 tests, 0 failures.
 - Local app launch verification passes through `script/build_and_run.sh --verify`.
 - Final visual QA capture completed at `/tmp/forsetti-uiqa-final.png`.
 - Final app-owned runtime log check returned no `com.forsetti.jamfpro` errors.
