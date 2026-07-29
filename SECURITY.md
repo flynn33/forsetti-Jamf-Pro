@@ -13,9 +13,8 @@ Security updates are provided for the latest release of this project.
 
 Please do **not** report security vulnerabilities through public GitHub issues.
 
-Instead, report them privately using GitHub Security Advisories:
-
-https://github.com/flynn33/forsetti-Jamf-Pro/security/advisories/new
+Instead, please report them by emailing
+[contact@ravenforgesoftware.com](mailto:contact@ravenforgesoftware.com).
 
 Please include:
 
