@@ -40,10 +40,10 @@ Command Center → **Support Technician**.
 
 ### 2. Search for a Mac
 
-1. Scope: **Computers** (or **All**).
-2. Query: `C02DEMO0001` (or `reviewer`, `MacBook`).
-3. Run search.
-4. Select **Reviewer MacBook Pro**.
+1. Scope: **Computers** or **All** (default is fine).
+2. The search field is **pre-filled** with `C02DEMO0001` in demo mode — just run **Search**.
+   - You can also clear it and try `reviewer`, `MacBook`, or a mobile serial such as `F9FDEMO0001`.
+3. Select **Reviewer MacBook Pro**.
 
 Expected: detail loads with general identity, hardware, OS, security, storage, local users, configuration profiles, groups, and sample extension attributes. Management ID is present so action buttons enable.
 

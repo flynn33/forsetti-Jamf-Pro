@@ -17,7 +17,11 @@ final class SupportTechnicianViewModel: ObservableObject {
     @Published var ticketReference = ""
 
     /// The username or serial number search query.
-    @Published var query = ""
+    /// Prefills a known sample serial in App Store demo mode so reviewers can
+    /// run Search immediately without typing.
+    @Published var query = AppStoreReviewDemoMode.isEnabled
+        ? AppStoreReviewDemoMode.supportTechnicianPrefillQuery
+        : ""
 
     /// The selected device type scope for the search.
     @Published var searchScope: SupportSearchScope = .all

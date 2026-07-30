@@ -32,9 +32,10 @@ enum AppStoreReviewDemoMode: Sendable {
         Suggested paths:
         • Computer Search — search “MacBook” or leave blank and run Search
         • Mobile Device Search — search “iPad” or leave blank and run Search
-        • Support Technician — search serial C02DEMO0001, open Reviewer MacBook Pro,
-          browse Hardware / Security / Applications / Command History, then run
-          Refresh Inventory or Blank Push (simulated only). Mobile: F9FDEMO0001.
+        • Support Technician — search field is pre-filled with C02DEMO0001; run Search,
+          open Reviewer MacBook Pro, browse Hardware / Security / Applications /
+          Command History, then run Refresh Inventory or Blank Push (simulated only).
+          Mobile serial for a second pass: F9FDEMO0001.
         • Prestage Director, Reports, and Permissions Matrix — open and browse
 
         Exit demo: Settings → App Store Demo Mode → Exit Demo Mode
@@ -45,6 +46,9 @@ enum AppStoreReviewDemoMode: Sendable {
 
     /// Stable fake server URL used only for UI labels while demo is on.
     nonisolated static let demoServerURLString = "https://app-store-demo.forsetti.local"
+
+    /// Support Technician search field prefill for App Review (Reviewer MacBook Pro).
+    nonisolated static let supportTechnicianPrefillQuery = "C02DEMO0001"
 
     private static let lock = NSLock()
 

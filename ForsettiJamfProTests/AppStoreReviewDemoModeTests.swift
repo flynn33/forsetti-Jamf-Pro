@@ -247,6 +247,39 @@ final class AppStoreReviewDemoModeTests: XCTestCase {
         AppStoreReviewDemoController.shared.disable()
         XCTAssertFalse(JamfSessionAvailability.isAvailable(credentialsStore: store))
     }
+
+    @MainActor
+    func test_supportTechnicianPrefillsSearchQueryInDemoMode() {
+        AppStoreReviewDemoMode.setEnabled(true)
+        AppStoreReviewDemoController.shared.enable()
+
+        let viewModel = SupportTechnicianViewModel(
+            apiGateway: JamfAPIGateway(
+                credentialsStore: JamfCredentialsStore(secureStore: DemoTestSecureStore()),
+                authenticationService: JamfAuthenticationService(
+                    diagnosticsReporter: DemoNoopDiagnosticsReporter()
+                ),
+                diagnosticsReporter: DemoNoopDiagnosticsReporter()
+            ),
+            diagnosticsReporter: DemoNoopDiagnosticsReporter()
+        )
+
+        XCTAssertEqual(viewModel.query, AppStoreReviewDemoMode.supportTechnicianPrefillQuery)
+        XCTAssertEqual(viewModel.query, "C02DEMO0001")
+
+        AppStoreReviewDemoController.shared.disable()
+        let liveViewModel = SupportTechnicianViewModel(
+            apiGateway: JamfAPIGateway(
+                credentialsStore: JamfCredentialsStore(secureStore: DemoTestSecureStore()),
+                authenticationService: JamfAuthenticationService(
+                    diagnosticsReporter: DemoNoopDiagnosticsReporter()
+                ),
+                diagnosticsReporter: DemoNoopDiagnosticsReporter()
+            ),
+            diagnosticsReporter: DemoNoopDiagnosticsReporter()
+        )
+        XCTAssertEqual(liveViewModel.query, "")
+    }
 }
 
 // MARK: - Test doubles
