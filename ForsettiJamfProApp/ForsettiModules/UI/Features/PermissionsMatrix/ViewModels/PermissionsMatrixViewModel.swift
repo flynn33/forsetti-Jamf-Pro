@@ -97,7 +97,9 @@ final class PermissionsMatrixViewModel: ObservableObject {
             .store(in: &graphCancellables)
     }
 
-    var hasCredentials: Bool { credentialsStore.hasStoredCredentials }
+    var hasCredentials: Bool {
+        JamfSessionAvailability.isAvailable(credentialsStore: credentialsStore)
+    }
 
     // MARK: - Loading
 

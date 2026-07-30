@@ -17,6 +17,7 @@
 
 ### Added
 
+- **App Store Review demo mode.** Reviewers (and anyone without a Jamf Pro tenant) can enable **Explore App Store Demo** from Settings or Jamf Credentials. While demo is on, `JamfAPIGateway` serves local sample inventory only — no live Jamf connection, no Keychain requirement, and mutating API verbs return simulated local acknowledgements. Support Technician is fully walkable: RSQL search, multi-section device detail (management IDs, apps, security, profiles), MDM command history, demo policies, and simulated management actions. See [`docs/APP_STORE_REVIEW_DEMO.md`](docs/APP_STORE_REVIEW_DEMO.md).
 - **Repository governance and release gates.** Added [`CONTRIBUTING.md`](CONTRIBUTING.md) and a pull-request template to state the maintainer-only pull-request policy, [`NOTICE`](NOTICE) for the repository's copyright notice, and [`docs/PUBLIC_RELEASE_CHECKLIST.md`](docs/PUBLIC_RELEASE_CHECKLIST.md) to block public product release until the evaluation and purchase controls are implemented and tested.
 
 ### Changed

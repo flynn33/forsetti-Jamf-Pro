@@ -65,7 +65,7 @@ struct PermissionsMatrixRuntimeVerificationView: View {
                 }
 
                 if viewModel.hasCredentials == false {
-                    Text("Connect to Jamf Pro (save verified credentials in Settings) to compare live privileges.")
+                    Text("Connect to Jamf Pro (save verified credentials in Settings) or enable App Store Demo Mode to compare privileges.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }

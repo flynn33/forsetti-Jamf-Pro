@@ -18,6 +18,8 @@ struct ServerCredentialsView: View {
     @ObservedObject var credentialsStore: JamfCredentialsStore
     /// Optional diagnostics reporter for logging credential-related events.
     let diagnosticsReporter: (any DiagnosticsReporting)?
+    /// App Store Review demo controller (shared; does not use Keychain).
+    @ObservedObject private var demoController = AppStoreReviewDemoController.shared
 
     /// The Jamf Pro server URL entered by the user.
     @State private var serverURL = ""
@@ -139,6 +141,19 @@ struct ServerCredentialsView: View {
                     }
                 }
 
+                // App Store Review entry — no tenant required.
+                AppStoreDemoModeControlsView(
+                    onEnabled: {
+                        statusMessage = "App Store demo enabled. Sample data only — no live Jamf Pro connection."
+                        errorMessage = nil
+                        dismiss()
+                    },
+                    onDisabled: {
+                        statusMessage = "Exited demo mode. Configure live Jamf Pro credentials to continue, or re-enter demo."
+                        errorMessage = nil
+                    }
+                )
+
                 // Actions
                 VStack(spacing: 10) {
                     Button {
@@ -160,7 +175,7 @@ struct ServerCredentialsView: View {
                     }
                     .buttonStyle(.dashboardSecondary)
                     .frame(maxWidth: .infinity, minHeight: 44)
-                    .disabled(canVerifyConnection == false || isVerifyingConnection)
+                    .disabled(canVerifyConnection == false || isVerifyingConnection || demoController.isEnabled)
 
                     Button {
                         saveCredentials()
@@ -171,7 +186,7 @@ struct ServerCredentialsView: View {
                     .buttonStyle(.dashboardPrimary)
                     // Save is only enabled after a successful verification
                     .frame(maxWidth: .infinity, minHeight: 44)
-                    .disabled(isConnectionVerified == false || isVerifyingConnection)
+                    .disabled(isConnectionVerified == false || isVerifyingConnection || demoController.isEnabled)
 
                     Button(role: .destructive) {
                         clearCredentials()
@@ -181,6 +196,7 @@ struct ServerCredentialsView: View {
                     }
                     .buttonStyle(.dashboardDanger)
                     .frame(maxWidth: .infinity, minHeight: 44)
+                    .disabled(demoController.isEnabled)
                 }
                 .padding(.top, 4)
 

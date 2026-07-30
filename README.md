@@ -25,9 +25,20 @@ Deployment Tracker is no longer compiled, bundled, registered, activated, or sho
 
 The preserved directory is a non-runnable source snapshot for a future standalone application. It is intentionally outside the app and test target roots and must not be added back to the Forsetti Jamf Pro targets.
 
+## App Store Review demo
+
+Apple App Review can exercise the Mac and iOS apps **without a Jamf Pro tenant**.
+
+1. Open **Settings** or **Jamf Credentials**.
+2. Choose **Explore App Store Demo**.
+3. An orange banner confirms sample-data-only mode; no live Jamf connection is used.
+
+Details, safety guarantees, and paste-ready Review Notes: [`docs/APP_STORE_REVIEW_DEMO.md`](docs/APP_STORE_REVIEW_DEMO.md).
+
 ## Documentation
 
 - [`docs/README.md`](docs/README.md) — documentation map and historical-material boundary
+- [`docs/APP_STORE_REVIEW_DEMO.md`](docs/APP_STORE_REVIEW_DEMO.md) — App Store Review demo mode (entry, safety, Review Notes)
 - [`WIKI.md`](WIKI.md) — current architecture notes
 - [`Standalone/DeploymentTracker/README.md`](Standalone/DeploymentTracker/README.md) — preservation boundary and extraction checklist
 - [`docs/PUBLIC_RELEASE_CHECKLIST.md`](docs/PUBLIC_RELEASE_CHECKLIST.md) — required 30-day evaluation lock and public-release gates

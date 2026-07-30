@@ -6,6 +6,7 @@ This directory and the root-level project documents cover two different kinds of
 
 - [`../README.md`](../README.md) — product overview, active modules, validation, license, and repository policy
 - [`../WIKI.md`](../WIKI.md) — current architecture notes
+- [`APP_STORE_REVIEW_DEMO.md`](APP_STORE_REVIEW_DEMO.md) — App Store Review demo mode (entry, safety, paste-ready Review Notes)
 - [`../Standalone/DeploymentTracker/README.md`](../Standalone/DeploymentTracker/README.md) — preserved Deployment Tracker boundary and standalone extraction checklist
 - [`PUBLIC_RELEASE_CHECKLIST.md`](PUBLIC_RELEASE_CHECKLIST.md) — 30-day evaluation lock and public-release gates
 - [`../REMEDIATION_REPORT.md`](../REMEDIATION_REPORT.md) — A1.0.0 remediation record and post-baseline update

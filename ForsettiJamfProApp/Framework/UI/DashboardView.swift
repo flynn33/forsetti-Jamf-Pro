@@ -10,10 +10,16 @@ struct DashboardView: View {
     }
 
     @ObservedObject var appServices: ForsettiJamfProAppServices
+    @ObservedObject private var demoController = AppStoreReviewDemoController.shared
     @State private var activeSheet: ActiveSheet?
 
+    /// Live credentials **or** App Store Review demo mode unlock Command Center modules.
+    private var isSessionReady: Bool {
+        JamfSessionAvailability.isAvailable(credentialsStore: appServices.credentialsStore)
+    }
+
     private var hasCredentials: Bool {
-        appServices.credentialsStore.hasStoredCredentials
+        isSessionReady
     }
 
     private var appVersion: String {
@@ -37,23 +43,29 @@ struct DashboardView: View {
 
     var body: some View {
         NavigationStack {
-            ForsettiWorkspaceShell(
-                navigation: { isCompact in
-                    navigationRail(isCompact: isCompact)
-                },
-                commandStream: {
-                    commandStream
-                },
-                content: {
-                    commandCenterContent
-                },
-                inspector: {
-                    commandCenterInspector
-                },
-                bottomDrawer: {
-                    EmptyView()
+            VStack(spacing: 0) {
+                if demoController.isEnabled {
+                    AppStoreDemoRibbonView()
                 }
-            )
+
+                ForsettiWorkspaceShell(
+                    navigation: { isCompact in
+                        navigationRail(isCompact: isCompact)
+                    },
+                    commandStream: {
+                        commandStream
+                    },
+                    content: {
+                        commandCenterContent
+                    },
+                    inspector: {
+                        commandCenterInspector
+                    },
+                    bottomDrawer: {
+                        EmptyView()
+                    }
+                )
+            }
             .sheet(item: $activeSheet) { activeSheet in
                 switch activeSheet {
                 case .settings:
@@ -131,7 +143,9 @@ struct DashboardView: View {
                 )
             ],
             userLabel: "Operator",
-            tenantLabel: hasCredentials ? "Jamf Pro connected" : "Jamf Pro setup needed",
+            tenantLabel: demoController.isEnabled
+                ? "App Store demo"
+                : (hasCredentials ? "Jamf Pro connected" : "Jamf Pro setup needed"),
             mode: isCompact ? .compactTop : .regular
         )
     }
@@ -139,11 +153,13 @@ struct DashboardView: View {
     private var commandStream: some View {
         ForsettiCommandStreamBar(
             state: hasCredentials ? .idle : .blocked,
-            message: hasCredentials
-                ? "Ready for Jamf Pro operations"
-                : "Credentials required before live Jamf Pro calls",
+            message: demoController.isEnabled
+                ? "App Store demo ready — sample data only, no live Jamf Pro calls"
+                : (hasCredentials
+                    ? "Ready for Jamf Pro operations"
+                    : "Credentials required before live Jamf Pro calls"),
             progress: hasCredentials ? 1 : 0,
-            trailingText: hasCredentials ? "READY" : "BLOCKED"
+            trailingText: demoController.isEnabled ? "DEMO" : (hasCredentials ? "READY" : "BLOCKED")
         )
     }
 

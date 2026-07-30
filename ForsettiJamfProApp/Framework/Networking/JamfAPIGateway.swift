@@ -171,6 +171,30 @@ actor JamfAPIGateway {
         body: Data? = nil,
         additionalHeaders: [String: String] = [:]
     ) async throws -> Data {
+        // App Store Review demo: serve fixtures only. Never open a network
+        // connection, never load Keychain credentials, never mint tokens.
+        if AppStoreReviewDemoMode.isEnabled {
+            await diagnosticsReporter.report(
+                source: "framework.api-gateway",
+                category: "app-store-demo",
+                severity: .info,
+                message: "Serving App Store demo fixture (no live Jamf Pro call).",
+                metadata: [
+                    "method": method.rawValue,
+                    "path": path,
+                    "query_item_count": String(queryItems.count),
+                    "body_byte_count": String(body?.count ?? 0),
+                    "external_data_changed": "false"
+                ]
+            )
+            return try AppStoreDemoResponseRouter.response(
+                path: path,
+                method: method,
+                queryItems: queryItems,
+                body: body
+            )
+        }
+
         var retryCount = 0
         let maxRetries = 3
 
@@ -463,6 +487,9 @@ actor JamfAPIGateway {
     /// UI (e.g. the Remote Management action opens the device's management
     /// page where Jamf Remote Assist lives).
     func currentServerBaseURL() async -> URL? {
+        if AppStoreReviewDemoMode.isEnabled {
+            return URL(string: AppStoreReviewDemoMode.demoServerURLString)
+        }
         do {
             let credentials = try await MainActor.run(body: {
                 try credentialsStore.loadCredentials()
