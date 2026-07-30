@@ -27,7 +27,8 @@ final class ReportsViewModel: ObservableObject {
     }
 
     var hasCredentials: Bool {
-        credentialsStore.hasStoredCredentials
+        // Demo mode unlocks reports against sample inventory without live credentials.
+        JamfSessionAvailability.isAvailable(credentialsStore: credentialsStore)
     }
 
     var lastRefreshDate: Date? {

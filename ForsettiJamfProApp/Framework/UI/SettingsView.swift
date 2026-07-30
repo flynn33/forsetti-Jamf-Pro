@@ -5,10 +5,15 @@ struct SettingsView: View {
 
     @ObservedObject var credentialsStore: JamfCredentialsStore
     let diagnosticsReporter: (any DiagnosticsReporting)?
+    @ObservedObject private var demoController = AppStoreReviewDemoController.shared
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                if demoController.isEnabled {
+                    AppStoreDemoRibbonView()
+                }
+
                 HStack {
                     Button {
                         dismiss()
@@ -25,6 +30,21 @@ struct SettingsView: View {
                 .padding(.bottom, 4)
 
                 List {
+                    Section {
+                        AppStoreDemoModeControlsView(
+                            onEnabled: {
+                                // Reviewers can leave Settings and immediately use modules.
+                                dismiss()
+                            }
+                        )
+                        .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                        .listRowBackground(Color.clear)
+                    } header: {
+                        Text("App Store Review")
+                    } footer: {
+                        Text("Use demo mode when no Jamf Pro tenant is available (including App Review). Live credentials are never required.")
+                    }
+
                     Section("Configuration") {
                         NavigationLink {
                             ServerCredentialsView(
