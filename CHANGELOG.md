@@ -15,6 +15,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Corrected macOS sandbox capabilities.** Removed unused `com.apple.security.device.camera` and `com.apple.security.network.server` entitlements from the macOS target. Set `ENABLE_INCOMING_NETWORK_CONNECTIONS = NO` and `ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES` in both Debug and Release configurations. Added platform-specific privacy descriptions: SDK-conditional `NSCameraUsageDescription` for iOS, and `NSLocalNetworkUsageDescription` for macOS. Suppressed the scanner button on macOS while preserving all iOS scanning behavior. See [`docs/review-remediation/macos-entitlement-remediation-report.md`](docs/review-remediation/macos-entitlement-remediation-report.md).
+
 ### Added
 
 - **App Store Review demo mode.** Reviewers (and anyone without a Jamf Pro tenant) can enable **Explore App Store Demo** from Settings or Jamf Credentials. While demo is on, `JamfAPIGateway` serves local sample inventory only — no live Jamf connection, no Keychain requirement, and mutating API verbs return simulated local acknowledgements. Support Technician is fully walkable: RSQL search, multi-section device detail (management IDs, apps, security, profiles), MDM command history, demo policies, and simulated management actions. See [`docs/APP_STORE_REVIEW_DEMO.md`](docs/APP_STORE_REVIEW_DEMO.md).
