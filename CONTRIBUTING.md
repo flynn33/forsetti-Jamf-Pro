@@ -13,3 +13,14 @@ If you want to inspect or evaluate the project, use a GitHub fork as permitted b
 Only designated project maintainers are eligible to submit work for inclusion in the official repository. Maintainers must have the right to submit all included material and must identify any third-party material and required notices.
 
 See [`LICENSE`](LICENSE) for the proprietary source-inspection and evaluation terms and [`NOTICE`](NOTICE) for the repository notice.
+
+## Attribution and identity
+
+This repository enforces a **no tool-origin attribution** rule for commits,
+authors, paths, pull request text, and source content. Maintainers must not
+credit assistive tooling as author of the work.
+
+Enforcement:
+
+- GitHub Actions workflow **Provenance Guard** (`.github/workflows/provenance-guard.yml`)
+- Local hooks via `scripts/install-hooks.sh` and `.githooks/`

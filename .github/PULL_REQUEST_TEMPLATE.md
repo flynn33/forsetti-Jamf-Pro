@@ -14,3 +14,10 @@ Describe the changes and their effect on the project.
 ## Validation
 
 List the checks used to validate the changes.
+
+---
+
+**Identity rule:** Maintainer submissions must use human identities only. Do not
+credit assistive tooling in commits, authors, branch names, paths, titles,
+descriptions, comments, reviews, or source. The **Provenance Guard** required
+check enforces this policy.
