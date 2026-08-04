@@ -59,12 +59,10 @@ xcodebuild -project 'Forsetti Jamf Pro.xcodeproj' -scheme 'Forsetti Jamf Pro' -d
 xcodebuild test -project 'Forsetti Jamf Pro.xcodeproj' -scheme 'ForsettiJamfProTests' -destination 'platform=macOS'
 ```
 
-## Proprietary license and evaluation
+## License
 
-Forsetti Jamf Pro is proprietary software. The source is visible on GitHub for inspection. Subject to [`LICENSE`](LICENSE), an individual may clone, compile, and test the software for a single 30-day Evaluation Period beginning on first execution. Continued application use after that period requires a valid purchase through the Apple App Store. Any exception requires a separate signed agreement from the Licensor.
+Forsetti Jamf Pro is licensed under the [Apache License, Version 2.0](LICENSE) (`Apache-2.0`).
 
-An App Store purchase authorizes use of the official App Store version under its accompanying end-user terms. It does not grant rights to distribute this source code or continue using modified or source-built versions after the Evaluation Period.
+You may use, reproduce, modify, and distribute this software under the terms of that license. See [`LICENSE`](LICENSE) for the full text and [`NOTICE`](NOTICE) for copyright attribution.
 
-The technical 30-day lock and purchase verification are planned release requirements and are not yet implemented. Forsetti Jamf Pro must not be treated as ready for public product release until the gates in [`docs/PUBLIC_RELEASE_CHECKLIST.md`](docs/PUBLIC_RELEASE_CHECKLIST.md) are complete.
-
-Pull requests from outside contributors are not reviewed, approved, or merged. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repository policy and [`NOTICE`](NOTICE) for the copyright notice.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repository participation policy.

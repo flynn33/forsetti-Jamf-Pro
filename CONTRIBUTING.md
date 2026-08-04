@@ -1,18 +1,18 @@
 # Repository Participation Policy
 
-Forsetti Jamf Pro is proprietary software. Public visibility of the source code permits inspection and the limited individual evaluation described in [`LICENSE`](LICENSE); it does not make the project open source.
+Forsetti Jamf Pro is open source software licensed under the [Apache License, Version 2.0](LICENSE).
 
 ## External development
 
-This project does not accept code or documentation contributions from outside contributors. Pull requests opened by anyone other than a designated project maintainer will not be reviewed, approved, or merged.
+This project does not currently accept code or documentation contributions from outside contributors. Pull requests opened by anyone other than a designated project maintainer will not be reviewed, approved, or merged.
 
-If you want to inspect or evaluate the project, use a GitHub fork as permitted by GitHub's service terms or clone the repository for the limited purposes and 30-day Evaluation Period stated in [`LICENSE`](LICENSE). Local modifications are permitted only for that evaluation. Do not publish, distribute, or submit the modified work with an expectation that it will be incorporated into this repository.
+You may fork, clone, modify, and redistribute the project under the terms of the Apache License 2.0. Please do not open pull requests with an expectation that external work will be incorporated into this repository unless a maintainer has invited the contribution.
 
 ## Maintainer submissions
 
 Only designated project maintainers are eligible to submit work for inclusion in the official repository. Maintainers must have the right to submit all included material and must identify any third-party material and required notices.
 
-See [`LICENSE`](LICENSE) for the proprietary source-inspection and evaluation terms and [`NOTICE`](NOTICE) for the repository notice.
+Unless stated otherwise, contributions intentionally submitted for inclusion are under the terms of the Apache License 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
 ## Attribution and identity
 
